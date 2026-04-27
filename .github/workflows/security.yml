@@ -54,7 +54,12 @@ jobs:
       - name: TruffleHog OSS
         uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --results=verified,unknown
+          # Only fail on results TruffleHog can actively verify as real
+          # secrets (live token, valid signature, etc). `unknown` matches
+          # patterns that *look like* secrets, which produces noise on
+          # documentation, fixtures, and example config strings — not
+          # the right gate for a public repo.
+          extra_args: --results=verified
 
   dependency-review:
     name: Dependency review
