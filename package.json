@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/sdk",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "Privacy-first browser RUM and error tracking SDK. Lightweight (~15-22 KB gzipped), framework-agnostic, no PII by default.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
