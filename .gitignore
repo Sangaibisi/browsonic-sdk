@@ -1,0 +1,60 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+coverage/
+
+# Env (all variants)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.*.local
+
+# TypeScript + lint caches
+*.tsbuildinfo
+.eslintcache
+
+# Package manager debug + pack outputs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.tgz
+
+# Secret defense — never commit these
+*.pem
+*.key
+credentials.json
+
+# Test & benchmark outputs
+bench-results.json
+e2e-results/
+playwright-report/
+test-results/
+.vitest-cache/
+
+# size-limit --why output (CI uses --save=size-report.json)
+size-report.json
+
+# E2E bundle artefacts (rebuilt on each test run)
+e2e/fixtures/demo-app/sdk.bundle.js
+e2e/fixtures/demo-app/sdk.bundle.js.map
+e2e/fixtures/demo-app/sdk.bundle.min.js
+e2e/fixtures/demo-app/sdk.bundle.min.js.map
+
+# ===========================================
+# AI Agent / LLM Crawler Protection
+# ===========================================
+# Prevent AI training crawlers from indexing source
+.ai-ignore
+ai.txt
+robots.txt
+
+# Block common AI training patterns
+**/*.training
+**/*.dataset
+bench-baseline.json
+
+# Claude Code workspace
+.claude/

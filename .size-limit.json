@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Main ESM (everything)",
+    "path": "dist/esm/index.js",
+    "limit": "22 KB",
+    "gzip": true
+  },
+  {
+    "name": "Core ESM (no widget)",
+    "path": "dist/esm/core.js",
+    "import": "{ Browsonic }",
+    "limit": "15 KB",
+    "gzip": true
+  },
+  {
+    "name": "Widget plugin (opt-in)",
+    "path": "dist/esm/widget-entry.js",
+    "limit": "6 KB",
+    "gzip": true
+  },
+  {
+    "name": "Full CJS bundle",
+    "path": "dist/cjs/index.js",
+    "limit": "26 KB",
+    "gzip": true
+  },
+  {
+    "name": "Main ESM — raw (before gzip)",
+    "path": "dist/esm/index.js",
+    "limit": "60 KB",
+    "gzip": false
+  }
+]

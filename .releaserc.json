@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/semantic-release.json",
+  "branches": [
+    "main",
+    { "name": "next", "prerelease": true },
+    { "name": "release/*.x", "range": "${name.replace(/^release\\//, '')}" }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          { "type": "refactor", "release": "patch" },
+          { "type": "perf", "release": "patch" },
+          { "type": "deps", "release": "patch" },
+          { "type": "ci", "release": false },
+          { "type": "test", "release": false },
+          { "type": "docs", "release": false },
+          { "type": "chore", "release": false }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            { "type": "feat", "section": "Features" },
+            { "type": "fix", "section": "Bug Fixes" },
+            { "type": "perf", "section": "Performance" },
+            { "type": "refactor", "section": "Refactors" },
+            { "type": "deps", "section": "Dependencies" },
+            { "type": "revert", "section": "Reverts" }
+          ]
+        }
+      }
+    ],
+    ["@semantic-release/npm", { "npmPublish": true }],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json", "package-lock.json"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          { "path": "dist/umd/browsonic.min.js", "label": "UMD bundle (minified)" },
+          { "path": "dist/umd/browsonic.min.js.map", "label": "UMD source map" },
+          { "path": "browsonic-sdk.cdx.json", "label": "CycloneDX SBOM" },
+          { "path": "browsonic-sdk.sha256sums", "label": "SHA-256 checksums" }
+        ]
+      }
+    ]
+  ]
+}

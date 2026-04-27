@@ -1,0 +1,68 @@
+name: Bug report
+description: Something is broken or behaving unexpectedly.
+labels: ['bug', 'triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please fill in as much as you can — incomplete reports take much longer to triage.
+
+        For security vulnerabilities, do **not** use this form. See [SECURITY.md](https://github.com/Sangaibisi/browsonic-sdk/blob/main/SECURITY.md).
+
+  - type: input
+    id: sdk-version
+    attributes:
+      label: SDK version
+      description: Output of `npm ls @browsonic/sdk` or the version in your package.json.
+      placeholder: 2.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: Chrome 134 on macOS 14.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Clear description of the actual behaviour.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A link to a CodeSandbox, StackBlitz, or small repo, or an inline snippet that reproduces the issue.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: console
+    attributes:
+      label: Console output
+      description: Copy any errors or warnings from the browser console. Mask anything sensitive before pasting.
+      render: text
+
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and did not find a duplicate.
+          required: true
+        - label: I am on the latest version of `@browsonic/sdk` (or have explained why I am not).
+          required: true

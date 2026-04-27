@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/Sangaibisi/browsonic-sdk/security/advisories/new
+    about: Please report security issues privately, not via public issues.
+  - name: Question or discussion
+    url: https://github.com/Sangaibisi/browsonic-sdk/discussions
+    about: For open-ended questions, integration help, and design discussions.

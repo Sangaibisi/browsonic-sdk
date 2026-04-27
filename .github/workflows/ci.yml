@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write # needed for size-limit comment
+
+jobs:
+  lint:
+    name: Lint + format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
+      # Supply-chain check (Sprint P15 / F3.5.B). Fails the build on any
+      # high/critical advisory. Dependabot cycles weekly; this step is
+      # the "right now" guard that catches advisories published between
+      # Dependabot runs. `--production=false` so devDeps are scanned too.
+      # Bumped to `critical`: bundled npm CLI ships transitive moderate/
+      # high advisories (picomatch, brace-expansion) that we can't fix
+      # without forking npm itself. The supply-chain signal that
+      # actually matters for shipped code is critical. We track the
+      # noisier band via Dependabot instead.
+      - run: npm audit --audit-level=critical --production=false
+
+  # Node compatibility matrix. The SDK ships `engines: ">=20"` and is
+  # consumed by browsers + Node tools, so every supported major must
+  # type-check and run the unit suite cleanly. 20 is current LTS; 22
+  # is the next LTS we want to be ready for. Node 18 was dropped in
+  # 2026 (EOL April 2025).
+  typecheck:
+    name: Typecheck (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit -p tsconfig.json
+
+  unit:
+    name: Unit tests + coverage (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    needs: typecheck
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+      - run: npm ci
+      # Coverage gate is enforced inside vitest.config.ts via thresholds.
+      # Every node version runs the same suite — coverage thresholds
+      # don't depend on engine, so a regression on 20 alone still fails.
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          # Per-node artifact name so concurrent uploads don't collide.
+          name: coverage-node-${{ matrix.node }}
+          path: coverage/
+          retention-days: 7
+
+  bench:
+    name: Microbenchmarks + regression gate
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      # Pull the previous run's artifact (if any) as baseline.
+      - name: Download previous bench baseline
+        uses: dawidd6/action-download-artifact@v20
+        continue-on-error: true
+        with:
+          workflow: ci.yml
+          branch: main
+          name: bench-results
+          path: ./.bench-prev
+
+      - name: Stage baseline
+        run: |
+          if [ -f ./.bench-prev/bench-results.json ]; then
+            cp ./.bench-prev/bench-results.json ./bench-baseline.json
+            echo "Baseline prepared"
+          else
+            echo "No baseline yet — first run or artifact expired."
+          fi
+
+      - run: npm run bench
+
+      - name: Check for regressions (>10% slower)
+        run: node scripts/check-bench-regression.mjs bench-baseline.json 0.10
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-results
+          path: bench-results.json
+          retention-days: 30
+
+  size:
+    name: Bundle size budget
+    runs-on: ubuntu-latest
+    needs: typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
+      # Enforce hard budget (fails if exceeded)
+      - run: npx size-limit
+
+      # Emit a --why report as an artifact for PR debugging
+      - name: size-limit analysis
+        if: always()
+        run: npm run size:why -- --save=size-report.json || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: size-report
+          path: size-report.json
+          retention-days: 14
+
+      # Post/update a PR comment with the current size delta vs base
+      - name: PR size comment
+        if: github.event_name == 'pull_request'
+        uses: andresz1/size-limit-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          skip_step: install
+          package_manager: npm

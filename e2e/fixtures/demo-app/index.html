@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Browsonic Perf Fixture — E-commerce Demo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        color: #111;
+        background: #fafafa;
+      }
+      header {
+        background: #fff;
+        border-bottom: 1px solid #eee;
+        padding: 16px 24px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      h1 {
+        font-size: 20px;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .hero {
+        background: linear-gradient(135deg, #6366f1, #06b6d4);
+        color: #fff;
+        padding: 48px 24px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+      }
+      .hero h2 {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .card-img {
+        width: 100%;
+        aspect-ratio: 1;
+        background: #e5e7eb;
+        border-radius: 4px;
+        margin-bottom: 8px;
+      }
+      .card h3 {
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+      .card .price {
+        color: #6366f1;
+        font-weight: bold;
+      }
+      button {
+        background: #6366f1;
+        color: #fff;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 8px;
+      }
+      button:hover {
+        background: #4f46e5;
+      }
+      #log {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        background: #000;
+        color: #0f0;
+        padding: 8px;
+        font-family: monospace;
+        font-size: 10px;
+        max-height: 120px;
+        overflow: auto;
+        max-width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Browsonic Fixture Store</h1>
+    </header>
+    <main>
+      <section class="hero">
+        <h2>Spring Sale</h2>
+        <p>Up to 40% off on selected items</p>
+      </section>
+      <section class="grid" id="product-grid">
+        <!-- Products injected by JS to simulate realistic render cost -->
+      </section>
+    </main>
+
+    <!-- Hidden log for Playwright to read markers -->
+    <div id="log" aria-hidden="true"></div>
+
+    <script>
+      (function () {
+        const log = (msg) => {
+          performance.mark(msg);
+          const el = document.getElementById('log');
+          el.textContent += msg + '\n';
+          el.scrollTop = el.scrollHeight;
+        };
+        window.__perfLog = log;
+
+        log('app:start');
+
+        // Simulate product grid — 24 cards
+        const grid = document.getElementById('product-grid');
+        const frag = document.createDocumentFragment();
+        for (let i = 1; i <= 24; i++) {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.innerHTML = `
+          <div class="card-img"></div>
+          <h3>Product ${i}</h3>
+          <div class="price">$${(19 + i * 3).toFixed(2)}</div>
+          <button data-product-id="${i}">Add to cart</button>
+        `;
+          frag.appendChild(card);
+        }
+        grid.appendChild(frag);
+
+        // Simulate user interactions
+        document.addEventListener('click', (e) => {
+          if (e.target.matches('button[data-product-id]')) {
+            log('user:click:add-to-cart');
+          }
+        });
+
+        // Fire a simulated network request so network collector has work
+        fetch('/v1/usage?bootstrap=1', { method: 'GET' }).catch(() => {});
+
+        // Fire a simulated error (caught — won't trigger SDK error handler)
+        try {
+          // intentionally empty — SDK shouldn't instrument this
+        } catch {}
+
+        log('app:ready');
+        window.__appReady = true;
+      })();
+    </script>
+
+    <!-- SDK injection slot — tests inject a <script> here that sets window.BrowsonicSDK
+       by loading sdk.bundle.js (built by scripts/build-e2e-bundle.mjs).
+       Leave empty for baseline runs (no SDK). -->
+    <div id="sdk-slot" aria-hidden="true" hidden></div>
+  </body>
+</html>

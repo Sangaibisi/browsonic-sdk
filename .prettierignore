@@ -1,0 +1,11 @@
+dist/
+coverage/
+node_modules/
+bench-results.json
+e2e/fixtures/demo-app/sdk.bundle.js
+e2e/fixtures/demo-app/sdk.bundle.min.js
+e2e/fixtures/demo-app/*.map
+playwright-report/
+test-results/
+e2e-results/
+package-lock.json

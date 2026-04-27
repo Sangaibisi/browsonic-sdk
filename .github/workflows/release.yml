@@ -1,0 +1,81 @@
+name: release
+
+# semantic-release driven by Conventional Commits. Runs on every push
+# to main (or release branches) and decides on its own whether a
+# release is due based on commit messages since the last tag.
+#
+# Required secrets:
+#   GITHUB_TOKEN  — provided by Actions; needs `contents: write`
+#                   + `issues: write` + `pull-requests: write` to update
+#                   CHANGELOG, push the tag, and publish the GitHub Release.
+#   NPM_TOKEN     — npmjs.org Automation token with publish rights to
+#                   the @browsonic scope. Generate at npmjs.com →
+#                   Access Tokens → Granular → "Publish".
+#
+# Branch policy (.releaserc.json):
+#   main         → stable releases (npm dist-tag: latest)
+#   next         → prereleases (npm dist-tag: next)
+#   release/X.x  → LTS lines (e.g. release/2.x), patch-only
+
+on:
+  push:
+    branches:
+      - main
+      - next
+      - 'release/*.x'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write # required for npm provenance (sigstore)
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: semantic-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # semantic-release reads tag history to compute the next
+          # version; shallow clones produce nonsense.
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build (all distribution formats)
+        run: npm run build
+
+      # Optional supply-chain artefacts attached to the GitHub Release.
+      - name: Generate SBOM (CycloneDX)
+        run: npx --yes @cyclonedx/cyclonedx-npm --output-format json --output-file browsonic-sdk.cdx.json
+        continue-on-error: true
+
+      - name: Compute checksums
+        run: |
+          set -e
+          cd dist
+          if [ -f umd/browsonic.min.js ]; then
+            sha256sum umd/browsonic.min.js umd/browsonic.js > ../browsonic-sdk.sha256sums || true
+          fi
+
+      - name: semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # `--provenance` is enabled via package.json publishConfig and
+          # requires id-token: write (declared above).
+        run: npx semantic-release
