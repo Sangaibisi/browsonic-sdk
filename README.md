@@ -1,398 +1,226 @@
 # Browsonic SDK
 
-[![npm version](https://img.shields.io/npm/v/@browsonic/sdk.svg)](https://www.npmjs.com/package/@browsonic/sdk)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@browsonic/sdk.svg?color=cb3837)](https://www.npmjs.com/package/@browsonic/sdk)
+[![npm downloads](https://img.shields.io/npm/dm/@browsonic/sdk.svg?color=cb3837)](https://www.npmjs.com/package/@browsonic/sdk)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-3178c6.svg)](./LICENSE)
 [![CI](https://github.com/Sangaibisi/browsonic-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/Sangaibisi/browsonic-sdk/actions/workflows/ci.yml)
-[![Bundle size](https://img.shields.io/bundlephobia/minzip/@browsonic/sdk?label=gzipped)](https://bundlephobia.com/package/@browsonic/sdk)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/@browsonic/sdk?label=gzipped&color=8a2be2)](https://bundlephobia.com/package/@browsonic/sdk)
+[![Provenance](https://img.shields.io/badge/npm-provenance-2c8ebb)](https://docs.npmjs.com/generating-provenance-statements)
 
-**See what your users see. Fix issues before they complain.**
+> **Privacy-first browser RUM & error tracking.** ~15 KB gzipped, no runtime dependencies, framework-agnostic, and no PII captured by default.
 
-A privacy-first browser RUM and error tracking SDK. Lightweight (~15-22 KB gzipped), framework-agnostic, no PII captured by default. Pairs with any HTTP ingest endpoint that accepts the documented event payload.
+The browser is the noisiest place to debug. Every JavaScript error, failed network call, and slow API response happens on a device you don't control, in a session you can't replay. Browsonic captures that surface — without spying on your users — and ships it to a backend you control.
 
 ```bash
 npm install @browsonic/sdk
 ```
 
----
+```ts
+import { Browsonic } from '@browsonic/sdk';
 
-## The Problem We Solve
-
-Every day, your customers encounter errors on your website that you never hear about:
-
-- A payment button that doesn't respond
-- A form that silently fails to submit
-- An API call that returns an error but shows nothing to the user
-- A JavaScript crash that breaks the entire page
-
-**90% of users who experience an error simply leave.** They don't contact support. They don't report the issue. They just go to your competitor.
-
-By the time you discover the problem from the 10% who do complain, you've already lost countless customers and revenue.
-
----
-
-## What is BrowSonic?
-
-BrowSonic is a lightweight JavaScript SDK that sits silently in your web application, capturing every error, failed API call, and anomaly the moment it happens—before your users even notice.
-
-Think of it as **security cameras for your user experience**: always watching, never interfering, and ready to show you exactly what went wrong.
-
----
-
-## Real-World Scenarios
-
-### Scenario 1: The Silent Checkout Failure
-
-**Without BrowSonic:**
-
-> Your checkout page has a bug that affects 3% of users on Safari. The payment API returns a 400 error, but your UI shows a loading spinner forever. Users refresh, try again, and eventually give up. You lose $50,000 in revenue over 2 weeks before someone finally emails support.
-
-**With BrowSonic:**
-
-> The moment the first Safari user encounters the 400 error, BrowSonic captures it with full context: the browser version, the exact API response, the user's cart contents (masked for privacy). Your team gets alerted, identifies the Safari-specific bug, and deploys a fix within hours—before most users are affected.
-
----
-
-### Scenario 2: The Third-Party Script Disaster
-
-**Without BrowSonic:**
-
-> A third-party analytics script you installed last month starts throwing JavaScript errors after an update. Your entire product page breaks for 20% of mobile users. You don't find out until angry reviews appear on social media 3 days later.
-
-**With BrowSonic:**
-
-> BrowSonic captures the JavaScript error immediately, including the stack trace pointing to the third-party script. Your team is notified, temporarily disables the script, and contacts the vendor—all before a single negative review is posted.
-
----
-
-### Scenario 3: The API Degradation
-
-**Without BrowSonic:**
-
-> Your backend team deploys a new version. Response times increase from 200ms to 3 seconds for certain endpoints. Users experience slow loading, and conversion rates drop 15%. The backend metrics look fine because the servers aren't crashing—they're just slow.
-
-**With BrowSonic:**
-
-> BrowSonic captures every failed or slow API call from the user's perspective. You see exactly which endpoints are slow, which users are affected, and what they were trying to do. You catch the performance regression the same day it's deployed.
-
----
-
-## Why Choose BrowSonic?
-
-### 1. Zero Impact on Your Application
-
-Unlike other monitoring tools that can slow down your site or cause crashes, BrowSonic is built with a **fail-safe guarantee**:
-
-- SDK errors **never** crash your application
-- Automatic circuit breaker pauses monitoring if something goes wrong
-- Your users will never know it's there
-
-### 2. Rich Context, Automatically
-
-When an error happens, you don't just get "Error: undefined is not a function." You get:
-
-- **What page** the user was on
-- **What they were doing** (their localStorage state, form data)
-- **Their environment** (browser, device, timezone)
-- **The exact moment** it happened
-- **How to reproduce it** (stack trace, API responses)
-
-### 3. Privacy by Default
-
-BrowSonic automatically masks sensitive data:
-
-- Passwords, tokens, and API keys are **automatically redacted**
-- Input values are **never stored** - only patterns and lengths
-- Password fields are **completely skipped**
-- GDPR and CCPA compliant out of the box
-
-📖 **[Full Privacy Documentation](./PRIVACY.md)**
-
-### 4. Works Offline
-
-Users on unreliable connections? No problem. BrowSonic queues events locally and sends them when connectivity returns. **No error is ever lost.**
-
-### 5. Lightweight
-
-- **~15 KB gzipped** core entry (widget-free); **~22 KB** with widget
-- No external dependencies
-- Works with any JavaScript framework (React, Vue, Angular, vanilla JS)
-- Plugin architecture — opt into only the collectors you need
-
----
-
-## How It Works
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Your Web App  │────▶│   BrowSonic     │────▶│  Your Dashboard │
-│                 │     │      SDK        │     │                 │
-│  • JS Errors    │     │  • Captures     │     │  • Real-time    │
-│  • API Failures │     │  • Enriches     │     │    alerts       │
-│  • Console Logs │     │  • Batches      │     │  • Analytics    │
-│                 │     │  • Sends        │     │  • Debugging    │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+new Browsonic().init({
+  apiEndpoint: 'https://your-ingest.example.com',
+  appKey: 'your-app-key',
+});
 ```
 
-1. **Capture**: SDK silently monitors console errors, JavaScript exceptions, and network failures
-2. **Enrich**: Each event is automatically enriched with user context, environment data, and session information
-3. **Protect**: Sensitive data is masked before leaving the browser
-4. **Deliver**: Events are batched and sent to your backend efficiently
+That's it. JavaScript errors, unhandled promise rejections, console errors, and failed network requests are now captured automatically.
 
 ---
 
-## Quick Start
+## ✨ Highlights
 
-Add a few lines of code to start monitoring:
+- 📦 **Tiny.** 14 KB core, 21 KB with the in-app widget — both gzipped. Zero runtime dependencies.
+- 🛡️ **Fail-safe.** Internal errors never crash the host page. A circuit breaker pauses collection on repeated SDK failures.
+- 🔒 **Privacy-first defaults.** No input values stored. No cookie values captured. Storage capture off by default. Password fields skipped entirely.
+- 🔌 **Plugin architecture.** Opt into only the collectors you need; the `@browsonic/sdk/core` entry drops the widget code from your bundle.
+- 📡 **Offline-ready.** Three-stage queue (`localStorage` → IndexedDB → in-memory) survives network drops, quota exhaustion, and private-mode browsers.
+- 🔭 **Self-observable.** Optional `internalDiagnostics: true` posts the SDK's own init / event-process / flush latency percentiles back to your backend.
+- 🌐 **Universal.** ES modules, CommonJS, and a UMD bundle for `<script>` / CDN. Works with React, Vue, Angular, Astro, Next.js, vanilla JS — anything that runs in a browser.
+- 🔐 **Supply-chain transparent.** Every release ships with [npm provenance](https://docs.npmjs.com/generating-provenance-statements), a CycloneDX SBOM, and SHA-256 checksums.
 
-```typescript
+---
+
+## 🚀 Usage
+
+```ts
 import { Browsonic } from '@browsonic/sdk';
 
 const sdk = new Browsonic();
+
 sdk.init({
-  apiEndpoint: 'https://your-browsonic-api.com',
+  apiEndpoint: 'https://your-ingest.example.com',
   appKey: 'your-app-key',
 
-  // Optional: Enable visitor tracking (privacy-safe)
-  trackVisitor: true,
+  // Tag events with your release
+  clientVersion: '1.0.0',
 
-  // Optional: Add custom metadata
+  // Filter or enrich events before they leave the browser
   onError: (event) => {
-    // Filter or modify events before sending
-    return true;
+    if (event.message?.includes('benign')) return false; // drop
+    return event;
   },
 });
 
-// Add context
-sdk.setUser({ id: 'user-123', plan: 'premium' });
-sdk.addMetadata('version', '1.0.0');
+// Identify the user (no PII leaves the browser without your `apiEndpoint` consenting)
+sdk.setUser({ id: 'user-123', plan: 'pro' });
+
+// Manual capture
+sdk.captureMessage('user reached checkout');
+sdk.captureError(new Error('payment provider timed out'));
 ```
 
-That's it. You're now capturing every error on your site.
+Framework adapters (React Error Boundary, Vue plugin, Next.js wiring), every configuration option, and the full ingest contract live in **[INTEGRATION.md](./INTEGRATION.md)**.
 
 ---
 
-## What Gets Captured
+## 🔒 Privacy by default
 
-| Event Type             | Description                       | Example                                            |
-| ---------------------- | --------------------------------- | -------------------------------------------------- |
-| **JavaScript Errors**  | Runtime exceptions, syntax errors | `TypeError: Cannot read property 'x' of undefined` |
-| **Unhandled Promises** | Rejected promises without catch   | `Promise rejection: Network request failed`        |
-| **Console Errors**     | `console.error()` calls           | `console.error('Payment failed:', error)`          |
-| **Network Failures**   | API calls with status >= 400      | `POST /api/checkout - 500 Internal Server Error`   |
-| **Custom Events**      | Your own tracked events           | `sdk.captureMessage('User abandoned cart')`        |
+The SDK is designed so the **safest configuration is the default**. To capture more, you opt in.
 
----
+| Default                                            | Behaviour                                                                                                    |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `captureStorage: { local: false, session: false }` | `localStorage` / `sessionStorage` snapshots disabled.                                                        |
+| `captureCookieValues: false`                       | Cookie _names_ are attached to events; values are stripped.                                                  |
+| Input value capture                                | Never. Only patterns (`email`, `numeric`, …) and length are recorded.                                        |
+| Password fields                                    | Skipped entirely — no event records they exist.                                                              |
+| `redactKeys`                                       | `token`, `password`, `authorization`, `secret`, `key`, `credential`, `auth` redacted everywhere they appear. |
+| `respectGPC: true`                                 | Honours `navigator.globalPrivacyControl` automatically.                                                      |
+| `hasConsented()` hook                              | Host-supplied consent gate — nothing leaves the browser until it returns true.                               |
 
-## Key Features
-
-| Feature                  | Benefit                              |
-| ------------------------ | ------------------------------------ |
-| **Automatic Capture**    | No manual instrumentation needed     |
-| **Session Tracking**     | Follow a user's entire journey       |
-| **Deduplication**        | Same error doesn't flood your system |
-| **Offline Support**      | Events queued until network returns  |
-| **Privacy Masking**      | PII automatically redacted           |
-| **Zero-Crash Guarantee** | SDK never breaks your app            |
-| **Lightweight**          | ~15 KB core, no dependencies         |
+Full guarantees and the reasoning behind them: **[PRIVACY.md](./PRIVACY.md)**.
 
 ---
 
-## ROI: The Business Case
+## 📊 Performance
 
-| Metric                         | Without BrowSonic   | With BrowSonic |
-| ------------------------------ | ------------------- | -------------- |
-| Time to detect issues          | Days to weeks       | Minutes        |
-| Customer complaints before fix | 50-100+             | 1-5            |
-| Revenue lost per incident      | $10,000 - $100,000+ | < $1,000       |
-| Developer debugging time       | Hours               | Minutes        |
-| Customer trust impact          | Significant         | Minimal        |
+Numbers from the v2.2.0 release. Reproduce locally with `npm run build && npm run size && npx playwright test`.
 
-**One prevented incident pays for years of monitoring.**
+| Metric                                          | Budget      | v2.2.0                   |
+| ----------------------------------------------- | ----------- | ------------------------ |
+| Main entry (ESM, gzipped)                       | 22 KB       | **20.96 KB**             |
+| Core entry — no widget (ESM, gzipped)           | 15 KB       | **13.95 KB**             |
+| `init()` blocking time (desktop)                | ≤ 15 ms p95 | **0.30 ms**              |
+| `init()` on Moto G4 emulation (6× CPU throttle) | ≤ 15 ms     | **2.70 ms**              |
+| LCP delta vs no-SDK (10-iter median)            | ≤ 50 ms     | **-2 ms** (within noise) |
+| CLS delta                                       | ≤ 0.01      | **0**                    |
+| Heap delta (2-minute burst)                     | ≤ 2.5 MB    | **0 MB**                 |
+| Long tasks during 2 s idle                      | 0           | **0**                    |
 
----
-
-## 2.x Feature Highlights
-
-### Telemetry Timeline
-
-Captures chronological events leading up to errors:
-
-- **Console logs** — info, warn, error
-- **Network requests** — Fetch & XMLHttpRequest
-- **Navigation** — SPA route changes
-- **Visitor interactions** — Clicks & inputs (privacy-safe)
-
-### Developer Experience
-
-- **Plugin architecture** — register only the collectors you need
-- **`onError` callback** — filter or modify events before send
-- **Metadata API** — add custom session + event context
-- **Async stack modes** — `false` / `'manual'` / `'global'` (2.0 strict)
-- **Dependency detection** — auto-detect React, Vue, jQuery, etc.
-
-### Reliability
-
-- **Critical Path API** — suspend non-essential telemetry during
-  checkout / payment / signup flows
-- **`fatal` level + instant flush** — unrecoverable errors bypass batching
-- **Error storm protection** — `onErrorStorm` callback + extended
-  dedup cooldown when the error rate spikes
-- **Adaptive quality degradation** — SDK listens to
-  `X-Browsonic-Quota-Remaining` and eases off when the backend is
-  under pressure
-- **Offline queue with tiered persistence** — `localStorage` → IndexedDB
-  → in-memory fallback survives quota exhaustion and private-mode browsers
-
-### Privacy & Compliance
-
-- **Storage + cookie capture OFF by default** (0.3.0 BREAKING) —
-  `captureStorage: { local: true }` is opt-in
-- **`visitorIdStrategy`** — `'cookie'` (default) / `'localStorage'` /
-  `'session'` / `'none'` for GDPR-aware deployments
-- **`respectGPC`** — honours `navigator.globalPrivacyControl` by default
-- **`hasConsented()`** — host-supplied consent gate
-- **`redactKeys` (Set) + `redactKeyPatterns`** — O(1) exact-match fast
-  path plus substring fallback
-- **Automatic PII redaction**, cookie value stripping, password fields skipped
-
-### Observability
-
-- **`internalDiagnostics: true`** — SDK posts its own
-  `init_duration_ms` / `event_process_ms` / `flush_latency_ms`
-  percentiles + dropped-event counters to `/v1/diagnostics`
-- **`onUnsupportedVersion`** — callback fires when the backend signals
-  (via `X-Browsonic-Min-Sdk-Version`) that the running SDK is below
-  the supported floor
-- **Storm-suppression aggregation events** surface masked signal to
-  dashboards
-
-### Security
-
-- **`cspNonce` config** — applies a CSP nonce to the widget's
-  shadow-root `<style>` for strict-CSP hosts
-- **URL whitelist validation** — `apiEndpoint` parsed with `new URL()`
-  so parser-trick hosts
-  (`https://evil.example.com\@trusted.example.com`) fail at
-  `validateConfig` time
-- **Widget ReDoS + XSS guards** on match patterns
-- CycloneDX SBOM + SHA-256 checksums on every release
+Full methodology, microbenchmarks, and CI gates: **[BENCHMARKS.md](./BENCHMARKS.md)**.
 
 ---
 
-## Configuration Options
+## 🌐 Browser support
 
-```typescript
-sdk.init({
-  // Required
-  apiEndpoint: 'https://your-api.com',
-  appKey: 'your-app-key',
+Evergreen browsers from the last two years. The UMD bundle targets ES2018 for legacy CMS / WordPress / Shopify embeds.
 
-  // Batching
-  flushIntervalMs: 10000, // Default 10s (was 30s pre-0.3.0)
-  maxBatchSize: 25, // Default 25 (sendBeacon 64KB-safe)
-  maxPayloadBytes: 51200, // Default 50 KB (margin under 64KB)
+| Engine                     | Minimum |
+| -------------------------- | ------- |
+| Chromium / Edge            | 80      |
+| Firefox                    | 75      |
+| Safari                     | 13.1    |
+| Node (for tests + tooling) | 20      |
 
-  // Telemetry
-  maxTelemetryEntries: 20, // Ring buffer size
-  includeTelemetry: true, // Include timeline with errors
+CDN copy-paste:
 
-  // Network
-  captureXHR: true, // Capture XMLHttpRequest
-  networkTelemetry: true, // Record all network requests
-
-  // Navigation (SPA)
-  trackNavigation: true, // Track route changes
-
-  // Visitor (OFF by default for privacy)
-  trackVisitor: false, // Enable click/input tracking
-  visitor: {
-    click: true, // Track clicks
-    input: true, // Track inputs (patterns only)
-    inputThrottleMs: 500, // Throttle input events
-  },
-
-  // Visitor ID strategy (2.3+)
-  visitorIdStrategy: 'cookie', // 'cookie' | 'localStorage' | 'session' | 'none'
-  respectGPC: true, // Honour navigator.globalPrivacyControl
-  hasConsented: () => true, // Host-supplied consent gate
-
-  // Async Stack Trace (OFF by default for performance)
-  captureAsyncStack: false, // false | 'manual' | 'global'
-
-  // Storage + cookie capture (OFF by default since 0.3.0)
-  captureStorage: { local: false, session: false, maxEntries: 20 },
-  captureCookieValues: false,
-
-  // Privacy — Set-based exact match + pattern fallback
-  redactKeys: ['token', 'password', 'authorization', 'secret'],
-  redactKeyPatterns: [], // Optional substring-match add-ons
-  redactCookieNames: ['session_id'],
-
-  // CSP nonce for widget <style> on strict-CSP hosts (2.4+)
-  cspNonce: undefined,
-
-  // Self-diagnostics (opt-in)
-  internalDiagnostics: false,
-  internalDiagnosticsIntervalMs: 60000,
-
-  // Callbacks
-  onError: (event) => true, // Filter/modify events
-  onErrorStorm: (phase, count) => {}, // Storm enter/exit hook
-  onUnsupportedVersion: (min, current) => {}, // Backend min-version signal
-
-  // Debug
-  debug: false, // Enable console logging
-});
+```html
+<script src="https://cdn.jsdelivr.net/npm/@browsonic/sdk@2/dist/umd/browsonic.min.js"></script>
+<script>
+  window.Browsonic.getBrowsonic().init({
+    apiEndpoint: 'https://your-ingest.example.com',
+    appKey: 'your-app-key',
+  });
+</script>
 ```
 
 ---
 
-## API Reference
+## 🏗️ How it works
 
-### SDK Instance
+```mermaid
+flowchart LR
+    A[Your app] -->|errors · fetch · console · navigation| B(Browsonic SDK)
+    B -->|redact + enrich| C{Queue}
+    C -->|online| D[/v1/events/]
+    C -->|offline| E[localStorage / IndexedDB]
+    E -->|reconnect| C
+    D --> F[Your ingest backend]
+```
 
-```typescript
+1. **Capture.** Browser-native APIs are wrapped: `window.onerror`, `unhandledrejection`, `fetch`, `XMLHttpRequest`, `console`, `history`.
+2. **Enrich.** Each event gets browser context, viewport, session id, user id (if set), and the last N telemetry entries (console + network).
+3. **Redact.** Sensitive keys are masked, password fields skipped, cookie values stripped — before the event is queued.
+4. **Batch & deliver.** Events are batched (default: 25 events / 50 KB / 10 s) and posted to your `apiEndpoint`. On failure the batch persists locally and retries when the network returns.
+
+The receiving end is **your problem to host or buy.** The SDK has no hardcoded endpoint.
+
+---
+
+## 📚 API at a glance
+
+```ts
 const sdk = new Browsonic();
 
-sdk.init(config); // Initialize
-sdk.captureMessage('Custom event'); // Manual capture
-sdk.captureError(new Error('Oops')); // Capture error
-sdk.setUser({ id: '123' }); // Set user context
-sdk.clearUser(); // Clear user
-sdk.addMetadata('key', 'value'); // Add metadata
-sdk.removeMetadata('key'); // Remove metadata
-sdk.getMetadata(); // Get all metadata
-sdk.clearMetadata(); // Clear metadata
-sdk.flush(); // Force send events
-sdk.pause(); // Pause capturing
-sdk.resume(); // Resume capturing
-sdk.destroy(); // Cleanup
+sdk.init(config); // Initialise; call once per page
+sdk.captureMessage('something happened'); // Manual event
+sdk.captureError(new Error('boom')); // Manual error
+
+sdk.setUser({ id, email, plan }); // Identify user (apply your own PII rules)
+sdk.clearUser();
+
+sdk.addMetadata('feature_flags', flags);
+sdk.removeMetadata('feature_flags');
+
+sdk.flush(); // Force the pending batch
+sdk.pause();
+sdk.resume(); // Stop / start capture
+
+sdk.enterCriticalPath('checkout'); // Suspend non-essential telemetry
+sdk.exitCriticalPath();
+
+sdk.destroy(); // Tear-down hooks (e.g. SPA navigation)
 ```
 
----
-
-## Documentation
-
-- **[Integration Guide](./INTEGRATION.md)** — installation, configuration, framework adapters, ingest contract
-- **[Privacy](./PRIVACY.md)** — what is captured, what is masked, opt-in/opt-out controls
-- **[Benchmarks](./BENCHMARKS.md)** — measured size and runtime overhead, reproducible setup
-- **[Contributing](./CONTRIBUTING.md)** — dev environment, commit conventions, PR workflow
-- **[Security](./SECURITY.md)** — private vulnerability disclosure
+Full TypeScript types ship in `dist/types/`. Auto-completion in VS Code shows TSDoc on every public symbol.
 
 ---
 
-## Self-hosting and SaaS
+## 🛠️ Self-hosting and SaaS
 
-The SDK is an HTTP client. It posts batches to a `/v1/events` endpoint that you configure via `apiEndpoint`. The wire protocol is documented in [INTEGRATION.md](./INTEGRATION.md). You can:
+The SDK is an HTTP client. It posts batches to a `/v1/events` endpoint you configure via `apiEndpoint`. You have two paths:
 
-- Run your own ingest server that accepts the payload format and stores events however you like.
-- Or use the hosted Browsonic SaaS, which provides a turnkey backend with dashboards, alerts, and replay. (The SaaS backend is a separate, closed-source product.)
-
-The SDK has no hardcoded endpoint and works with either path.
+- **Self-host.** Run an ingest server that accepts the documented event payload and stores events however you like — Postgres, ClickHouse, S3, an SQS queue, your call. The wire format is in [INTEGRATION.md](./INTEGRATION.md).
+- **Browsonic SaaS.** A turnkey backend with dashboards, alerts, replay reconstruction, AI-powered incident insights, and Jira / Slack integrations. The SaaS backend is a separate commercial product; the SDK works identically against either path.
 
 ---
 
-## License
+## 📖 Documentation
+
+| Doc                                  | What's inside                                                     |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| [INTEGRATION.md](./INTEGRATION.md)   | Full configuration reference, framework adapters, ingest contract |
+| [PRIVACY.md](./PRIVACY.md)           | Privacy guarantees and how to verify them                         |
+| [BENCHMARKS.md](./BENCHMARKS.md)     | Performance methodology and CI gates                              |
+| [CHANGELOG.md](./CHANGELOG.md)       | Release notes                                                     |
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Dev environment, commit conventions, PR workflow                  |
+| [SECURITY.md](./SECURITY.md)         | Private vulnerability disclosure                                  |
+| [AGENTS.md](./AGENTS.md)             | Operating manual for AI-assisted contributions                    |
+
+---
+
+## 🤝 Contributing
+
+Bug reports, feature suggestions, and pull requests are welcome.
+
+- 🐛 [Open an issue](https://github.com/Sangaibisi/browsonic-sdk/issues/new/choose)
+- 💬 [Start a discussion](https://github.com/Sangaibisi/browsonic-sdk/discussions)
+- 🔐 Security disclosure: see [SECURITY.md](./SECURITY.md)
+- 📝 First-time contributor? Read [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md).
+
+---
+
+## 📜 License
 
 Apache License 2.0 — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
 
