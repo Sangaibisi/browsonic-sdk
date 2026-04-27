@@ -78,7 +78,7 @@ jobs:
       # Every node version runs the same suite — coverage thresholds
       # don't depend on engine, so a regression on 20 alone still fails.
       - run: npm run test:coverage
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           # Per-node artifact name so concurrent uploads don't collide.
@@ -122,7 +122,7 @@ jobs:
       - name: Check for regressions (>10% slower)
         run: node scripts/check-bench-regression.mjs bench-baseline.json 0.10
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bench-results
@@ -149,7 +149,7 @@ jobs:
       - name: size-limit analysis
         if: always()
         run: npm run size:why -- --save=size-report.json || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: size-report
