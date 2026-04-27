@@ -76,6 +76,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # `setup-node@v4` with `registry-url` writes ~/.npmrc as
+          # `_authToken=${NODE_AUTH_TOKEN}`; semantic-release internally
+          # calls `npm whoami` which reads that file. Without
+          # NODE_AUTH_TOKEN the substitution is empty and the verify
+          # step fails with E401.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           # `--provenance` is enabled via package.json publishConfig and
           # requires id-token: write (declared above).
         run: npx semantic-release
