@@ -223,5 +223,3 @@ Bug reports, feature suggestions, and pull requests are welcome.
 ## 📜 License
 
 Apache License 2.0 — see [LICENSE](./LICENSE) and [NOTICE](./NOTICE).
-
-Copyright 2024-2026 Emrullah Yıldırım.
