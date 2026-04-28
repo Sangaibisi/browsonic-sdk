@@ -84,7 +84,7 @@ describe('getOrCreateVisitorId — strategy branches', () => {
     // getOrCreateLocalStorageId() already falls back to an ephemeral
     // UUID when storage rejects — so we only assert persistence when
     // the env actually writes.
-    let writable = false;
+    let writable: boolean;
     try {
       localStorage.setItem('__probe__', '1');
       writable = localStorage.getItem('__probe__') === '1';
@@ -104,7 +104,7 @@ describe('getOrCreateVisitorId — strategy branches', () => {
   });
 
   it('session strategy persists across calls when storage is writable', () => {
-    let writable = false;
+    let writable: boolean;
     try {
       sessionStorage.setItem('__probe__', '1');
       writable = sessionStorage.getItem('__probe__') === '1';
