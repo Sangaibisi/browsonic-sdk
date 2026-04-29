@@ -249,7 +249,7 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
   - Notlar: `src/collectors/error.ts` raw stack string'i geçiyor, parse yok. Multi-engine ayrımı yok. `Error.cause` chain unwinding yok. `wrap.ts` sadece manuel `Browsonic.wrap()`; `setTimeout`/`setInterval`/`rAF` otomatik instrumentation yok. Error collector test sayısı: 13 (parser/linked-error testi 0). S2 plan kalemleri bu audit ile doğrulandı.
 
 - [2026-04-29] **S2 milestone 1**: Multi-engine stack parser core + 31 unit test + NOTICE attribution — durum: ✅
-  - Commit/PR: bkz. milestone 1 commit hash `<S2_M1_HASH>`
+  - Commit/PR: bkz. milestone 1 commit hash `bbff724`
   - Test/CI: typecheck clean, lint 0/0, test 366/366 passed (335→366, +31). size — main 17.05 KB / 22 (no change, tree-shake), core 11.6 KB / 15 (no change), CJS 21.5 KB / 26 (+1.28 KB; CJS tree-shake daha zayıf, ESM/main bütçe etkilenmedi).
   - Notlar: Yeni dosya `src/utils/stack-parser.ts` + test. Chromium / Gecko / WebKit recognise eden 3 parser; `parseStackString(stack, parsers?, maxFrames?)` orchestrator. Default cap 50 frame. NOTICE dosyasına TraceKit (MIT) ve sentry-javascript (MIT) lineage attribution eklendi. Public types/index.ts'e expose etmedik — milestone 2'de error.ts integration'ı ile birlikte yapılacak.
 
