@@ -444,6 +444,11 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
   - Test/CI: typecheck clean, lint 0/0, test 10/10 passed (Vitest + happy-dom + @testing-library/react)
   - Notlar: Public OSS, Apache-2.0, npm provenance, semantic-release, weekly Dependabot, ci.yml + release.yml. peerDeps: `@browsonic/sdk ^2.2.1`, `react ^18 || ^19`. ESLint 10 ↔ eslint-plugin-react@7.37 peer-range çatışmasını `.npmrc` `legacy-peer-deps=true` ile geçiştirildi (lib pratikte ESLint 10 ile çalışıyor; plugin maintainer peer-range güncellenince kaldırılır). `<BrowsonicErrorBoundary>` defansif: SDK reporting failure ve onError throw test'leri yeşil. Component stack 1024 char'a truncate ediliyor — privacy footprint minimal.
 
+- [2026-04-29] **S5 milestone 2**: hooks (`useBrowsonic` / `useUser` / `useCaptureError`) + `withBrowsonic` HOC + `docs/ADAPTER_TEMPLATE.md` taslağı — durum: ✅
+  - Commit/PR: browsonic-react `e9b06e9` (push range `b441250..e9b06e9` main)
+  - Test/CI: typecheck clean, lint 0/0, test **28/28 passed** (10 → 28, +18: 13 hooks + 5 hoc)
+  - Notlar: `useBrowsonic` lazy mount, stable across renders. `useUser(user|null)` JSON.stringify-keyed dep array — value-equal new-reference user'da retrigger yok. `useCaptureError` stable callback (useCallback). `withBrowsonic` displayName fallback chain (custom → Component.displayName → name → 'Component'). Tüm hook'lar SDK unreachable / SDK-throws senaryolarında defansif isolation testleri yeşil. **`docs/ADAPTER_TEMPLATE.md`** S5'in en önemli dış-yönelimli çıktısı: Vue/Svelte/Angular adapter'ları için repo bootstrap + 4-primitif API parite tablosu + defansif kontrat + test discipline + release flow + literal "files to copy" cheat sheet. S6/S7/S10 bu template'ten doğrudan replicate edecek. Resolve-sdk shared util'e çıkarıldı (`src/resolve-sdk.ts`); error-boundary ve hook'lar tek lookup path paylaşıyor. M3'te (sıradaki tur): React Router instrumentation + `examples/react-vite/` demo app + ilk yayın `@browsonic/react@0.1.0`.
+
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
 - [ ] Post-flight (1.3) tüm adımları geçildi. _M3 closure'da işaretlenecek._
