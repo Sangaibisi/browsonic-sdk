@@ -92,7 +92,7 @@ Sprint kapanmadan önce:
 | #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum              |
 | ------- | ----- | ------------------------------------------------- | ------- | --------------------- | ------------------ |
 | **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29 |
-| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | AÇILMADI           |
+| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | AÇILDI 2026-04-29  |
 | **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | AÇILMADI           |
 | **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | AÇILMADI           |
 | **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI           |
@@ -200,11 +200,16 @@ OSS olarak yayınlanan SDK'da `@license Proprietary` notice'ları ile Apache-2.0
 
 ---
 
-### Sprint 2 — Stack Parser & Linked Errors (P1, 2 hafta) — DURUM: AÇILMADI
+### Sprint 2 — Stack Parser & Linked Errors (P1, 2 hafta) — DURUM: AÇILDI 2026-04-29
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-04-29** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) AGENTS.md aynı session'da S1 başında okundu (376 satır) — değişmedi, geçerli.
+  - [x] (1.1.2) SPRINT_PLAN.md son haline kadar okundu — S1 KAPANDI işaretli (`0e6ecf9` + `fbaf1fe`), cross-repo etki yok notu mevcut.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — pending/in-progress yok; S1 lesson-learned entry mevcut.
+  - [x] (1.1.4) AGENTS.md ↔ S2 çatışması yok. AGENTS.md "Bundle size budget holds" + "Test count does not silently shrink" + "Every public symbol carries a TSDoc comment" → S2 plan kalemleri zaten bu kısıtları içeriyor.
+  - [x] (1.1.5) Working tree S1 ile aynı durum: `.github/workflows/{ci,e2e,security}.yml` modified (kullanıcı kaynaklı, S2 dosya kümesiyle çakışmaz). S1 commit'leri push edildi (`01ce98f..fbaf1fe`).
 
 #### Sprint Hedefi
 
@@ -238,7 +243,15 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
 
 #### İş Logu
 
-(boş)
+- [2026-04-29] S2 audit: mevcut error collector + wrap modülü incelemesi — durum: ✅
+  - Commit/PR: read-only audit
+  - Test/CI: —
+  - Notlar: `src/collectors/error.ts` raw stack string'i geçiyor, parse yok. Multi-engine ayrımı yok. `Error.cause` chain unwinding yok. `wrap.ts` sadece manuel `Browsonic.wrap()`; `setTimeout`/`setInterval`/`rAF` otomatik instrumentation yok. Error collector test sayısı: 13 (parser/linked-error testi 0). S2 plan kalemleri bu audit ile doğrulandı.
+
+- [2026-04-29] **S2 milestone 1**: Multi-engine stack parser core + 31 unit test + NOTICE attribution — durum: ✅
+  - Commit/PR: bkz. milestone 1 commit hash `<S2_M1_HASH>`
+  - Test/CI: typecheck clean, lint 0/0, test 366/366 passed (335→366, +31). size — main 17.05 KB / 22 (no change, tree-shake), core 11.6 KB / 15 (no change), CJS 21.5 KB / 26 (+1.28 KB; CJS tree-shake daha zayıf, ESM/main bütçe etkilenmedi).
+  - Notlar: Yeni dosya `src/utils/stack-parser.ts` + test. Chromium / Gecko / WebKit recognise eden 3 parser; `parseStackString(stack, parsers?, maxFrames?)` orchestrator. Default cap 50 frame. NOTICE dosyasına TraceKit (MIT) ve sentry-javascript (MIT) lineage attribution eklendi. Public types/index.ts'e expose etmedik — milestone 2'de error.ts integration'ı ile birlikte yapılacak.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 

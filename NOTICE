@@ -3,3 +3,22 @@ Copyright 2024-2026 Emrullah Yıldırım
 
 This product includes software developed at the Browsonic project
 (https://github.com/Sangaibisi/browsonic-sdk).
+
+----
+
+Portions of the multi-engine stack-frame parser in
+src/utils/stack-parser.ts are inspired by:
+
+  TraceKit (https://github.com/csnover/TraceKit)
+  Copyright (c) 2013 Onur Can Cakmak and TraceKit contributors.
+  Licensed under the MIT License.
+
+  sentry-javascript (https://github.com/getsentry/sentry-javascript)
+  Copyright (c) 2012 Functional Software, Inc. dba Sentry.
+  Licensed under the MIT License.
+
+The Browsonic implementation is rewritten and does not contain
+verbatim source from either project, but the regex shapes for
+recognising Chromium / Gecko frame lines were derived from the
+upstream lineage. The original MIT licenses permit this use,
+including under Apache-2.0 redistribution, with attribution.

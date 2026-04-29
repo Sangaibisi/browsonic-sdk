@@ -407,3 +407,15 @@ export {
   COMMON_THIRD_PARTY_PATTERNS,
   COMMON_IGNORABLE_MESSAGES,
 } from './ignore';
+
+// Re-export stack parser (Sprint 2)
+export {
+  UNKNOWN_FUNCTION,
+  DEFAULT_MAX_FRAMES,
+  chromiumStackParser,
+  geckoStackParser,
+  defaultStackParsers,
+  parseStackString,
+  type StackFrame,
+  type StackLineParser,
+} from './stack-parser';
