@@ -89,18 +89,18 @@ Sprint kapanmadan önce:
 
 ## 2. Sprint Özet Tablosu
 
-| #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum    |
-| ------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------- |
-| **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | AÇILMADI |
-| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | AÇILMADI |
-| **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | AÇILMADI |
-| **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | AÇILMADI |
-| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI |
-| **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI |
-| **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI |
-| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI |
-| **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI |
-| **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI |
+| #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum              |
+| ------- | ----- | ------------------------------------------------- | ------- | --------------------- | ------------------ |
+| **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29 |
+| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | AÇILMADI           |
+| **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | AÇILMADI           |
+| **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | AÇILMADI           |
+| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI           |
+| **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI           |
+| **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI           |
+| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI           |
+| **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI           |
+| **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI           |
 
 Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kalıp doğrulandıktan sonra S6/S7/S10 aynı şablonu çoğaltır.
 
@@ -108,7 +108,7 @@ Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kal
 
 ## 3. Sprint Detayları
 
-### Sprint 1 — OSS Foundation Hygiene (P0, 1 hafta) — DURUM: AÇILDI 2026-04-29
+### Sprint 1 — OSS Foundation Hygiene (P0, 1 hafta) — DURUM: KAPANDI 2026-04-29
 
 #### Pre-flight Check
 
@@ -150,17 +150,17 @@ OSS olarak yayınlanan SDK'da `@license Proprietary` notice'ları ile Apache-2.0
 #### İş Logu
 
 - [2026-04-29] Header pattern audit — 58 dosyada `Proprietary`; 3 farklı varyant (büyük block + NOTICE, orta block, küçük block) tespit edildi — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: read-only audit
   - Notlar: SPRINT_PLAN.md ve CHANGELOG.md grep'te göründü ama kasıtlı (planın kendisi açıklama amaçlı kullanıyor; CHANGELOG history entry).
 
 - [2026-04-29] License notice cleanup (sed/perl tabanlı toplu replace) — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: typecheck temiz, test:run 335/335 passed, lint 0/0
   - Notlar: 5 transform — `All rights reserved` çıkarıldı, `@license Proprietary - See LICENSE.md( for terms)?` → `@license Apache-2.0`, `NOTICE: This source code is proprietary…` 2-satır blok silindi.
 
 - [2026-04-29] SPDX header injection (her .ts dosyasının üstüne `// SPDX-License-Identifier: Apache-2.0`) — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: idempotent script (head ile zaten var olanı atlar) — find sonucu "All have SPDX ✓"
   - Notlar: Tüm src/\*_/_.ts dosyaları kapsandı; bench/, scripts/, e2e/ AGENTS.md'ye göre kapsam dışı tutuldu (browser src değiller).
 
@@ -170,12 +170,12 @@ OSS olarak yayınlanan SDK'da `@license Proprietary` notice'ları ile Apache-2.0
   - Notlar: `CHANGELOG.md:23` "License: proprietary → Apache 2.0." entry'si geçişin kendisini dokümante eden tarihi kayıt; OSS güveni için saklanır.
 
 - [2026-04-29] package.json keywords genişletildi — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: typecheck/test/size etkilenmedi
   - Notlar: 7 yeni keyword (javascript-error-monitoring, browser-error-tracking, client-side-error-tracking, exception-tracking, crash-reporting, logging, apache-2). Description aynen korundu (zaten OSS-uyumlu).
 
 - [2026-04-29] ROADMAP.md kök dizinde oluşturuldu — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: —
   - Notlar: Public-facing özet; iç tracking SPRINT_PLAN'de kalır. "Out of scope" bölümü Sentry'yi açıkça işaret edip yönlendiriyor (skop disiplini).
 
@@ -185,7 +185,7 @@ OSS olarak yayınlanan SDK'da `@license Proprietary` notice'ları ile Apache-2.0
   - Notlar: `pull_request_template.md`, `bug_report.yml`, `feature_request.yml`, `config.yml` zaten son derece olgun; AGENTS.md'ye atıf, security advisory link, pre-flight checks, bundle/perf delta tabloları, ingest-contract checklist hepsi mevcut.
 
 - [2026-04-29] CI gate'leri (typecheck + lint + test:run + size) — durum: ✅
-  - Commit/PR: bkz. S1 kapanış commit'i `<S1_HASH>`
+  - Commit/PR: bkz. S1 kapanış commit'i `0e6ecf9`
   - Test/CI: typecheck clean, lint 0/0, test 335/335 passed (2.57s), size — main 17.05 KB (bütçe 22), core 11.6 KB (bütçe 15), widget 5.12 KB (bütçe 6), CJS 20.22 KB (bütçe 26)
   - Notlar: Bundle size'lar bütçenin çok altında — license header değişiklikleri build sırasında yorumlar strip edildiği için byte etkisi yok.
 
