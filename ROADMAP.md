@@ -9,19 +9,25 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- **OSS foundation hygiene.** Apache-2.0 license headers, SPDX identifiers in every source file, public roadmap, contribution glide path. Closing the gap between the published license and historical file-level notices left over from the early closed-source phase.
+- **Public scope / breadcrumb / tag API** _(queued — see "Next")_.
+
+## Recently shipped
+
+- **OSS foundation hygiene** _(2026-04-29)_ — Apache-2.0 license headers, SPDX identifiers in every source file, public roadmap.
+- **Multi-engine stack parser & linked errors** _(2026-04-29, SDK 2.3.0)_ — Chromium / Gecko / WebKit per-engine parsers, `Error.cause` chain unwinding (depth 5 + circular guard), frame-aware fingerprint that absorbs line/column variance across minified rebuilds. New public types `StackFrame` and `LinkedError` on `BrowsonicEvent`.
+- **`@browsonic/react` adapter** _(2026-04-29)_ — separate repo [Sangaibisi/browsonic-react](https://github.com/Sangaibisi/browsonic-react), Apache-2.0. Ships `<BrowsonicErrorBoundary>`, `useBrowsonic` / `useUser` / `useCaptureError` hooks, and the `withBrowsonic` HOC. The repo carries [`docs/ADAPTER_TEMPLATE.md`](https://github.com/Sangaibisi/browsonic-react/blob/main/docs/ADAPTER_TEMPLATE.md) — the checklist that the next framework adapters (Vue, Svelte, Angular) replicate.
 
 ## Next (queued, in priority order)
 
-1. **Multi-engine stack parser & linked errors.** First-class parsing for Chrome (V8), Firefox (Gecko), Safari (WebKit), and Edge (Chromium) stack traces. Linked-error / `Error.cause` chain unwinding with circular-reference protection. Golden-fixture suite per engine.
-2. **Source-map upload pipeline (Webpack first).** A separate `@browsonic/sourcemaps` package: CLI for upload / inject / list / delete, plus a Webpack plugin. Backend `/v1/sourcemaps` ingest contract finalised. Debug-ID injection so releases don't depend solely on a release tag.
-3. **Source-map upload pipeline (Vite, Rollup, esbuild).** Round out the bundler matrix. Shared `@browsonic/sourcemaps-core` keeps the upload + inject logic single-sourced across plugins.
-4. **React adapter (pilot for the rest).** `@browsonic/react`: `<BrowsonicErrorBoundary>`, `useBrowsonic()` hook, `withBrowsonic()` HOC, opt-in React Router instrumentation. The shipped adapter is also the **template** all other framework adapters follow — the template is committed alongside the package.
-5. **Vue + Svelte adapters.** Apply the React-pilot template to `@browsonic/vue` (Composition API plugin, `app.config.errorHandler` chaining, Vue Router instrumentation) and `@browsonic/svelte` (SvelteKit `handleError` hook, `+error.svelte` integration).
-6. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
-7. **Public scope / breadcrumb / tag API.** `addBreadcrumb`, `setTag`, `setContext`, `setExtra`, `withScope` — Sentry-compatible naming so teams switching from `@sentry/browser` keep their muscle memory.
-8. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
-9. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+1. **Public scope / breadcrumb / tag API.** `addBreadcrumb`, `setTag`, `setContext`, `setExtra`, `withScope` — Sentry-compatible naming so teams switching from `@sentry/browser` keep their muscle memory.
+2. **Vue + Svelte adapters.** Apply the React-pilot template ([`browsonic-react/docs/ADAPTER_TEMPLATE.md`](https://github.com/Sangaibisi/browsonic-react/blob/main/docs/ADAPTER_TEMPLATE.md)) to `@browsonic/vue` (Composition API plugin, `app.config.errorHandler` chaining, Vue Router instrumentation) and `@browsonic/svelte` (SvelteKit `handleError` hook, `+error.svelte` integration).
+3. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
+4. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
+5. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+
+## Deferred (rejoining the queue after design review)
+
+- **Source-map upload pipeline (Webpack / Vite / Rollup / esbuild).** A separate `@browsonic/sourcemaps` package with CLI + bundler plugins, plus a backend `/v1/sourcemaps` ingest endpoint. Deferred 2026-04-29 — design (debugId strategy, ingest contract, backend symbolicator) needs a dedicated review session before implementation begins.
 
 ## Later (parking lot — not committed)
 

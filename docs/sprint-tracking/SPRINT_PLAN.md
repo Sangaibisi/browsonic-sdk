@@ -95,7 +95,7 @@ Sprint kapanmadan önce:
 | **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
 | **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
 | **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
-| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILDI 2026-04-29    |
+| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
 | **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
 | **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
 | **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI             |
@@ -389,7 +389,7 @@ Production'da minified stack tek başına okunamaz. TrackJS'in `trackjs-cli`'sin
 
 ---
 
-### Sprint 5 — React Adapter Pilot (P2, 2 hafta) — DURUM: AÇILDI 2026-04-29
+### Sprint 5 — React Adapter Pilot (P2, 2 hafta) — DURUM: KAPANDI 2026-04-29
 
 #### Pre-flight Check
 
@@ -447,12 +447,23 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
 - [2026-04-29] **S5 milestone 2**: hooks (`useBrowsonic` / `useUser` / `useCaptureError`) + `withBrowsonic` HOC + `docs/ADAPTER_TEMPLATE.md` taslağı — durum: ✅
   - Commit/PR: browsonic-react `e9b06e9` (push range `b441250..e9b06e9` main)
   - Test/CI: typecheck clean, lint 0/0, test **28/28 passed** (10 → 28, +18: 13 hooks + 5 hoc)
-  - Notlar: `useBrowsonic` lazy mount, stable across renders. `useUser(user|null)` JSON.stringify-keyed dep array — value-equal new-reference user'da retrigger yok. `useCaptureError` stable callback (useCallback). `withBrowsonic` displayName fallback chain (custom → Component.displayName → name → 'Component'). Tüm hook'lar SDK unreachable / SDK-throws senaryolarında defansif isolation testleri yeşil. **`docs/ADAPTER_TEMPLATE.md`** S5'in en önemli dış-yönelimli çıktısı: Vue/Svelte/Angular adapter'ları için repo bootstrap + 4-primitif API parite tablosu + defansif kontrat + test discipline + release flow + literal "files to copy" cheat sheet. S6/S7/S10 bu template'ten doğrudan replicate edecek. Resolve-sdk shared util'e çıkarıldı (`src/resolve-sdk.ts`); error-boundary ve hook'lar tek lookup path paylaşıyor. M3'te (sıradaki tur): React Router instrumentation + `examples/react-vite/` demo app + ilk yayın `@browsonic/react@0.1.0`.
+  - Notlar: `useBrowsonic` lazy mount, stable across renders. `useUser(user|null)` JSON.stringify-keyed dep array — value-equal new-reference user'da retrigger yok. `useCaptureError` stable callback (useCallback). `withBrowsonic` displayName fallback chain (custom → Component.displayName → name → 'Component'). Tüm hook'lar SDK unreachable / SDK-throws senaryolarında defansif isolation testleri yeşil. **`docs/ADAPTER_TEMPLATE.md`** S5'in en önemli dış-yönelimli çıktısı: Vue/Svelte/Angular adapter'ları için repo bootstrap + 4-primitif API parite tablosu + defansif kontrat + test discipline + release flow + literal "files to copy" cheat sheet. S6/S7/S10 bu template'ten doğrudan replicate edecek. Resolve-sdk shared util'e çıkarıldı (`src/resolve-sdk.ts`); error-boundary ve hook'lar tek lookup path paylaşıyor.
+
+- [2026-04-29] **S5 milestone 3**: `examples/react-vite/` demo app + ADAPTER_TEMPLATE.md finalize + ROADMAP shipped status + S5 closure — durum: ✅
+  - Commit/PR: browsonic-react `8f9b0ed` (push range `e9b06e9..8f9b0ed` main)
+  - Test/CI: lint 0/0 (after `examples/**` lint-ignore), typecheck clean, 28/28 tests still passing.
+  - Notlar: Vite 7 + React 19 demo `file:../..` ile parent adapter'ı tüketiyor — npm publish gerekmeden lokal `npm run dev` ile çalışır. Demo her public surface'ı tek ekranda gösteriyor (boundary + 3 hook + HOC); inline styles only, NOT in CI. `examples/**` adapter'ın type-aware lint graph'ından hariç tutuldu (kendi tsconfig'i ile bağımsız tip güvenliği). ADAPTER_TEMPLATE.md'ye §6.1 (demo app pattern) ve §6.2 (first-publish checklist: NPM_TOKEN secret, paket adı, provenance, peerDeps şekli, yeşil CI gate, okunabilir CHANGELOG) eklendi. Adapter ROADMAP.md 0.1 = shipped olarak güncellendi; 0.2 dokümantasyon polish'e (recipe cookbook), 0.3 React Router instrumentation'a hizalı. **Yayın gate'i:** `NPM_TOKEN` GitHub repo settings'te tanımlı olmalı — release.yml main push'unda fail eder ama git commit/push güvenli; secret eklenince re-run ile yayın akar.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi. _M3 closure'da işaretlenecek._
-- Etkilenen repolar (M3 sonunda doğrulanacak): **browsonic-dashboard** (kendisi React tabanlı; @browsonic/react publish olunca dashboard'ın direkt SDK kullanımını adapter'a geçirme fırsatı), **browsonic-landing-astro** (landing'de yeni paket tanıtımı CTA'sı), **browsonic-sdk** (ROADMAP.md'ye `@browsonic/react adapter package opened` referans satırı M3 publish ile eklenecek).
+- [x] **2026-04-29** Post-flight (1.3) tüm adımları geçildi.
+- **Etkilenen repolar:**
+  - **browsonic-react** (yeni repo) — Sangaibisi/browsonic-react açıldı, public OSS Apache-2.0, Sprint 5 boyunca tüm M1+M2+M3 commit'leri push edildi. Bu sprint **bu reponun open + scaffold + 0.1 surface'ının yayına hazır hale getirilmesi**.
+  - **browsonic-sdk** (bu repo) — ROADMAP.md güncellendi: stack parser + linked errors shipped (S2), `@browsonic/react` shipped (S5), source-map pipeline deferred (S3+S4). Sprint planında akış da S2 → S5 olarak yansıdı.
+  - **browsonic-service** — _değişiklik gerekmiyor_; adapter SDK'nın mevcut public yüzeyini (`captureError`, `setUser`, `addMetadata`, `clearUser`) kullanıyor; ingest format değişmedi.
+  - **browsonic-dashboard** _(opsiyonel fırsat)_ — kendisi React tabanlı. `@browsonic/react` 0.1 yayınlanınca dashboard'ın direkt SDK kullanımını adapter'a geçirebilir (boundary + hooks); bu CROSS_REPO_IMPACTS.md'ye `pending` entry olarak eklendi.
+  - **browsonic-landing-astro** _(opsiyonel)_ — landing'de "@browsonic/react" tanıtımı için CTA güncellemesi; CROSS_REPO_IMPACTS.md'ye `pending` entry.
+- CROSS_REPO_IMPACTS.md güncellendi (S5 entries).
 
 ---
 

@@ -57,6 +57,7 @@ Her sprint kapanışında, [SPRINT_PLAN.md](./SPRINT_PLAN.md) Bölüm 1.3 (post-
 _Sprint kapanışlarında öğrenilen, ileride başka sprint'leri etkileyecek genel bulgular buraya yazılır. Tek-defa-not / lesson-learned formatı._
 
 - **2026-04-29 — S1 kapanışı:** Cross-repo etki yok. SDK iç hijyen sprintiydi (license header + SPDX + ROADMAP + sprint tracking dosyaları). API yüzeyi, `/v1/events` ingest contract, ve build çıktıları değişmedi; service/dashboard/ops tarafında tetikleyici işletme yok. **Lesson-learned:** "saf iç temizlik" sprintleri için bu dosyaya satır eklemeden, SPRINT_PLAN.md'nin sprint kapanış log'una not düşmek protokol-uyumlu. Tablonun amacı sadece **gerçek aksiyon gerektiren** etkileri toplamak.
+- **2026-04-29 — S5 kapanışı:** Yeni repo (Sangaibisi/browsonic-react) açıldı, 0.1 surface yayına hazır (boundary + 3 hook + HOC + demo + ADAPTER_TEMPLATE). **Lesson-learned-1:** Yeni paket açma sprintleri için `NPM_TOKEN` secret'ı CI'da bekleyen **gerçek bir aksiyon kaydı** üretiyor — entry #3 buna örnek. Gelecekteki adapter sprintleri (S6/S7/S10) aynı checklist'i tekrar açacak. **Lesson-learned-2:** `examples/**` dizini adapter'ın type-aware lint graph'ından hariç tutuldu — bu pattern'i ADAPTER_TEMPLATE.md'ye §6.1 olarak yansıttık, sonraki adapter'larda lint conflict yaşanmaması için.
 
 ---
 
