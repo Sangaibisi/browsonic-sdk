@@ -92,7 +92,7 @@ Sprint kapanmadan önce:
 | #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum              |
 | ------- | ----- | ------------------------------------------------- | ------- | --------------------- | ------------------ |
 | **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29 |
-| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | AÇILDI 2026-04-29  |
+| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29 |
 | **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | AÇILMADI           |
 | **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | AÇILMADI           |
 | **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI           |
@@ -200,7 +200,7 @@ OSS olarak yayınlanan SDK'da `@license Proprietary` notice'ları ile Apache-2.0
 
 ---
 
-### Sprint 2 — Stack Parser & Linked Errors (P1, 2 hafta) — DURUM: AÇILDI 2026-04-29
+### Sprint 2 — Stack Parser & Linked Errors (P1, 2 hafta) — DURUM: KAPANDI 2026-04-29
 
 #### Pre-flight Check
 
@@ -263,7 +263,7 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
 - Plan kalemi "Bundle ölçümü: Yeni parser maks +1 KB gzip" idi. Gerçek M2 toplam delta **+1.89 KB** main ESM (parser ~0.5 KB + linked-errors ~0.4 KB + integration glue ~1.0 KB). AGENTS.md "200-byte fine, 2-KB needs explanation" eşiğinin altında, hard bütçe sınırı (22 KB) korunuyor. Lazy-load gerekmedi. M3 öncesi yeniden değerlendir; eğer fingerprint olgunluğu / async wrap audit ek bytes getirirse ya bundle'ı paylaşılmış util'e indirgeriz ya da `errorPlugin`'e taşırız.
 
 - [2026-04-29] **S2 milestone 3**: Frame-aware fingerprint + queueMicrotask wrap + Promise.then plan revize — durum: ✅
-  - Commit/PR: bkz. milestone 3 commit hash `<S2_M3_HASH>`
+  - Commit/PR: bkz. milestone 3 commit hash `8020600`
   - Test/CI: typecheck clean, lint 0/0, test **397/397 passed** (392→397, +5: 3 fingerprint absorption + 2 queueMicrotask). size — main 18.94 → **19.01 KB / 22** (+0.07 KB), core 11.6 → **12.67 KB / 15** (+1.07 KB), widget 5.12 KB / 6 (no change), CJS 22.44 → 22.53 KB / 26 (+0.09 KB).
   - Notlar: `generateFingerprint` artık `parseStackString` ile frame-aware: line/col absorption (aynı bug minified rebuild'lerde tek fingerprint), file differentiation korunuyor, parseable olmayan stack için legacy fallback. `callback.ts`'in 'global' modunda `setTimeout`/`setInterval`/`requestAnimationFrame`/`addEventListener`/`removeEventListener` dışına `queueMicrotask` da eklendi. `Promise.then` plan kalemiydi; **bilinçli olarak skipple**ndi (aşağıda revize notu).
 
