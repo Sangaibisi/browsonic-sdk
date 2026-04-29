@@ -89,18 +89,18 @@ Sprint kapanmadan önce:
 
 ## 2. Sprint Özet Tablosu
 
-| #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum              |
-| ------- | ----- | ------------------------------------------------- | ------- | --------------------- | ------------------ |
-| **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29 |
-| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29 |
-| **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | AÇILMADI           |
-| **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | AÇILMADI           |
-| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI           |
-| **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI           |
-| **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI           |
-| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI           |
-| **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI           |
-| **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI           |
+| #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                |
+| ------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------- |
+| **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29   |
+| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
+| **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
+| **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
+| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI             |
+| **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
+| **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
+| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI             |
+| **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
+| **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
 
 Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kalıp doğrulandıktan sonra S6/S7/S10 aynı şablonu çoğaltır.
 
@@ -285,7 +285,15 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
 
 ---
 
-### Sprint 3 — Source Map Pipeline ① (CLI + Webpack) (P1, 2 hafta) — DURUM: AÇILMADI
+### Sprint 3 — Source Map Pipeline ① (CLI + Webpack) (P1, 2 hafta) — DURUM: ERTELENDİ 2026-04-29
+
+#### Plan Revize Notu — Erteleme
+
+- **2026-04-29:** Kullanıcı isteği üzerine S3 ertelendi. Gerekçe: source map pipeline kavramı tam yerine oturmadan implementasyona girilmesi istenmiyor; sprint açılmadan önce ek inceleme/açıklama turu gerekecek.
+- S4 (Vite + Rollup + Esbuild plugin'leri) S3'ün kurduğu `@browsonic/sourcemaps` ortak çekirdeğine bağımlı olduğu için **birlikte ertelendi**.
+- **Sprint akışı yeniden sıralandı:** S2 → **S5** (React Adapter pilot). S3 + S4, S5 — ya da daha sonraki uygun bir nokta — sonrasında yeniden açılacak; bu plan dosyasındaki sprint listesi konumlarını korur, sadece **execute order** revize edildi.
+- **Bağımsızlık doğrulaması:** S5+S6+S7+S8 iş paketleri source map pipeline çıktısına runtime-bağımlı **değil** (adapter paketleri ve public API genişletmeleri SDK'nın mevcut public yüzeyine kuruluyor). Yalnız S7'deki Next.js adapter'ında "sourcemap auto-upload" alt-kalemi vardı; o, S3+S4 yapıldığında **ek olarak** entegre edilecek — adapter'ın MVP'si onsuz çıkar.
+- Skopu yeniden açmak için: pre-flight'tan önce kullanıcıyla source map pipeline tasarımını tartış (ingest contract, debugId stratejisi, backend symbolicator seçimi).
 
 #### Pre-flight Check
 
@@ -332,7 +340,11 @@ Production'da minified stack tek başına okunamaz. TrackJS'in `trackjs-cli`'sin
 
 ---
 
-### Sprint 4 — Source Map Pipeline ② (Vite + Rollup + Esbuild) (P1, 2 hafta) — DURUM: AÇILMADI
+### Sprint 4 — Source Map Pipeline ② (Vite + Rollup + Esbuild) (P1, 2 hafta) — DURUM: ERTELENDİ 2026-04-29
+
+#### Plan Revize Notu — Erteleme
+
+- **2026-04-29:** S3 ile birlikte ertelendi (S3 erteleme notuna bak). S4 plugin'leri S3'ün kurduğu `@browsonic/sourcemaps-core` ortak çekirdeğine bağımlı; S3 kurulmadan başlatılamaz.
 
 #### Pre-flight Check
 
