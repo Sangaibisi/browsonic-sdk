@@ -419,3 +419,10 @@ export {
   type StackFrame,
   type StackLineParser,
 } from './stack-parser';
+
+// Re-export linked errors (Sprint 2)
+export {
+  unwindLinkedErrors,
+  DEFAULT_LINKED_ERRORS_MAX_DEPTH,
+  type LinkedError,
+} from './linked-errors';

@@ -128,4 +128,102 @@ describe('createErrorCollector', () => {
       expect(onEvent.mock.calls[0][0].message).toBe('Unhandled promise rejection');
     });
   });
+
+  describe('parsed stack + linked errors (Sprint 2 M2)', () => {
+    it('attaches stackFrames parsed from the captured Error', () => {
+      const err = new Error('boom');
+      window.onerror?.('unused', 'app.js', 1, 1, err);
+      const event = onEvent.mock.calls[0][0];
+      expect(Array.isArray(event.stackFrames)).toBe(true);
+      // happy-dom + V8 produce at least one frame for any thrown Error.
+      expect(event.stackFrames.length).toBeGreaterThan(0);
+    });
+
+    it('attaches errorType from the Error constructor name', () => {
+      const err = new TypeError('type boom');
+      window.onerror?.('unused', 'app.js', 1, 1, err);
+      const event = onEvent.mock.calls[0][0];
+      expect(event.errorType).toBe('TypeError');
+    });
+
+    it('errorType is null when Error is missing (synthesized stack path)', () => {
+      window.onerror?.('implicit', 'app.js', 1, 1);
+      const event = onEvent.mock.calls[0][0];
+      expect(event.errorType).toBeNull();
+    });
+
+    it('attaches unwound linkedErrors when Error.cause is present', () => {
+      const root = new TypeError('underlying');
+      const err = new Error('wrapped', { cause: root });
+      window.onerror?.('unused', 'app.js', 1, 1, err);
+      const event = onEvent.mock.calls[0][0];
+      expect(event.linkedErrors).toHaveLength(1);
+      expect(event.linkedErrors[0].type).toBe('TypeError');
+      expect(event.linkedErrors[0].message).toBe('underlying');
+    });
+
+    it('linkedErrors is [] when there is no cause chain', () => {
+      const err = new Error('plain');
+      window.onerror?.('unused', 'app.js', 1, 1, err);
+      const event = onEvent.mock.calls[0][0];
+      expect(event.linkedErrors).toEqual([]);
+    });
+
+    it('linkedErrors caps at depth 5 even with a 10-deep chain', () => {
+      let chain = new Error('level-0');
+      for (let i = 1; i < 10; i++) {
+        chain = new Error(`level-${i}`, { cause: chain });
+      }
+      window.onerror?.('unused', 'app.js', 1, 1, chain);
+      const event = onEvent.mock.calls[0][0];
+      expect(event.linkedErrors).toHaveLength(5);
+    });
+  });
+
+  describe('unhandledrejection — parsed stack + linked errors', () => {
+    it('attaches errorType for Error reasons', () => {
+      const event = new Event('unhandledrejection') as PromiseRejectionEvent;
+      Object.defineProperty(event, 'reason', { value: new RangeError('out of range') });
+      window.dispatchEvent(event);
+      const captured = onEvent.mock.calls[0][0];
+      expect(captured.errorType).toBe('RangeError');
+    });
+
+    it('errorType is null for non-Error reasons', () => {
+      const event = new Event('unhandledrejection') as PromiseRejectionEvent;
+      Object.defineProperty(event, 'reason', { value: 'plain reason' });
+      window.dispatchEvent(event);
+      const captured = onEvent.mock.calls[0][0];
+      expect(captured.errorType).toBeNull();
+    });
+
+    it('attaches linkedErrors for Error reasons with a cause', () => {
+      const root = new Error('underlying');
+      const reason = new Error('wrapped', { cause: root });
+      const event = new Event('unhandledrejection') as PromiseRejectionEvent;
+      Object.defineProperty(event, 'reason', { value: reason });
+      window.dispatchEvent(event);
+      const captured = onEvent.mock.calls[0][0];
+      expect(captured.linkedErrors).toHaveLength(1);
+      expect(captured.linkedErrors[0].message).toBe('underlying');
+    });
+
+    it('linkedErrors is [] for non-Error reasons', () => {
+      const event = new Event('unhandledrejection') as PromiseRejectionEvent;
+      Object.defineProperty(event, 'reason', { value: 'plain reason' });
+      window.dispatchEvent(event);
+      const captured = onEvent.mock.calls[0][0];
+      expect(captured.linkedErrors).toEqual([]);
+    });
+
+    it('attaches stackFrames for Error reasons', () => {
+      const reason = new Error('async boom');
+      const event = new Event('unhandledrejection') as PromiseRejectionEvent;
+      Object.defineProperty(event, 'reason', { value: reason });
+      window.dispatchEvent(event);
+      const captured = onEvent.mock.calls[0][0];
+      expect(Array.isArray(captured.stackFrames)).toBe(true);
+      expect(captured.stackFrames.length).toBeGreaterThan(0);
+    });
+  });
 });

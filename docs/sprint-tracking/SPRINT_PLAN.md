@@ -253,6 +253,15 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
   - Test/CI: typecheck clean, lint 0/0, test 366/366 passed (335→366, +31). size — main 17.05 KB / 22 (no change, tree-shake), core 11.6 KB / 15 (no change), CJS 21.5 KB / 26 (+1.28 KB; CJS tree-shake daha zayıf, ESM/main bütçe etkilenmedi).
   - Notlar: Yeni dosya `src/utils/stack-parser.ts` + test. Chromium / Gecko / WebKit recognise eden 3 parser; `parseStackString(stack, parsers?, maxFrames?)` orchestrator. Default cap 50 frame. NOTICE dosyasına TraceKit (MIT) ve sentry-javascript (MIT) lineage attribution eklendi. Public types/index.ts'e expose etmedik — milestone 2'de error.ts integration'ı ile birlikte yapılacak.
 
+- [2026-04-29] **S2 milestone 2**: Linked errors + error.ts integration + public types — durum: ✅
+  - Commit/PR: bkz. milestone 2 commit hash `<S2_M2_HASH>`
+  - Test/CI: typecheck clean, lint 0/0, test 392/392 passed (366→392, +26: 14 linked-errors + 12 error.ts M2). size — main 17.05 → **18.94 KB / 22** (+1.89 KB; bütçe içinde), core 11.6 KB / 15 (no change — core entry default plugin set yok), widget 5.12 KB / 6 (no change), CJS 21.5 → 22.44 KB / 26 (+0.94 KB).
+  - Notlar: Yeni dosya `src/utils/linked-errors.ts` + test (14 test, depth cap + circular guard + non-Error causes). `BrowsonicEvent` type'ına `errorType?: string \| null`, `stackFrames?: StackFrame[]`, `linkedErrors?: LinkedError[]` eklendi (additive, backward-compatible PUBLIC API). `error.ts` her iki handler'da (window.onerror + unhandledrejection) parser+unwind çağırıyor. `StackFrame` ve `LinkedError` tipleri `@browsonic/sdk` ana entry'sinden import edilebilir oldu.
+
+#### Plan Revize Notu (M2)
+
+- Plan kalemi "Bundle ölçümü: Yeni parser maks +1 KB gzip" idi. Gerçek M2 toplam delta **+1.89 KB** main ESM (parser ~0.5 KB + linked-errors ~0.4 KB + integration glue ~1.0 KB). AGENTS.md "200-byte fine, 2-KB needs explanation" eşiğinin altında, hard bütçe sınırı (22 KB) korunuyor. Lazy-load gerekmedi. M3 öncesi yeniden değerlendir; eğer fingerprint olgunluğu / async wrap audit ek bytes getirirse ya bundle'ı paylaşılmış util'e indirgeriz ya da `errorPlugin`'e taşırız.
+
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
 - [ ] Post-flight (1.3) tüm adımları geçildi.

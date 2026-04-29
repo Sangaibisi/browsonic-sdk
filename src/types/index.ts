@@ -5,6 +5,23 @@
  * @license Apache-2.0
  */
 
+import type { StackFrame } from '../utils/stack-parser';
+import type { LinkedError } from '../utils/linked-errors';
+
+/**
+ * Re-export the parsed-stack types so consumers can import them from
+ * `@browsonic/sdk` directly:
+ *
+ * ```ts
+ * import type { BrowsonicEvent, StackFrame, LinkedError } from '@browsonic/sdk';
+ * ```
+ *
+ * The runtime parser lives in `src/utils/stack-parser.ts` and
+ * `src/utils/linked-errors.ts`; only the types travel here.
+ */
+export type { StackFrame, StackLineParser } from '../utils/stack-parser';
+export type { LinkedError } from '../utils/linked-errors';
+
 /**
  * Event severity levels.
  *
@@ -89,6 +106,27 @@ export interface BrowsonicEvent {
   level: EventLevel;
   message: string;
   stack?: string | null;
+  /**
+   * Constructor name of the captured error (`TypeError`, `RangeError`,
+   * custom Error subclass). `null` for non-Error captures (manual
+   * `captureMessage`, `unhandledrejection` with a string reason).
+   * Added in Sprint 2 (M2).
+   */
+  errorType?: string | null;
+  /**
+   * Parsed stack frames produced by the multi-engine stack parser
+   * (Sprint 2 M1+M2). Empty array when the engine produced no usable
+   * stack. Backends should prefer `stackFrames` over the raw `stack`
+   * string for grouping and display — the parser already normalises
+   * function names and flags `inApp` per frame.
+   */
+  stackFrames?: StackFrame[];
+  /**
+   * Unwound `Error.cause` chain (Sprint 2 M2). Ordered direct cause
+   * first, oldest cause last. Capped at depth 5 with circular-
+   * reference protection. Empty array when there is no cause chain.
+   */
+  linkedErrors?: LinkedError[];
   /** Event-level context (url, referrer, pageAge) */
   context: EventContext;
   /** Telemetry timeline (console, network, navigation logs) */

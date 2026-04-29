@@ -6,7 +6,7 @@
  */
 
 import type { BrowsonicEvent } from '../types';
-import { uuid, timestamp, safeExecute } from '../utils';
+import { uuid, timestamp, safeExecute, parseStackString, unwindLinkedErrors } from '../utils';
 import { extractBindStack } from './callback';
 
 interface ErrorCollectorOptions {
@@ -41,13 +41,22 @@ export function createErrorCollector(options: ErrorCollectorOptions) {
         // Extract bindStack if present (from async callback wrapper)
         const { bindStack, bindTime } = extractBindStack(error);
 
+        // Sprint 2 M2: parsed frames + linked-error chain enrich the
+        // event so backends do not have to parse stacks themselves.
+        const stackFrames = parseStackString(stack);
+        const linkedErrors = unwindLinkedErrors(error);
+        const errorType = error ? error.constructor?.name || error.name || 'Error' : null;
+
         const event: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'> = {
           eventId: uuid(),
           timestamp: timestamp(),
           type: 'error',
           level: 'error',
           message: errorMessage,
+          errorType,
           stack,
+          stackFrames,
+          linkedErrors,
           bindStack,
           bindTime,
         };
@@ -97,13 +106,24 @@ export function createErrorCollector(options: ErrorCollectorOptions) {
         // Extract bindStack if present (from async callback wrapper)
         const { bindStack, bindTime } = extractBindStack(reason);
 
+        // Sprint 2 M2: parser + linked-errors enrichment. `errorType`
+        // is null for non-Error reasons — that distinction matters for
+        // backends grouping unhandledrejection by class.
+        const stackFrames = parseStackString(stack);
+        const linkedErrors = reason instanceof Error ? unwindLinkedErrors(reason) : [];
+        const errorType =
+          reason instanceof Error ? reason.constructor?.name || reason.name || 'Error' : null;
+
         const browsonicEvent: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'> = {
           eventId: uuid(),
           timestamp: timestamp(),
           type: 'unhandledrejection',
           level: 'error',
           message,
+          errorType,
           stack,
+          stackFrames,
+          linkedErrors,
           bindStack,
           bindTime,
         };
