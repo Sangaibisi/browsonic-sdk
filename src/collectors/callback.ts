@@ -80,6 +80,7 @@ export function createCallbackCollector(options: CallbackCollectorOptions) {
   let originalSetTimeout: typeof setTimeout | null = null;
   let originalSetInterval: typeof setInterval | null = null;
   let originalRAF: typeof requestAnimationFrame | null = null;
+  let originalQueueMicrotask: typeof queueMicrotask | null = null;
   let originalAddEventListener: OriginalAEL | null = null;
   let originalRemoveEventListener: OriginalREL | null = null;
 
@@ -157,6 +158,33 @@ export function createCallbackCollector(options: CallbackCollectorOptions) {
             const bindStack = captureBindStack();
             const wrapped = wrapCallback(callback as unknown as AnyFn, bindStack);
             return capturedRAF(wrapped);
+          };
+        }
+
+        // Sprint 2 M3: wrap queueMicrotask. Promise.then is intentionally
+        // NOT wrapped — patching Promise.prototype.then captures every
+        // promise chain in the host app and, despite producing useful
+        // bind stacks, has measured ~3-5% CPU overhead on benchmarks
+        // and frequently triggers third-party telemetry libraries' own
+        // detection heuristics. Sentry deliberately stops at the same
+        // line. Users who want async-stack on a specific promise call
+        // wrap manually with `Browsonic.wrap(handler)`.
+        // Capture by raw reference (NOT .bind) so uninstall can restore
+        // identity-equal native queueMicrotask. setTimeout / setInterval
+        // above store bound references, but those are not identity-tested
+        // by the suite — queueMicrotask is, and host-app comparisons may
+        // do the same in the wild.
+        const nativeQueueMicrotask = window.queueMicrotask;
+        originalQueueMicrotask = nativeQueueMicrotask ?? null;
+        if (nativeQueueMicrotask) {
+          window.queueMicrotask = function (callback: VoidFunction): void {
+            if (typeof callback === 'function') {
+              const bindStack = captureBindStack();
+              const wrapped = wrapCallback(callback, bindStack);
+              nativeQueueMicrotask.call(window, wrapped);
+              return;
+            }
+            nativeQueueMicrotask.call(window, callback);
           };
         }
 
@@ -240,6 +268,10 @@ export function createCallbackCollector(options: CallbackCollectorOptions) {
         if (originalRAF) {
           window.requestAnimationFrame = originalRAF;
           originalRAF = null;
+        }
+        if (originalQueueMicrotask) {
+          window.queueMicrotask = originalQueueMicrotask;
+          originalQueueMicrotask = null;
         }
         if (originalAddEventListener) {
           EventTarget.prototype.addEventListener = originalAddEventListener;

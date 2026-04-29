@@ -5,6 +5,8 @@
  * @license Apache-2.0
  */
 
+import { parseStackString } from './stack-parser';
+
 /**
  * Generate a UUID v4
  */
@@ -134,6 +136,27 @@ export function cyrb53(str: string, seed = 0): string {
  * error streams (1M+ unique errors/day in large tenants saw measurable
  * dedup mistakes under the 32-bit birthday bound).
  * See BASELINE.md + PERFORMANS-STRATEJISI.md §9.
+ *
+ * Sprint 2 M3: switched the stack contribution from raw string slice
+ * to **parsed-frame `function@filename`** (line/column dropped). Two
+ * reasons:
+ *
+ *   - **Minified rebuild stability.** Production bundles re-emit with
+ *     small offset shifts on every release (hot-reloads, vendor splits,
+ *     even comment changes). Hashing raw stacks meant the same logical
+ *     bug fingerprinted differently across builds, fracturing the
+ *     grouped-errors dashboard.
+ *   - **In-page route variance.** The same handler called from
+ *     `/page1` and `/page2` produced identical line/col values in
+ *     stack but the URL part of the fingerprint already collapses
+ *     URLs via {@link normalizeUrlForFingerprint}. The stack part now
+ *     mirrors that intent.
+ *
+ * Falls back to the legacy raw-stack hashing path when
+ * {@link parseStackString} produces no frames (unparseable input,
+ * synthesized `at file:line:col` strings from `window.onerror`'s
+ * Error-less path), so behaviour is unchanged on inputs the parser
+ * can't resolve.
  */
 export function generateFingerprint(
   type: string,
@@ -142,7 +165,18 @@ export function generateFingerprint(
   url: string,
   maxStackFrames: number
 ): string {
-  const stackPart = stack ? stack.split('\n').slice(0, maxStackFrames).join('\n') : '';
+  const frames = parseStackString(stack);
+  let stackPart: string;
+  if (frames.length > 0) {
+    stackPart = frames
+      .slice(0, maxStackFrames)
+      .map((f) => `${f.function}@${f.filename}`)
+      .join('\n');
+  } else {
+    // Legacy fallback: raw split. Preserves dedup behaviour on stacks
+    // the parser can't recognise (rare in practice).
+    stackPart = stack ? stack.split('\n').slice(0, maxStackFrames).join('\n') : '';
+  }
   const raw = `${type}|${message}|${stackPart}|${normalizeUrlForFingerprint(url)}`;
   return cyrb53(raw);
 }

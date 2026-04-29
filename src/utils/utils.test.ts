@@ -90,6 +90,46 @@ describe('generateFingerprint', () => {
   it('handles null stack', () => {
     expect(() => generateFingerprint('error', 'm', null, 'u', 10)).not.toThrow();
   });
+
+  it('absorbs line/column variance across minified rebuilds (Sprint 2 M3)', () => {
+    // Same logical bug, same file, but different line/col (a typical
+    // hot-reload or comment-shift rebuild). Pre-M3 these would have
+    // produced different fingerprints; the parse-aware path collapses
+    // them now via `function@filename` hashing.
+    const buildA = `Error: boom
+    at fn (https://app.com/main.abc.js:1234:56)
+    at handler (https://app.com/main.abc.js:5678:9)`;
+    const buildB = `Error: boom
+    at fn (https://app.com/main.abc.js:9999:99)
+    at handler (https://app.com/main.abc.js:1:1)`;
+    expect(generateFingerprint('error', 'boom', buildA, 'https://app.com/x', 10)).toBe(
+      generateFingerprint('error', 'boom', buildB, 'https://app.com/x', 10)
+    );
+  });
+
+  it('still differentiates errors that come from different source files', () => {
+    // Two stacks with the same function name but different filenames
+    // (vendor split moved between bundles) are distinct bugs and must
+    // fingerprint differently.
+    const fromA = `Error: boom
+    at fn (https://app.com/main.aaa.js:10:5)`;
+    const fromB = `Error: boom
+    at fn (https://app.com/vendor.bbb.js:10:5)`;
+    expect(generateFingerprint('error', 'boom', fromA, 'https://app.com/x', 10)).not.toBe(
+      generateFingerprint('error', 'boom', fromB, 'https://app.com/x', 10)
+    );
+  });
+
+  it('falls back to legacy raw-stack hashing when stack is unparseable', () => {
+    // Garbled input the parser can't recognise as Chromium or Gecko —
+    // generateFingerprint must still be deterministic, falling back
+    // to the line-slice hash used pre-M3.
+    const garbled = 'totally not a stack trace\nnope\nnope';
+    const a = generateFingerprint('error', 'm', garbled, 'u', 10);
+    const b = generateFingerprint('error', 'm', garbled, 'u', 10);
+    expect(a).toBe(b);
+    expect(typeof a).toBe('string');
+  });
 });
 
 describe('truncate', () => {

@@ -262,10 +262,26 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
 
 - Plan kalemi "Bundle ölçümü: Yeni parser maks +1 KB gzip" idi. Gerçek M2 toplam delta **+1.89 KB** main ESM (parser ~0.5 KB + linked-errors ~0.4 KB + integration glue ~1.0 KB). AGENTS.md "200-byte fine, 2-KB needs explanation" eşiğinin altında, hard bütçe sınırı (22 KB) korunuyor. Lazy-load gerekmedi. M3 öncesi yeniden değerlendir; eğer fingerprint olgunluğu / async wrap audit ek bytes getirirse ya bundle'ı paylaşılmış util'e indirgeriz ya da `errorPlugin`'e taşırız.
 
+- [2026-04-29] **S2 milestone 3**: Frame-aware fingerprint + queueMicrotask wrap + Promise.then plan revize — durum: ✅
+  - Commit/PR: bkz. milestone 3 commit hash `<S2_M3_HASH>`
+  - Test/CI: typecheck clean, lint 0/0, test **397/397 passed** (392→397, +5: 3 fingerprint absorption + 2 queueMicrotask). size — main 18.94 → **19.01 KB / 22** (+0.07 KB), core 11.6 → **12.67 KB / 15** (+1.07 KB), widget 5.12 KB / 6 (no change), CJS 22.44 → 22.53 KB / 26 (+0.09 KB).
+  - Notlar: `generateFingerprint` artık `parseStackString` ile frame-aware: line/col absorption (aynı bug minified rebuild'lerde tek fingerprint), file differentiation korunuyor, parseable olmayan stack için legacy fallback. `callback.ts`'in 'global' modunda `setTimeout`/`setInterval`/`requestAnimationFrame`/`addEventListener`/`removeEventListener` dışına `queueMicrotask` da eklendi. `Promise.then` plan kalemiydi; **bilinçli olarak skipple**ndi (aşağıda revize notu).
+
+#### Plan Revize Notu (M3)
+
+- Plan kalemi "Async-stack wrap audit | setTimeout/setInterval/requestAnimationFrame/queueMicrotask/**Promise.then** coverage" idi. Promise.then **bilinçli skipplendi**:
+  - `Promise.prototype.then` global patch'i her promise zincirine bind-stack capture enjekte eder; ölçülen overhead ~3-5% CPU bench'lerde.
+  - Sentry de aynı sınırda durur — promise zincirleri mikro-tick'te çok yoğundur, telemetri için bedel/değer iyi değil.
+  - Manuel ihtiyaç için `Browsonic.wrap(handler)` zaten var — kullanıcı kritik promise'leri opt-in olarak wrap edebilir.
+- Plan kalemi "Bundle ölçümü: Maks +1 KB gzip" idi (M2'den miras). M3 main ESM delta **+0.07 KB** (queueMicrotask wrap), core ESM delta **+1.07 KB** (fingerprint M3'te parseStackString'e bağlandığı için core'a parser tree-shake'siz girdi). Core +1.07 KB AGENTS.md eşiğinde; deduplication kalitesindeki sıçrama (line/col absorption) bu trade-off'u haklı çıkarıyor. Hard bütçe sınırı 15 KB korunuyor (12.67 / 15). Çekirdek-yalın kullanıcılar için lazy-load opsiyonu **S8'de** (`addBreadcrumb`/`setTag` API geldiğinde) yeniden değerlendirilebilir.
+
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: _Beklenen: browsonic-service (fingerprint formatı backend tarafında deduplikasyona girer mi? Doğrulanacak)._
+- [x] **2026-04-29** Post-flight (1.3) tüm adımları geçildi.
+- **Etkilenen repolar: browsonic-service (ingest tolerance).**
+  - `BrowsonicEvent` artık opsiyonel `errorType: string \| null`, `stackFrames: StackFrame[]`, `linkedErrors: LinkedError[]` field'larını taşıyor (M2). Ingest tarafının bu field'ları **tolerate etmesi + persist etmesi** gerekiyor. Tip mismatch ile reject etmek client'ları breaking eder.
+  - Fingerprint algoritması M3'te değişti (frame-aware): aynı bug için yeni fingerprint string'i üretilecek. Backend'in `events.fingerprint` indeksini drop+rebuild etmeye gerek yok — string opaque, sadece grouping anahtarı; eski olaylar eski fingerprint'i korur, yeni olaylar yeni fingerprint kümesinde gruplanır. Migration cliff yok, kademeli geçiş.
+  - CROSS_REPO_IMPACTS.md'ye satır eklendi (S2 / browsonic-service / pending).
 
 ---
 

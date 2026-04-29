@@ -45,9 +45,10 @@ Her sprint kapanışında, [SPRINT_PLAN.md](./SPRINT_PLAN.md) Bölüm 1.3 (post-
 
 ## 2. Etki Tablosu
 
-| #           | Sprint | Tarih (eklendi) | Etkilenen Repo | Yapılması Gereken İş | Status | Sorumlu | İşletme Kaydı |
-| ----------- | ------ | --------------- | -------------- | -------------------- | ------ | ------- | ------------- |
-| _henüz boş_ |        |                 |                |                      |        |         |               |
+| #   | Sprint | Tarih (eklendi) | Etkilenen Repo    | Yapılması Gereken İş                                                                                                                                                                                                                                                                                                                                                                                                    | Status  | Sorumlu      | İşletme Kaydı |
+| --- | ------ | --------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------ | ------------- |
+| 1   | S2     | 2026-04-29      | browsonic-service | `BrowsonicEvent`'in yeni opsiyonel field'larını (`errorType`, `stackFrames`, `linkedErrors`) ingest tarafında **tolerate edip persist et**. Mevcut SDK 2.3.0 client'ları bu alanları doldurarak gönderiyor; tip mismatch ile reject olursa breaking olur. Persist tipleri için: `errorType TEXT NULL`, `stack_frames JSONB NULL`, `linked_errors JSONB NULL`.                                                           | pending | service-team | —             |
+| 2   | S2     | 2026-04-29      | browsonic-service | Fingerprint algoritması SDK 2.3.0'da değişti (frame-aware: line/col absorption). Backend tarafında `events.fingerprint` indeksini drop+rebuild **gerekmez** — string opaque, sadece grouping anahtarı. Eski olaylar eski fingerprint'i korur, yeni olaylar yeni kümede gruplanır. **Doğrulama yap:** dashboard "Grouped errors" panelinin migration cliff'i göstermediğini gözlemle (ilk 24 saat kademeli geçiş bekle). | pending | service-team | —             |
 
 ---
 

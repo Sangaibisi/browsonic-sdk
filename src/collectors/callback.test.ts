@@ -99,4 +99,39 @@ describe('callback collector — global mode addEventListener/removeEventListene
     target.dispatchEvent(new Event('x-test'));
     expect(handler.handleEvent).toHaveBeenCalledTimes(1);
   });
+
+  describe('queueMicrotask wrap (Sprint 2 M3)', () => {
+    it('overrides window.queueMicrotask while installed', () => {
+      // beforeEach already installed a fresh collector; capture the
+      // current binding (wrapped) and a clean reference for restore.
+      collector?.uninstall();
+
+      const native = window.queueMicrotask;
+      const fresh = createCallbackCollector({ debugLog: () => {} });
+      fresh.install();
+      expect(window.queueMicrotask).not.toBe(native);
+
+      fresh.uninstall();
+      expect(window.queueMicrotask).toBe(native);
+      collector = null;
+    });
+
+    it('still runs the user callback', async () => {
+      // Functional smoke: wrapped queueMicrotask must dispatch the
+      // callback exactly like the native API.
+      const ran = vi.fn();
+      window.queueMicrotask(() => ran());
+      // Microtasks drain on the next await boundary.
+      await Promise.resolve();
+      expect(ran).toHaveBeenCalledTimes(1);
+    });
+
+    // NOTE: A `_bindStack on thrown microtask error` test was deliberately
+    // omitted. happy-dom does not surface microtask exceptions through a
+    // listener we can hook in unit tests, and unhandled exceptions inside
+    // queueMicrotask propagate as test-runtime errors rather than as
+    // window 'error' events. The bind-stack mechanism itself is already
+    // covered by `wrapForAsyncStack` tests above; the queueMicrotask
+    // override + invocation are validated by the two tests in this block.
+  });
 });
