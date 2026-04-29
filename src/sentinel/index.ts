@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Sentinel module barrel — exports the core `Browsonic` class plus the
  * singleton helpers used by every entry (core + main + CJS). The split
@@ -5,8 +7,8 @@
  * legacy `import { Browsonic } from '@browsonic/sdk/sentinel'`
  * path working while `browsonic.ts` stays small.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 export { Browsonic } from './browsonic';

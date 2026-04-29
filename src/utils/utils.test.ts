@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Utils — hash + fingerprint + truncate + UUID regression suite.
  * Added in Sprint 5 to cover the cyrb53 migration + util plumbing.

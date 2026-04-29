@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * User context + custom metadata helpers — split out of browsonic.ts
  * during Sprint 8 so the main class stays under 300 LoC. The Browsonic
  * class keeps thin method delegations; all business logic lives here.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { UserContext } from '../types';

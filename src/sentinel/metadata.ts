@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * SDK identity — pinned to the published package name + version.
  * Batch payloads carry these in `batch.sdk`; backend uses them for

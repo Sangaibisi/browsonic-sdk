@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget Rule Matcher
  * Evaluates events against widget rules and tracks occurrence counts.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicEvent, WidgetRule, WidgetNotification } from '../types';

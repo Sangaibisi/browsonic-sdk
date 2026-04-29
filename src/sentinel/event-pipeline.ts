@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Event pipeline — the hot path from a collector / plugin emit to the
  * queue. Runs per event:
@@ -14,8 +16,8 @@
  * stage can't break the host app. Repeat internal errors arm the
  * circuit breaker via `handleInternalError`.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicEvent, MetadataEntry } from '../types';

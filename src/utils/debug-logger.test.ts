@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Debug logger unit tests — covers the NOOP gate, namespace prefix,
  * and legacy adapter introduced in Sprint P15 (F3.1.E). These paths

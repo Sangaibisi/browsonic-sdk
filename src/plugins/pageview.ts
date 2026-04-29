@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Page view collector plugin — sends a page-view ping on initial load
  * and on SPA route changes. Gated by `trackPageViews: true` AND a
  * non-null `apiKey` (enforced by validateConfig).
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

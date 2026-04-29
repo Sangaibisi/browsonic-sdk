@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Queue — sampling + batch metadata regression suite.
  * Covers PERFORMANS-STRATEJISI §3 (sampling) and CHANGELOG 0.3.0 batch fields.

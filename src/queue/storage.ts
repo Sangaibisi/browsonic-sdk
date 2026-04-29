@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Three-stage persist-queue backend (Sprint P15 / F3.1.G).
  *
@@ -17,8 +19,8 @@
  * caller's `debugLog` and swallowed. Persistence is best-effort; it
  * must never crash the SDK.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 type DebugLog = (message: string, ...args: unknown[]) => void;

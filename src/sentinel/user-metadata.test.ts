@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * user-metadata helpers — covers the thin delegation layer used by the
  * Browsonic class (setUser / clearUser / *Metadata). The goal here is to

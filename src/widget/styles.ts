@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget Styles (scoped inside Shadow DOM)
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 export const WIDGET_STYLES = `

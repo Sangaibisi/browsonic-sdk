@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Lifecycle — `init()` fast path (sync config resolve + state flip);
  * `start()` awaiter; idle-scheduled `runBootstrap()` that builds the
@@ -7,8 +9,8 @@
  * See PERFORMANS-STRATEJISI.md §1 (init blocking p95 ≤ 15 ms) and §6
  * (pre-bootstrap buffer for capture-before-running events).
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicConfig } from '../types';

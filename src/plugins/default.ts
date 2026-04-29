@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Default-plugin bridge.
  *
@@ -20,8 +22,8 @@
  * Each plugin is registered by `id`; `sdk.register` dedups by id, so
  * re-init or manual prior registration is safe.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicConfig } from '../types';

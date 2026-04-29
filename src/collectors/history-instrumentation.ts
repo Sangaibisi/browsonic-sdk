@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Singleton history instrumentation — reference-counted.
  *
@@ -15,8 +17,8 @@
  *   a ref-counted handle. When the last subscriber unsubscribes, the
  *   history methods are restored to their native implementations.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 export type HistoryChangeType = 'pushState' | 'replaceState' | 'popstate' | 'hashchange';

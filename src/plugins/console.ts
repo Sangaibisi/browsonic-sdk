@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Console collector plugin — intercepts `console.*` calls, pushes them
  * to the shared telemetry store, and emits events for levels whitelisted
@@ -7,8 +9,8 @@
  * auto-registers it when the host passes classic config (captureLevels
  * non-empty).
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

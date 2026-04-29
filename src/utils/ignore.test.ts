@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * shouldIgnoreError — filter rule regression suite.
  *

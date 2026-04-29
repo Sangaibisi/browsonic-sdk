@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Structured debug logger (Sprint P15 / F3.1.E).
  *
@@ -28,8 +30,8 @@
  * logger.error('failed to init', err, { retries: 3 });
  * ```
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { ResolvedConfig } from '../types';

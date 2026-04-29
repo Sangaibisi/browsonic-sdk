@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Core entry — Browsonic SDK without the widget UI / rule engine.
  *
@@ -13,8 +15,8 @@
  *
  * Full surface (with widget) remains available via the main `.` import.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md for terms
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 // Main SDK class + singleton helpers

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Plugin architecture regression suite.
  * Covers Sprint 6.1 — register/activate/deactivate lifecycle + widget plugin.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Browsonic SDK - JavaScript Error Monitoring Agent
  *
@@ -8,12 +10,10 @@
  * Host apps that want the minimal core (bundle ≤ 8 KB gzip) import from
  * `@browsonic/sdk/core` and register plugins explicitly.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md for terms
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  * @see https://browsonic.io/docs
  *
- * NOTICE: This source code is proprietary and confidential.
- * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 
 import type { BrowsonicConfig } from './types';

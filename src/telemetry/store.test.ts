@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * TelemetryStore — ring buffer + pause/resume regression suite.
  * pause()/resume() added in 0.3.0 for Critical Path mode.

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Default-plugin bridge — translates classic `BrowsonicConfig` fields
  * into plugin registrations. This suite guards the contract so a future

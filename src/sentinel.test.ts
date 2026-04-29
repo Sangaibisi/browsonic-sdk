@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Browsonic lifecycle + Critical Path + async bootstrap — regression suite.
  *

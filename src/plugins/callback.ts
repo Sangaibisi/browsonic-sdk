@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Callback collector plugin — 'global' async-stack mode. Wraps
  * setTimeout / setInterval / rAF / addEventListener / removeEventListener
@@ -7,8 +9,8 @@
  * 'manual' mode does NOT install this plugin; users call `Browsonic.wrap()`
  * directly for selected callbacks.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

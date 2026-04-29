@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Visitor ID strategy regression suite (Sprint P14, F3.1.A).
  *

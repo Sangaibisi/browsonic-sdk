@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Minimal `wrapForAsyncStack` utility — lives in its own module so the
  * core bundle can import just this helper for `Browsonic.wrap()` without
  * pulling in the full (~9 KB) callback collector.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 type AnyFn = (...args: unknown[]) => unknown;

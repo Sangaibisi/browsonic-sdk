@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Browsonic — core SDK class. Since Sprint 8 the class is a thin
  * façade: state fields live here, but the business logic for each
@@ -8,11 +10,9 @@
  * State fields are marked `@internal`; they are technically `public`
  * for cross-module access, but are NOT part of the supported SDK API.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  *
- * NOTICE: This source code is proprietary and confidential.
- * Unauthorized copying, modification, or distribution is strictly prohibited.
  */
 
 import type {

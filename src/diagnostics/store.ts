@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Self-diagnostics store — an in-memory ring buffer for the SDK's own
  * performance metrics. Enabled via `internalDiagnostics: true`; a
@@ -15,8 +17,8 @@
  * current contents, plus raw counters. Cheap to query — we re-sort
  * the N most recent samples on demand, and N is capped (default 200).
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 export type DroppedReason = 'sampled_out' | 'storm' | 'oversized' | 'quota' | 'ignored' | 'state';

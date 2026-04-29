@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Public manual-capture API — `captureMessage` / `captureError` — plus
  * the pre-bootstrap buffer that holds events while the SDK is in the
  * `initializing` state (between sync `init()` and the idle-scheduled
  * bootstrap). See PERFORMANS-STRATEJISI.md §6.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicEvent } from '../types';

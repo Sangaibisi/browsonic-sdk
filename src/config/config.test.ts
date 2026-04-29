@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * updateConfig deep-merge + runtime-lock regression suite.
  * Covers TEKNIK-IYILESTIRME-PLANI.md §1.5.

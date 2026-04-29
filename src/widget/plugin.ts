@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget plugin — wires the notification UI into the SDK via the
  * plugin contract (src/plugin.ts). Core SDK no longer imports this
@@ -23,8 +25,8 @@
  * Registering `widgetPlugin()` is the opt-in; the legacy `enableWidget`
  * flag was removed in 2.0.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

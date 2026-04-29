@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * DiagnosticsStore — ring-buffer counters + percentile snapshot.
  */

@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Fetch network collector plugin — intercepts `window.fetch` for
  * telemetry + error capture. Gated upstream by the default-plugin
  * helper when the host wants network coverage.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

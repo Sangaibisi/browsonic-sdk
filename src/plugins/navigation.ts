@@ -1,10 +1,12 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Navigation collector plugin — subscribes to the shared history
  * instrumentation module and emits navigation telemetry.
  * Gated by `trackNavigation: true`.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

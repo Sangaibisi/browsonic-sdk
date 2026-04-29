@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget entry — notification plugin + types + sanitize constants.
  *
@@ -14,8 +16,8 @@
  * Apps that don't need the widget omit this import and pay zero bytes
  * for widget code.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md for terms
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 // Plugin factory — the primary integration point.

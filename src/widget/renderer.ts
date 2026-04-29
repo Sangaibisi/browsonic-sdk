@@ -1,8 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget Renderer - Shadow DOM based notification UI
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { WidgetNotification, WidgetPosition, WidgetSeverity } from '../types';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * XHR collector — WeakMap metadata + AbortSignal listener regression suite.
  *

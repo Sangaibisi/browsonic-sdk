@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Plugin lifecycle plumbing — register, activate, deactivate. The
  * SDK's one extension point. See `src/plugin.ts` for the contract +
  * PluginContext shape. Core bundle never imports a concrete plugin;
  * tree-shake keeps plugin code out of `@browsonic/sdk/core`.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { BrowsonicEvent } from '../types';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * ReDoS mitigation for server-delivered widget rule regexes.
  *
@@ -15,8 +17,8 @@
  *
  * See TEKNIK-IYILESTIRME-PLANI.md §1.2.
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 /** Absolute character limit on user/server-supplied regex source. */

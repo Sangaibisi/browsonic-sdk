@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Safe-regex / ReDoS mitigation — regression suite.
  *

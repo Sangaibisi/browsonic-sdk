@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Widget rule matcher — event matching + cooldown + minCount/within regression suite.
  */

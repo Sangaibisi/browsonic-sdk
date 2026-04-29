@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Visitor collector plugin — captures click + input interactions for
  * telemetry. Gated by `trackVisitor: true` (off by default for privacy).
  *
- * @copyright 2024-2026 Browsonic. All rights reserved.
- * @license Proprietary - See LICENSE.md
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
  */
 
 import type { SdkPlugin, PluginContext } from '../plugin';

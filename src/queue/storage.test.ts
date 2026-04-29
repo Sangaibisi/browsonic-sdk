@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Tiered persist backend (Sprint P15 / F3.1.G) — unit coverage.
  *

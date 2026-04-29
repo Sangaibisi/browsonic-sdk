@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /**
  * Callback collector — addEventListener / removeEventListener round-trip
  * regression suite. Sprint 3.4-3.6.
