@@ -95,7 +95,7 @@ Sprint kapanmadan önce:
 | **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
 | **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
 | **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
-| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILMADI             |
+| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | AÇILDI 2026-04-29    |
 | **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
 | **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
 | **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI             |
@@ -389,11 +389,24 @@ Production'da minified stack tek başına okunamaz. TrackJS'in `trackjs-cli`'sin
 
 ---
 
-### Sprint 5 — React Adapter Pilot (P2, 2 hafta) — DURUM: AÇILMADI
+### Sprint 5 — React Adapter Pilot (P2, 2 hafta) — DURUM: AÇILDI 2026-04-29
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-04-29** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md aynı session'da okundu — değişmedi. Yeni `browsonic-react` reposunun kendi AGENTS.md'si bu sprintte yazılacak (SDK AGENTS.md'sinden adapt edilerek; Apache-2.0, OSS, privacy-first, agent-driven CI prensipleri devralınıyor).
+  - [x] (1.1.2) SPRINT_PLAN.md son haline kadar okundu; S2 KAPANDI, S3+S4 ERTELENDİ; S5 plan kalemleri (BrowsonicErrorBoundary / useBrowsonic / withBrowsonic / React Router) tutarlı.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — 2 pending entry var (S2 / browsonic-service); S5 ile bağlantılı değil, ayrı service ekibinin sırası.
+  - [x] (1.1.4) AGENTS.md ↔ S5 çatışması yok. S5 büyük ölçüde **yeni repo açma** sprintidir; SDK reposunda yalnız küçük bir referans güncellemesi (ROADMAP'a "@browsonic/react adapter package opened" satırı) düşülecek.
+  - [x] (1.1.5) Working tree temiz; S2 closure (`2f32e40`) push edildi.
+
+#### Milestone Bölümlemesi (Plan Revize)
+
+- **M1 (bu turun hedefi):** GitHub repo açma + skeleton scaffold (package.json, tsconfig, eslint, prettier, husky, vitest, AGENTS.md, LICENSE, NOTICE, README, ROADMAP, .gitignore, CI workflow yml'leri) + ilk component `<BrowsonicErrorBoundary>` + 1-2 test + ilk commit + push.
+- **M2 (sonraki tur):** `useBrowsonic`, `useUser`, `useCaptureError`, `withBrowsonic` HOC + testleri. `docs/ADAPTER_TEMPLATE.md` taslağı.
+- **M3 (sonraki tur):** React Router v6/v7 instrumentation, `examples/react-vite/` demo app, `ADAPTER_TEMPLATE.md` finalize, semantic-release ile **ilk yayın** (`@browsonic/react@0.1.0`), SDK ROADMAP'a referans satırı.
+
+> SDK 2.3.0'ın npm'de yayınlanması M3 öncesi tamamlanmış olmalı (peerDependency olarak gerekli). Adapter publish'i SDK 2.3.0 release pipeline'ına bağımlı bir bekleme noktası — release.yml CI'sinin durumu M3 pre-flight'ında doğrulanır.
 
 #### Sprint Hedefi
 
@@ -426,12 +439,15 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
 
 #### İş Logu
 
-(boş)
+- [2026-04-29] **S5 milestone 1**: Sangaibisi/browsonic-react reposunun açılması + scaffold + `<BrowsonicErrorBoundary>` + 10 unit test — durum: ✅
+  - Commit/PR: browsonic-react `b441250` (push range `13dc01c..b441250` main)
+  - Test/CI: typecheck clean, lint 0/0, test 10/10 passed (Vitest + happy-dom + @testing-library/react)
+  - Notlar: Public OSS, Apache-2.0, npm provenance, semantic-release, weekly Dependabot, ci.yml + release.yml. peerDeps: `@browsonic/sdk ^2.2.1`, `react ^18 || ^19`. ESLint 10 ↔ eslint-plugin-react@7.37 peer-range çatışmasını `.npmrc` `legacy-peer-deps=true` ile geçiştirildi (lib pratikte ESLint 10 ile çalışıyor; plugin maintainer peer-range güncellenince kaldırılır). `<BrowsonicErrorBoundary>` defansif: SDK reporting failure ve onError throw test'leri yeşil. Component stack 1024 char'a truncate ediliyor — privacy footprint minimal.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-dashboard** (kendisi React tabanlı; bu adapter çıkınca dashboard'da SDK kullanımını yeni adapter'a geçirme — fırsat), **browsonic-landing-astro** (landing'de bu yeni paketi tanıtım).
+- [ ] Post-flight (1.3) tüm adımları geçildi. _M3 closure'da işaretlenecek._
+- Etkilenen repolar (M3 sonunda doğrulanacak): **browsonic-dashboard** (kendisi React tabanlı; @browsonic/react publish olunca dashboard'ın direkt SDK kullanımını adapter'a geçirme fırsatı), **browsonic-landing-astro** (landing'de yeni paket tanıtımı CTA'sı), **browsonic-sdk** (ROADMAP.md'ye `@browsonic/react adapter package opened` referans satırı M3 publish ile eklenecek).
 
 ---
 
