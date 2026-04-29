@@ -34,10 +34,19 @@ updates:
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'monthly'
+      interval: 'weekly'
+      day: 'monday'
     open-pull-requests-limit: 3
     commit-message:
       prefix: 'chore(ci)'
     labels:
       - 'dependencies'
       - 'github-actions'
+    groups:
+      actions-major:
+        update-types:
+          - 'major'
+      actions-minor-patch:
+        update-types:
+          - 'minor'
+          - 'patch'
