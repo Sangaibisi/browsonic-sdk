@@ -254,7 +254,7 @@ Error tracking ürününün özü: minified production stack'i okuyabilmek. Sent
   - Notlar: Yeni dosya `src/utils/stack-parser.ts` + test. Chromium / Gecko / WebKit recognise eden 3 parser; `parseStackString(stack, parsers?, maxFrames?)` orchestrator. Default cap 50 frame. NOTICE dosyasına TraceKit (MIT) ve sentry-javascript (MIT) lineage attribution eklendi. Public types/index.ts'e expose etmedik — milestone 2'de error.ts integration'ı ile birlikte yapılacak.
 
 - [2026-04-29] **S2 milestone 2**: Linked errors + error.ts integration + public types — durum: ✅
-  - Commit/PR: bkz. milestone 2 commit hash `<S2_M2_HASH>`
+  - Commit/PR: bkz. milestone 2 commit hash `931f198`
   - Test/CI: typecheck clean, lint 0/0, test 392/392 passed (366→392, +26: 14 linked-errors + 12 error.ts M2). size — main 17.05 → **18.94 KB / 22** (+1.89 KB; bütçe içinde), core 11.6 KB / 15 (no change — core entry default plugin set yok), widget 5.12 KB / 6 (no change), CJS 21.5 → 22.44 KB / 26 (+0.94 KB).
   - Notlar: Yeni dosya `src/utils/linked-errors.ts` + test (14 test, depth cap + circular guard + non-Error causes). `BrowsonicEvent` type'ına `errorType?: string \| null`, `stackFrames?: StackFrame[]`, `linkedErrors?: LinkedError[]` eklendi (additive, backward-compatible PUBLIC API). `error.ts` her iki handler'da (window.onerror + unhandledrejection) parser+unwind çağırıyor. `StackFrame` ve `LinkedError` tipleri `@browsonic/sdk` ana entry'sinden import edilebilir oldu.
 
