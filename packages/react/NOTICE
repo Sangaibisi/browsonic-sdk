@@ -1,0 +1,8 @@
+Browsonic React Adapter
+Copyright 2024-2026 Emrullah Yıldırım
+
+This product includes software developed at the Browsonic project
+(https://github.com/Sangaibisi/browsonic-react).
+
+This package is an adapter for the @browsonic/sdk core library
+(https://github.com/Sangaibisi/browsonic-sdk).
