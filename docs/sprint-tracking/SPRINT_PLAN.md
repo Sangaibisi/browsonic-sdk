@@ -621,7 +621,7 @@ Sentry'nin `addBreadcrumb` / `setTag` / `setContext` / `setExtra` / `withScope` 
 #### İş Logu
 
 - [2026-05-04] **S8 milestone 1**: `setTag` (alias) + `setContext` + `setExtra` + `removeTag` / `removeContext` / `clearContexts` / `removeExtra` / `clearExtras` public API + state alanları (`contexts`, `extras`) + event-pipeline yansıması — durum: ✅
-  - Commit/PR: bkz. milestone 1 commit hash `<S8_M1_HASH>`
+  - Commit/PR: bkz. milestone 1 commit hash `cd7f53f`
   - Test/CI: typecheck clean, lint 0/0, test **407/407 passed** (397 → 407, +10: 5 setContext + 5 setExtra). size — main 19.01 → **19.26 KB / 22** (+0.25 KB), core 12.67 → **12.89 KB / 15** (+0.22 KB), widget 5.12 KB (no change), CJS 22.53 → 22.9 KB / 26 (+0.37 KB).
   - Notlar: Mevcut `addMetadata`/`removeMetadata` korundu (geriye uyumlu); `setTag`/`removeTag` Sentry-uyumlu naming alias olarak eklendi. `setContext` shallow-copy on write (post-set mutation izole). `setExtra` reference-stored (Sentry parite — fresh obje pass etmek isolation için kullanıcı sorumluluğunda; user-metadata.ts'te documented). `BrowsonicEvent`'a opsiyonel `contexts?: Record<string, Record<string, unknown>>` ve `extras?: Record<string, unknown>` eklendi (additive, breaking değil). Event-pipeline her event creation'da contexts/extras'ı snapshot olarak yansıtıyor (`hasContexts ? { contexts: { ...sdk.contexts } } : {}` pattern'i ile boş bucket atılır, payload bloating yok).
 
