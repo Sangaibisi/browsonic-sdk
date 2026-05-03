@@ -83,3 +83,23 @@ describe('TelemetryStore — pause / resume (Critical Path support)', () => {
     expect(store.isPaused()).toBe(false);
   });
 });
+
+describe('TelemetryStore — breadcrumb category (Sprint 8 M2)', () => {
+  it('routes breadcrumb entries into the breadcrumb timeline channel', () => {
+    const store = createTelemetryStore(5);
+    store.add({
+      category: 'breadcrumb',
+      data: { category: 'navigation', level: 'info', message: 'm' },
+    });
+    const timeline = store.getTimeline();
+    expect(timeline.breadcrumb.length).toBe(1);
+    expect(timeline.breadcrumb[0].category).toBe('navigation');
+    expect(timeline.breadcrumb[0].level).toBe('info');
+    expect(timeline.breadcrumb[0].message).toBe('m');
+  });
+
+  it('initialises breadcrumb as an empty array when no breadcrumbs were added', () => {
+    const store = createTelemetryStore(5);
+    expect(store.getTimeline().breadcrumb).toEqual([]);
+  });
+});

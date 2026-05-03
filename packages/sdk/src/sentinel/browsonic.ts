@@ -23,6 +23,7 @@ import type {
   SdkState,
   CriticalPathOptions,
   CriticalPathState,
+  Breadcrumb,
 } from '../types';
 import { resolveConfig, mergeConfigUpdate } from '../config';
 import { wrapForAsyncStack } from '../collectors/wrap';
@@ -53,6 +54,8 @@ import {
   removeExtra as removeExtraImpl,
   clearExtras as clearExtrasImpl,
 } from './user-metadata';
+// Sprint 8 M2 — breadcrumb timeline
+import { addBreadcrumb as addBreadcrumbImpl } from './breadcrumbs';
 import {
   enterCriticalPath as enterCriticalPathImpl,
   exitCriticalPath as exitCriticalPathImpl,
@@ -227,6 +230,19 @@ export class Browsonic {
   /** Clear all extras. Added Sprint 8 M1. */
   clearExtras(): void {
     clearExtrasImpl(this);
+  }
+
+  /**
+   * Append a breadcrumb to the telemetry timeline (Sprint 8 M2).
+   * Breadcrumbs land in `event.telemetry.breadcrumb` for every
+   * subsequently-captured event, alongside auto-collected console /
+   * network / navigation / visitor entries. `category` is required;
+   * `level` defaults to `'info'` and `timestamp` is auto-filled when
+   * omitted. No-op while the SDK is uninitialised or while a Critical
+   * Path window has paused the telemetry store.
+   */
+  addBreadcrumb(breadcrumb: Breadcrumb): void {
+    addBreadcrumbImpl(this, breadcrumb);
   }
 
   /**

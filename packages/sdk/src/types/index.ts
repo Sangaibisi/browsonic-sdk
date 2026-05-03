@@ -179,6 +179,54 @@ export interface BrowsonicEvent {
 }
 
 /**
+ * Severity levels for breadcrumb entries (Sprint 8 M2). Sentry-compatible
+ * naming so teams migrating from `@sentry/browser` keep their muscle
+ * memory. Note that this differs from console entry levels (which use
+ * `'warn'` instead of `'warning'`).
+ */
+export type BreadcrumbLevel = 'debug' | 'info' | 'warning' | 'error' | 'fatal';
+
+/**
+ * Public input shape for {@link Browsonic.addBreadcrumb}. Mirrors
+ * Sentry's `Breadcrumb` so adapter code reads naturally for migrating
+ * teams. `category` is the only required field; `level` defaults to
+ * `'info'` and `timestamp` is auto-filled by the SDK when omitted.
+ *
+ * @public Sprint 8 M2
+ */
+export interface Breadcrumb {
+  /**
+   * Domain category — Sentry conventions are `'navigation'`, `'http'`,
+   * `'ui'`, `'console'`, `'auth'`. Custom strings are accepted.
+   */
+  category: string;
+  /** Severity level. Default `'info'`. */
+  level?: BreadcrumbLevel;
+  /** Human-readable description. */
+  message?: string;
+  /** Arbitrary structured data attached to the breadcrumb. */
+  data?: Record<string, unknown>;
+  /** ISO 8601 timestamp; auto-set when omitted. */
+  timestamp?: string;
+}
+
+/**
+ * Wire-format breadcrumb entry as it appears inside
+ * {@link TelemetryTimeline.breadcrumb}. Distinct from the input
+ * {@link Breadcrumb} type: `timestamp` and `level` are always present
+ * here because the SDK fills the defaults during `addBreadcrumb`.
+ *
+ * @public Sprint 8 M2
+ */
+export interface BreadcrumbTelemetryEntry {
+  timestamp: string;
+  category: string;
+  level: BreadcrumbLevel;
+  message?: string;
+  data?: Record<string, unknown>;
+}
+
+/**
  * Telemetry timeline included with events
  */
 export interface TelemetryTimeline {
@@ -186,6 +234,11 @@ export interface TelemetryTimeline {
   network: NetworkTelemetryEntry[];
   navigation: NavigationTelemetryEntry[];
   visitor: VisitorTelemetryEntry[];
+  /**
+   * User-supplied breadcrumb trail (Sprint 8 M2). Ordered chronologically
+   * (oldest → newest). Empty when no breadcrumbs were added.
+   */
+  breadcrumb: BreadcrumbTelemetryEntry[];
 }
 
 export interface ConsoleTelemetryEntry {

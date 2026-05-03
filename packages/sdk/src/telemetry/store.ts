@@ -8,9 +8,10 @@
 import { uuid, timestamp } from '../utils';
 
 /**
- * Telemetry entry categories
+ * Telemetry entry categories. `'breadcrumb'` is the Sprint 8 M2 channel
+ * for user-supplied breadcrumbs added via `Browsonic.addBreadcrumb`.
  */
-export type TelemetryCategory = 'console' | 'network' | 'navigation' | 'visitor';
+export type TelemetryCategory = 'console' | 'network' | 'navigation' | 'visitor' | 'breadcrumb';
 
 /**
  * Base telemetry entry
@@ -78,6 +79,22 @@ export interface VisitorTelemetryData {
 }
 
 /**
+ * Breadcrumb telemetry entry data (Sprint 8 M2). Mirrors Sentry's
+ * `Breadcrumb` interface but with `category` and `level` always present
+ * — the SDK's `addBreadcrumb` fills defaults before reaching the store.
+ */
+export interface BreadcrumbTelemetryData {
+  /** Domain category — 'navigation' / 'http' / 'ui' / 'auth' / custom. */
+  category: string;
+  /** Severity level. */
+  level: 'debug' | 'info' | 'warning' | 'error' | 'fatal';
+  /** Human-readable description. */
+  message?: string;
+  /** Arbitrary structured data. */
+  data?: Record<string, unknown>;
+}
+
+/**
  * Telemetry timeline snapshot for event payload
  */
 export interface TelemetryTimeline {
@@ -85,6 +102,11 @@ export interface TelemetryTimeline {
   network: Array<{ timestamp: string } & NetworkTelemetryData>;
   navigation: Array<{ timestamp: string } & NavigationTelemetryData>;
   visitor: Array<{ timestamp: string } & VisitorTelemetryData>;
+  /**
+   * User-supplied breadcrumb trail (Sprint 8 M2). Chronological,
+   * oldest → newest. Empty when no breadcrumbs were added.
+   */
+  breadcrumb: Array<{ timestamp: string } & BreadcrumbTelemetryData>;
 }
 
 /**
@@ -185,6 +207,7 @@ export function createTelemetryStore(maxSize: number = 30): TelemetryStore {
         network: [],
         navigation: [],
         visitor: [],
+        breadcrumb: [],
       };
 
       // Entries are in reverse order (newest first), we want chronological (oldest first)
@@ -215,6 +238,12 @@ export function createTelemetryStore(maxSize: number = 30): TelemetryStore {
             timeline.visitor.push({
               ...baseData,
               ...(entry.data as VisitorTelemetryData),
+            });
+            break;
+          case 'breadcrumb':
+            timeline.breadcrumb.push({
+              ...baseData,
+              ...(entry.data as BreadcrumbTelemetryData),
             });
             break;
         }

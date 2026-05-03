@@ -15,4 +15,5 @@ export {
   type NetworkTelemetryData,
   type NavigationTelemetryData,
   type VisitorTelemetryData,
+  type BreadcrumbTelemetryData,
 } from './store';

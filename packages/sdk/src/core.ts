@@ -38,6 +38,10 @@ export type {
   NetworkTelemetryEntry,
   NavigationTelemetryEntry,
   VisitorTelemetryEntry,
+  // Sprint 8 M2 — breadcrumb public surface
+  Breadcrumb,
+  BreadcrumbLevel,
+  BreadcrumbTelemetryEntry,
 } from './types';
 
 // Convenience helpers

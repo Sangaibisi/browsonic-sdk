@@ -81,6 +81,10 @@ export type {
   NetworkTelemetryEntry,
   NavigationTelemetryEntry,
   VisitorTelemetryEntry,
+  // Sprint 8 M2 — breadcrumb public surface
+  Breadcrumb,
+  BreadcrumbLevel,
+  BreadcrumbTelemetryEntry,
   // Widget types
   WidgetRule,
   WidgetRuleMatch,
