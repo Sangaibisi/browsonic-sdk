@@ -45,6 +45,13 @@ import {
   addMetadata as addMetadataImpl,
   removeMetadata as removeMetadataImpl,
   clearMetadata as clearMetadataImpl,
+  // Sprint 8 M1 — Sentry-compatible structured context surface
+  setContext as setContextImpl,
+  removeContext as removeContextImpl,
+  clearContexts as clearContextsImpl,
+  setExtra as setExtraImpl,
+  removeExtra as removeExtraImpl,
+  clearExtras as clearExtrasImpl,
 } from './user-metadata';
 import {
   enterCriticalPath as enterCriticalPathImpl,
@@ -89,6 +96,18 @@ export class Browsonic {
   /** @internal */ readonly maxInternalErrors = 5;
   /** @internal Custom user-set metadata key→value entries. */
   metadata: Record<string, string | number | boolean> = {};
+  /**
+   * @internal Structured context buckets (Sprint 8 M1). Each top-level
+   * key is a domain name; the value is an arbitrary object. Cleared on
+   * `clearContexts()`; individual buckets cleared on `removeContext(name)`.
+   */
+  contexts: Record<string, Record<string, unknown>> = {};
+  /**
+   * @internal Event-level non-indexed extras (Sprint 8 M1). Sibling to
+   * `metadata`; differs in that values are `unknown` (any shape allowed)
+   * and the backend does not index them.
+   */
+  extras: Record<string, unknown> = {};
 
   /**
    * Register a plugin with the SDK. MUST be called before `init()`.
@@ -150,6 +169,64 @@ export class Browsonic {
 
   clearMetadata(): void {
     clearMetadataImpl(this);
+  }
+
+  /**
+   * Set an indexable tag on subsequent events. Sentry-compatible alias
+   * for {@link addMetadata}; the tag lands in the same backing bucket
+   * so backends that already render `metadata` keys get tags for free.
+   * Added Sprint 8 M1.
+   */
+  setTag(key: string, value: string | number | boolean): void {
+    addMetadataImpl(this, key, value);
+  }
+
+  /**
+   * Remove a tag previously set via {@link setTag} or {@link addMetadata}.
+   * Symmetric alias for {@link removeMetadata}. Added Sprint 8 M1.
+   */
+  removeTag(key: string): void {
+    removeMetadataImpl(this, key);
+  }
+
+  /**
+   * Set a structured context bucket on subsequent events. Use for
+   * grouping per-event diagnostic data into UI-friendly panels (e.g.
+   * `setContext('order', { items: 3, total: 99 })`). Replaces any
+   * previous bucket with the same name. Added Sprint 8 M1.
+   */
+  setContext(name: string, ctx: Record<string, unknown>): void {
+    setContextImpl(this, name, ctx);
+  }
+
+  /** Remove the named context bucket. Added Sprint 8 M1. */
+  removeContext(name: string): void {
+    removeContextImpl(this, name);
+  }
+
+  /** Clear all context buckets. Added Sprint 8 M1. */
+  clearContexts(): void {
+    clearContextsImpl(this);
+  }
+
+  /**
+   * Set an event-level non-indexed extra. Use for large diagnostic
+   * blobs (debug snapshots, truncated request bodies). Backends store
+   * but do not index extras; prefer {@link setTag} for short
+   * searchable values. Added Sprint 8 M1.
+   */
+  setExtra(key: string, value: unknown): void {
+    setExtraImpl(this, key, value);
+  }
+
+  /** Remove a previously-set extra. Added Sprint 8 M1. */
+  removeExtra(key: string): void {
+    removeExtraImpl(this, key);
+  }
+
+  /** Clear all extras. Added Sprint 8 M1. */
+  clearExtras(): void {
+    clearExtrasImpl(this);
   }
 
   /**

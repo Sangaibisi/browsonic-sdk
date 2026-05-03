@@ -133,6 +133,23 @@ export interface BrowsonicEvent {
   telemetry?: TelemetryTimeline | null;
   /** Custom metadata */
   metadata?: MetadataEntry[];
+  /**
+   * Structured context buckets (Sprint 8 M1). Keys are domain names
+   * (e.g. `'order'`, `'session'`); values are arbitrary objects. Used
+   * for grouping per-event context into UI-friendly panels in the
+   * backend. Sentry-compatible naming so teams migrating from
+   * `@sentry/browser` keep their muscle memory. Empty when the host
+   * has not set any context.
+   */
+  contexts?: Record<string, Record<string, unknown>>;
+  /**
+   * Event-level non-indexed extras (Sprint 8 M1). For large
+   * diagnostic blobs that do not need backend indexing — debug
+   * snapshots, truncated request bodies, feature-flag dumps. Use
+   * `metadata` (`setTag`) for short indexable values; use this for
+   * everything else. Empty when no extras have been set.
+   */
+  extras?: Record<string, unknown>;
   /** Async stack trace captured at callback bind time */
   bindStack?: string | null;
   /** Timestamp when bindStack was captured */

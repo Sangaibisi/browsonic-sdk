@@ -67,6 +67,13 @@ export function handleEvent(
         value: String(value),
       }));
 
+      // Sprint 8 M1: snapshot contexts + extras at event-creation time.
+      // Shallow copy is sufficient — `setContext` already shallow-copies
+      // its input on write; `setExtra` stores by reference, but the
+      // mutation contract is documented in user-metadata.ts.
+      const hasContexts = Object.keys(sdk.contexts).length > 0;
+      const hasExtras = Object.keys(sdk.extras).length > 0;
+
       const event: BrowsonicEvent = {
         ...partialEvent,
         message,
@@ -74,6 +81,8 @@ export function handleEvent(
         context,
         telemetry,
         metadata: metadataEntries.length > 0 ? metadataEntries : undefined,
+        ...(hasContexts ? { contexts: { ...sdk.contexts } } : {}),
+        ...(hasExtras ? { extras: { ...sdk.extras } } : {}),
         _truncated: stackTruncated || message !== partialEvent.message,
         // Sprint P14 (F3.2.B): tag events captured during an active
         // critical path window so the backend can group them by flow

@@ -98,7 +98,7 @@ Sprint kapanmadan önce:
 | **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
 | **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
 | **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
-| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILMADI             |
+| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILDI 2026-05-04    |
 | **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
 | **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
 
@@ -549,11 +549,45 @@ Modern meta-framework adapter'ları. Server-side capture skop dışı (multi-run
 
 ---
 
-### Sprint 8 — Public Scope/Breadcrumb/Tag API (P2, 2 hafta) — DURUM: AÇILMADI
+### Sprint 8 — Public Scope/Breadcrumb/Tag API (P2, 2 hafta) — DURUM: AÇILDI 2026-05-04
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-05-04** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md aynı session'da S1+S2'de okundu — değişmedi, geçerli.
+  - [x] (1.1.2) SPRINT_PLAN.md tam okundu; S5 KAPANDI, S3+S4 ERTELENDİ; S8 plan kalemleri tutarlı.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — 5 pending entry var (S2 service ×2, S5 NPM_TOKEN + dashboard + landing); S8 ile bağlantılı değil.
+  - [x] (1.1.4) AGENTS.md ↔ S8 çatışması yok. S8 SDK içinde additive public API; bundle budget korunmalı.
+  - [x] (1.1.5) Working tree temiz; S5 closure (`ef54cb9`) push edildi.
+
+#### Monorepo Migration Karar Notu
+
+- **2026-05-04:** Kullanıcı sorgusu üzerine ekosistemde repo kirliliği değerlendirildi. Mevcut: 1 SDK + 1 React adapter (yeni açıldı) + 5 ek adapter repo planı (S6/S7/S10) → 7 adapter repo riski. Endüstri standardı **monorepo** (Sentry, TanStack, Vue, React hepsi monorepo). Karar: **monorepo'ya geçiş yapılacak**, ancak `browsonic-sdk` repo adı korunacak (rename yok). Migration **S6 öncesi** S5.5 sprintinde yürütülecek — şu an S8 (SDK içi additive API) blocker değil; S6 (Vue + Svelte) öncesi yeni adapter repolar açılmadan önce migration penceresi açık kalıyor. **Bu sprintten sonra S5.5 migration sprinti gündeme alınacak.**
+
+#### Milestone Bölümlemesi
+
+- **M1 (bu turun hedefi):** `setTag(k, v)` (mevcut `addMetadata`'ya Sentry-uyumlu alias) + `setContext(name, ctx)` (yeni structured context bucket) + `setExtra(k, v)` (yeni event-level non-indexed extras) + state alanları (`contexts`, `extras` on Sentinel) + event-pipeline yansıması + testler.
+- **M2 (sonraki tur):** `addBreadcrumb(b)` + `TelemetryStore`'a `breadcrumb` kategorisi extension + testler.
+- **M3 (sonraki tur):** `withScope(fn)` transient scope (try/finally pattern, async-safe overload) + testler + S8 closure.
+
+#### Mevcut API Audit (Pre-flight bulgusu)
+
+`src/sentinel/user-metadata.ts` zaten içeriyor: `setUser`, `clearUser`, `addMetadata`, `removeMetadata`, `clearMetadata`. Bunlar dokunulmuyor (geriye uyumlu); S8 üzerine ek katman:
+
+| Yeni API                                  | Şekli                                                  | Backing                                                  |
+| ----------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------- |
+| `setTag(k, v)`                            | `(k: string, v: string \| number \| boolean) => void`  | `addMetadata(k, v)` alias — yeni delegasyon, aynı bucket |
+| `setContext(name, ctx)`                   | `(name: string, ctx: Record<string, unknown>) => void` | yeni `sdk.contexts` bucket                               |
+| `setExtra(k, v)`                          | `(k: string, v: unknown) => void`                      | yeni `sdk.extras` bucket                                 |
+| `removeContext(name)` / `clearContexts()` | yeni                                                   | yeni state                                               |
+| `removeExtra(k)` / `clearExtras()`        | yeni                                                   | yeni state                                               |
+| `addBreadcrumb(b)` _(M2)_                 | `(b: Breadcrumb) => void`                              | `TelemetryStore` extension                               |
+| `withScope(fn)` _(M3)_                    | `(fn: (scope: Scope) => void) => void`                 | transient scope manager                                  |
+
+`BrowsonicEvent` public surface eklemeleri (additive, non-breaking):
+
+- `contexts?: Record<string, Record<string, unknown>>`
+- `extras?: Record<string, unknown>`
 
 #### Sprint Hedefi
 
@@ -586,12 +620,15 @@ Sentry'nin `addBreadcrumb` / `setTag` / `setContext` / `setExtra` / `withScope` 
 
 #### İş Logu
 
-(boş)
+- [2026-05-04] **S8 milestone 1**: `setTag` (alias) + `setContext` + `setExtra` + `removeTag` / `removeContext` / `clearContexts` / `removeExtra` / `clearExtras` public API + state alanları (`contexts`, `extras`) + event-pipeline yansıması — durum: ✅
+  - Commit/PR: bkz. milestone 1 commit hash `<S8_M1_HASH>`
+  - Test/CI: typecheck clean, lint 0/0, test **407/407 passed** (397 → 407, +10: 5 setContext + 5 setExtra). size — main 19.01 → **19.26 KB / 22** (+0.25 KB), core 12.67 → **12.89 KB / 15** (+0.22 KB), widget 5.12 KB (no change), CJS 22.53 → 22.9 KB / 26 (+0.37 KB).
+  - Notlar: Mevcut `addMetadata`/`removeMetadata` korundu (geriye uyumlu); `setTag`/`removeTag` Sentry-uyumlu naming alias olarak eklendi. `setContext` shallow-copy on write (post-set mutation izole). `setExtra` reference-stored (Sentry parite — fresh obje pass etmek isolation için kullanıcı sorumluluğunda; user-metadata.ts'te documented). `BrowsonicEvent`'a opsiyonel `contexts?: Record<string, Record<string, unknown>>` ve `extras?: Record<string, unknown>` eklendi (additive, breaking değil). Event-pipeline her event creation'da contexts/extras'ı snapshot olarak yansıtıyor (`hasContexts ? { contexts: { ...sdk.contexts } } : {}` pattern'i ile boş bucket atılır, payload bloating yok).
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-service** (yeni breadcrumb tipini ingest tarafı bekliyor mu? ek alan kabulü), **browsonic-dashboard** (yeni tag/context UI'ları — opsiyonel, sonra).
+- [ ] Post-flight (1.3) tüm adımları geçildi. _M3 closure'da işaretlenecek._
+- Etkilenen repolar (M3 sonunda doğrulanacak): **browsonic-service** (yeni `contexts` ve `extras` opsiyonel alanlarını ingest tarafı tolerate + persist etmeli — additive, breaking değil; tip mismatch ile reject olursa breaking. M2'de `breadcrumb` ek kategorisi telemetry timeline'a eklenince ek persist tip değişikliği gelebilir), **browsonic-dashboard** (yeni tag/context UI'ları — opsiyonel, sonra).
 
 ---
 

@@ -8,11 +8,24 @@
  * re-introducing the legacy `toLowerCase()` per-iteration allocation.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { setUser, clearUser, addMetadata, removeMetadata, clearMetadata } from './user-metadata';
+import {
+  setUser,
+  clearUser,
+  addMetadata,
+  removeMetadata,
+  clearMetadata,
+  // Sprint 8 M1 — Sentry-compatible context surface
+  setContext,
+  removeContext,
+  clearContexts,
+  setExtra,
+  removeExtra,
+  clearExtras,
+} from './user-metadata';
 import type { Browsonic } from './browsonic';
 import type { UserContext } from '../types';
 
-type SdkStub = Pick<Browsonic, 'config' | 'user' | 'metadata' | 'debugLog'>;
+type SdkStub = Pick<Browsonic, 'config' | 'user' | 'metadata' | 'contexts' | 'extras' | 'debugLog'>;
 
 function makeSdk(overrides: Partial<SdkStub> = {}): Browsonic {
   const config = {
@@ -27,6 +40,8 @@ function makeSdk(overrides: Partial<SdkStub> = {}): Browsonic {
     config: config as unknown as Browsonic['config'],
     user: null,
     metadata: {},
+    contexts: {},
+    extras: {},
     debugLog: ((..._args: unknown[]) => {
       logs.push(_args);
     }) as unknown as Browsonic['debugLog'],
@@ -115,5 +130,93 @@ describe('addMetadata / removeMetadata / clearMetadata', () => {
     sdk.metadata = { a: 1, b: 2 };
     clearMetadata(sdk);
     expect(sdk.metadata).toEqual({});
+  });
+});
+
+describe('setContext / removeContext / clearContexts (Sprint 8 M1)', () => {
+  let sdk: Browsonic;
+
+  beforeEach(() => {
+    sdk = makeSdk();
+  });
+
+  it('stores a structured context bucket by name', () => {
+    setContext(sdk, 'order', { items: 3, total: 99 });
+    expect(sdk.contexts).toEqual({ order: { items: 3, total: 99 } });
+  });
+
+  it('replaces an existing bucket on second set (no partial-merge)', () => {
+    setContext(sdk, 'order', { items: 3, total: 99 });
+    setContext(sdk, 'order', { items: 5 });
+    // Full replacement — `total` should be gone, NOT merged.
+    expect(sdk.contexts).toEqual({ order: { items: 5 } });
+  });
+
+  it('shallow-copies on write so post-set mutation does not leak', () => {
+    const ctx = { items: 3 };
+    setContext(sdk, 'order', ctx);
+    ctx.items = 99;
+    expect((sdk.contexts as Record<string, Record<string, unknown>>).order).toEqual({ items: 3 });
+  });
+
+  it('removeContext deletes the named bucket', () => {
+    sdk.contexts = { a: { x: 1 }, b: { y: 2 } };
+    removeContext(sdk, 'a');
+    expect(sdk.contexts).toEqual({ b: { y: 2 } });
+  });
+
+  it('clearContexts wipes everything', () => {
+    sdk.contexts = { a: { x: 1 }, b: { y: 2 } };
+    clearContexts(sdk);
+    expect(sdk.contexts).toEqual({});
+  });
+});
+
+describe('setExtra / removeExtra / clearExtras (Sprint 8 M1)', () => {
+  let sdk: Browsonic;
+
+  beforeEach(() => {
+    sdk = makeSdk();
+  });
+
+  it('stores arbitrary value types (object, array, primitive)', () => {
+    setExtra(sdk, 'snapshot', { foo: 'bar' });
+    setExtra(sdk, 'logs', ['a', 'b']);
+    setExtra(sdk, 'count', 42);
+    setExtra(sdk, 'flag', true);
+    expect(sdk.extras).toEqual({
+      snapshot: { foo: 'bar' },
+      logs: ['a', 'b'],
+      count: 42,
+      flag: true,
+    });
+  });
+
+  it('stores by reference (post-set mutation IS observable, by design)', () => {
+    // Sentry parity: `setExtra` does NOT shallow-copy. Documented in
+    // user-metadata.ts. Pass a fresh object to isolate mutations.
+    const blob = { items: 3 };
+    setExtra(sdk, 'orderBlob', blob);
+    blob.items = 99;
+    expect((sdk.extras as Record<string, unknown>).orderBlob).toEqual({ items: 99 });
+  });
+
+  it('removeExtra deletes by key', () => {
+    sdk.extras = { a: 1, b: 2 };
+    removeExtra(sdk, 'a');
+    expect(sdk.extras).toEqual({ b: 2 });
+  });
+
+  it('clearExtras wipes the object', () => {
+    sdk.extras = { a: 1, b: 2 };
+    clearExtras(sdk);
+    expect(sdk.extras).toEqual({});
+  });
+
+  it('accepts null and undefined as valid extras values', () => {
+    setExtra(sdk, 'maybeNull', null);
+    setExtra(sdk, 'maybeUndef', undefined);
+    expect((sdk.extras as Record<string, unknown>).maybeNull).toBeNull();
+    expect('maybeUndef' in sdk.extras).toBe(true);
   });
 });

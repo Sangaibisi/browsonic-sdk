@@ -77,3 +77,77 @@ export function clearMetadata(sdk: Browsonic): void {
   sdk.metadata = {};
   sdk.debugLog('Metadata cleared');
 }
+
+// ============================================================================
+// Sprint 8 M1 — Sentry-compatible structured context surface
+// ============================================================================
+
+/**
+ * Replace the named context bucket with a shallow copy of `ctx`. Each
+ * call overwrites the previous bucket of the same name; partial
+ * updates are intentionally NOT supported (callers compose the full
+ * bucket once per change to avoid cross-render shared-reference bugs).
+ */
+export function setContext(sdk: Browsonic, name: string, ctx: Record<string, unknown>): void {
+  safeExecute(
+    () => {
+      // Shallow-copy on write — host code may continue to mutate `ctx`
+      // after the call without affecting subsequent events.
+      sdk.contexts[name] = { ...ctx };
+      sdk.debugLog(`Context set: ${name}`);
+    },
+    undefined,
+    (error) => sdk.debugLog('setContext error:', error)
+  );
+}
+
+export function removeContext(sdk: Browsonic, name: string): void {
+  safeExecute(
+    () => {
+      delete sdk.contexts[name];
+      sdk.debugLog(`Context removed: ${name}`);
+    },
+    undefined,
+    (error) => sdk.debugLog('removeContext error:', error)
+  );
+}
+
+export function clearContexts(sdk: Browsonic): void {
+  sdk.contexts = {};
+  sdk.debugLog('Contexts cleared');
+}
+
+/**
+ * Set an event-level extra. Unlike {@link addMetadata}, the value is
+ * `unknown` — any shape, including nested objects and arrays, is
+ * allowed. Stored by reference (no clone): callers that mutate the
+ * value after setting it WILL leak the mutation into subsequent
+ * events. This matches Sentry's `setExtra` semantics; pass a fresh
+ * object on every change if isolation matters.
+ */
+export function setExtra(sdk: Browsonic, key: string, value: unknown): void {
+  safeExecute(
+    () => {
+      sdk.extras[key] = value;
+      sdk.debugLog(`Extra set: ${key}`);
+    },
+    undefined,
+    (error) => sdk.debugLog('setExtra error:', error)
+  );
+}
+
+export function removeExtra(sdk: Browsonic, key: string): void {
+  safeExecute(
+    () => {
+      delete sdk.extras[key];
+      sdk.debugLog(`Extra removed: ${key}`);
+    },
+    undefined,
+    (error) => sdk.debugLog('removeExtra error:', error)
+  );
+}
+
+export function clearExtras(sdk: Browsonic): void {
+  sdk.extras = {};
+  sdk.debugLog('Extras cleared');
+}
