@@ -1,0 +1,94 @@
+// SPDX-License-Identifier: Apache-2.0
+
+/**
+ * Vue 3 application plugin. Install with:
+ *
+ * ```ts
+ * import { createApp } from 'vue';
+ * import { browsonicPlugin } from '@browsonic/vue';
+ * import { getBrowsonic } from '@browsonic/sdk';
+ *
+ * const sdk = getBrowsonic();
+ * sdk.init({ apiEndpoint: 'https://...' });
+ *
+ * const app = createApp(App);
+ * app.use(browsonicPlugin, { sdk });
+ * app.mount('#app');
+ * ```
+ *
+ * What the plugin wires up
+ * ------------------------
+ * 1. `provide(browsonicInjectionKey, sdk)` — composables resolve via
+ *    `inject` first, falling back to the global window singleton.
+ * 2. `app.config.errorHandler` chaining — captures errors that escape
+ *    component boundaries (or aren't wrapped in one). Calls the
+ *    previously-installed handler afterwards so we coexist with other
+ *    plugins (Pinia devtools, custom logging) instead of stomping on
+ *    them.
+ *
+ * Defensive contract
+ * ------------------
+ * - SDK calls are wrapped in try/catch — a thrown `captureError`
+ *   cannot crash the host app's error pipeline.
+ * - The previous `errorHandler` is invoked even when our reporting
+ *   fails. Order: report → user handler → re-throw policy is set by
+ *   the SDK config, not the plugin.
+ *
+ * @copyright 2024-2026 Browsonic
+ * @license Apache-2.0
+ */
+
+import type { App, Plugin } from 'vue';
+import type { Browsonic } from '@browsonic/sdk';
+import { browsonicInjectionKey } from './inject-key';
+import { resolveSdk } from './resolve-sdk';
+
+export interface BrowsonicVueOptions {
+  /**
+   * SDK instance to report errors to. When omitted, the plugin tries
+   * `window.Browsonic.getBrowsonic()`. If neither is available the
+   * plugin still installs but reports become no-ops.
+   */
+  sdk?: Browsonic;
+  /**
+   * Whether to chain into `app.config.errorHandler`. Defaults to
+   * `true`. Set to `false` if your application explicitly manages its
+   * own errorHandler and wants the boundary alone to be the SDK
+   * report site.
+   */
+  chainErrorHandler?: boolean;
+}
+
+export const browsonicPlugin: Plugin<[BrowsonicVueOptions?]> = {
+  install(app: App, options?: BrowsonicVueOptions) {
+    const sdk = options?.sdk ?? resolveSdk();
+    const chain = options?.chainErrorHandler ?? true;
+
+    if (sdk) {
+      app.provide(browsonicInjectionKey, sdk);
+    }
+
+    if (chain) {
+      const previous = app.config.errorHandler;
+      app.config.errorHandler = (err, instance, info) => {
+        if (sdk) {
+          try {
+            const errorObj = err instanceof Error ? err : new Error(String(err));
+            sdk.captureError(errorObj);
+            if (typeof info === 'string' && info.length > 0) {
+              sdk.addMetadata('vueErrorInfo', info);
+            }
+          } catch {
+            // Defensive isolation — never break the host's error
+            // pipeline because reporting threw.
+          }
+        }
+        try {
+          previous?.(err, instance, info);
+        } catch {
+          // Same contract for the previous handler.
+        }
+      };
+    }
+  },
+};
