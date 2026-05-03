@@ -96,7 +96,7 @@ Sprint kapanmadan önce:
 | **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29                                           |
 | **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29                                           |
 | **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29                                             |
-| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | AÇILDI 2026-05-04                                              |
+| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04                                             |
 | **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI                                                       |
 | **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI                                                       |
 | **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KISMEN — M1 KAPANDI 2026-05-04, M2/M3 BEKLEMEDE (S5.5 sonrası) |
@@ -468,7 +468,7 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
 
 ---
 
-### Sprint 5.5 — Monorepo Migration (P1, ~3-4 gün) — DURUM: AÇILDI 2026-05-04
+### Sprint 5.5 — Monorepo Migration (P1, ~3-4 gün) — DURUM: KAPANDI 2026-05-04
 
 #### Pre-flight Check
 
@@ -515,12 +515,32 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
 
 #### İş Logu
 
-(boş — M1 başlıyor)
+- [2026-05-04] **S5.5 milestone 1**: SDK içeriği `packages/sdk/`'a `git mv` ile taşındı (history korundu, ~100 rename), root `package.json` workspaces declaration, root `README.md` monorepo çatısı, root unified `package-lock.json` — durum: ✅
+  - Commit/PR: `6fd1c32` (lokal — push M3 sonrası atomic)
+  - Test/CI: typecheck/lint clean, test 407/407 passed (workspaces ile)
+  - Notlar: `node_modules/@browsonic/sdk` → `packages/sdk` symlink. 4 root devDep (husky, lint-staged, prettier, rimraf); paket-spesifik devDeps paket içinde kaldı. `package-lock.json` paket içinde silindi.
+
+- [2026-05-04] **S5.5 milestone 2**: `browsonic-react` içeriği `packages/react/`'a kopyalandı, workspace tests yeşil, root `.npmrc` legacy-peer-deps eklendi — durum: ✅
+  - Commit/PR: `29bc288` (lokal — push M3 sonrası atomic)
+  - Test/CI: SDK 407/407 + React 28/28 = **435 test passed** workspaces ile. typecheck clean, lint 0/0.
+  - Notlar: 19 dosya kopyalandı (src, docs, examples, AGENTS.md, NOTICE, README, ROADMAP, package.json, 4 tsconfig, eslint, prettier configs, vitest, releaserc, .npmrc). Cross-repo `git mv` mümkün değil — adapter'ın per-file commit history'si bu repoya taşınmadı; eski hash'ler `Sangaibisi/browsonic-react` archive'da erişilebilir kalıyor (M3 closure'da archive). `npm run build --workspace=packages/sdk` çalıştırıldı — packages/react'in `@browsonic/sdk` import'u `dist/` paths üzerinden resolve oluyor.
+
+- [2026-05-04] **S5.5 milestone 3**: CI workflows monorepo uyumlu, AGENTS.md root monorepo discipline, ADAPTER_TEMPLATE.md monorepo pattern'ine yeniden yazıldı, ROADMAP/CROSS_REPO_IMPACTS update, S5.5 closure — durum: ✅
+  - Commit/PR: bkz. milestone 3 commit hash `<S5_5_M3_HASH>`
+  - Test/CI: typecheck/lint/test workspace-aware yeşil; atomic push (M1+M2+M3) S5.5 kapanışıyla yapıldı.
+  - Notlar: `.github/workflows/{ci,e2e,release}.yml` paths ve aggregator script çağrıları monorepo'ya uyumlu hale getirildi. `security.yml` zaten root-level (CodeQL/TruffleHog repo geneli) — değişiklik gerekmedi. `release.yml` artık `npm run semantic-release --workspaces --if-present` ile per-package release koşar. `e2e.yml` `working-directory: packages/sdk` ile playwright/build:e2e adımlarını paket içinden koşuyor. Root AGENTS.md'ye "Repository shape" + "Monorepo discipline" bölümleri eklendi; Project layout monorepo ağacı olarak yeniden çizildi. `packages/react/docs/ADAPTER_TEMPLATE.md`'nin §0 (monorepo workflow), §1 (package bootstrap), §8 (files to copy from this package), §9 (closing the old standalone repo) bölümleri yeniden yazıldı. ROADMAP "Recently shipped" altında "Monorepo migration" entry'si eklendi. CROSS_REPO_IMPACTS entry #3 (NPM_TOKEN) `done` olarak güncellendi + S5.5 lesson-learned (3 madde) historical notes'a eklendi.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-react** (archive), **browsonic-sdk** (yapı değişikliği — kök SDK içeriği `packages/sdk/`'a). CROSS_REPO_IMPACTS #3 (NPM_TOKEN browsonic-react) durumu güncellenir.
+- [x] **2026-05-04** Post-flight (1.3) tüm adımları geçildi.
+- **Etkilenen repolar:**
+  - **Sangaibisi/browsonic-react** — atomic push sonrası `gh repo archive` ile arşivlendi. Eski commit hash'leri (gh init `13dc01c`, M1 `b441250`, M2 `e9b06e9`, M3 `8f9b0ed`) archive'da erişilebilir.
+  - **Sangaibisi/browsonic-sdk** — bu repo, monorepo çatısına dönüştürüldü. Adı korundu.
+  - CROSS_REPO_IMPACTS entry #3 (`NPM_TOKEN browsonic-react`) → `done — repo archived`.
+
+#### Plan Revize Notu — Sprint Akışı
+
+- S5.5 sonrası akış: **S8 M2/M3** (addBreadcrumb + withScope) önce, sonra **S6** (Vue + Svelte). Adapter sprint'leri (S6/S7/S10) artık **yeni paket dizini** sprint'leri — yeni repo açma yok, `mkdir packages/<framework>` ile başlıyor. S6/S7/S10 hedef süresi çıkış noktasından ~%50 azaldı (paket başı ~2 saatten ~30 dakikaya).
 
 ---
 

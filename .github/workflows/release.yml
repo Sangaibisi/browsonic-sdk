@@ -1,8 +1,9 @@
 name: release
 
-# semantic-release driven by Conventional Commits. Runs on every push
-# to main (or release branches) and decides on its own whether a
-# release is due based on commit messages since the last tag.
+# semantic-release driven by Conventional Commits, run **per workspace**.
+# Each package owns its own .releaserc.json + CHANGELOG + version,
+# so every workspace decides independently whether a release is due
+# based on commit messages since its own last tag.
 #
 # Required secrets:
 #   GITHUB_TOKEN  — provided by Actions; needs `contents: write`
@@ -12,7 +13,7 @@ name: release
 #                   the @browsonic scope. Generate at npmjs.com →
 #                   Access Tokens → Granular → "Publish".
 #
-# Branch policy (.releaserc.json):
+# Branch policy (per package .releaserc.json):
 #   main         → stable releases (npm dist-tag: latest)
 #   next         → prereleases (npm dist-tag: next)
 #   release/X.x  → LTS lines (e.g. release/2.x), patch-only
@@ -22,7 +23,7 @@ on:
     branches:
       - main
       - next
-      - 'release/*.x'
+      - "release/*.x"
   workflow_dispatch:
 
 permissions:
@@ -37,9 +38,9 @@ concurrency:
 
 jobs:
   release:
-    name: semantic-release
+    name: semantic-release (per workspace)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
         with:
@@ -50,38 +51,46 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: "npm"
 
       - run: npm ci
 
-      - name: Build (all distribution formats)
+      - name: Build all packages
         run: npm run build
 
-      # Optional supply-chain artefacts attached to the GitHub Release.
-      - name: Generate SBOM (CycloneDX)
+      # Supply-chain artefacts for the SDK package — attached to its
+      # GitHub Release via @semantic-release/github plugin in
+      # packages/sdk/.releaserc.json (M3 follow-up: wire these into
+      # the SDK release config so they ride along with the published
+      # GitHub Release).
+      - name: Generate SBOM (sdk, CycloneDX)
+        working-directory: packages/sdk
         run: npx --yes @cyclonedx/cyclonedx-npm --output-format json --output-file browsonic-sdk.cdx.json
         continue-on-error: true
 
-      - name: Compute checksums
+      - name: Compute SDK UMD checksums
+        working-directory: packages/sdk
         run: |
           set -e
-          cd dist
-          if [ -f umd/browsonic.min.js ]; then
-            sha256sum umd/browsonic.min.js umd/browsonic.js > ../browsonic-sdk.sha256sums || true
+          if [ -f dist/umd/browsonic.min.js ]; then
+            sha256sum dist/umd/browsonic.min.js dist/umd/browsonic.js > browsonic-sdk.sha256sums || true
           fi
 
-      - name: semantic-release
+      - name: Run semantic-release (per workspace)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # `setup-node@v4` with `registry-url` writes ~/.npmrc as
+          # `setup-node@v6` with `registry-url` writes ~/.npmrc as
           # `_authToken=${NODE_AUTH_TOKEN}`; semantic-release internally
           # calls `npm whoami` which reads that file. Without
           # NODE_AUTH_TOKEN the substitution is empty and the verify
           # step fails with E401.
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          # `--provenance` is enabled via package.json publishConfig and
-          # requires id-token: write (declared above).
-        run: npx semantic-release
+          # `--provenance` is enabled via each package's
+          # publishConfig and requires id-token: write (declared above).
+        # `--workspaces --if-present` walks every package that ships a
+        # `semantic-release` script. Today: sdk + react. Each runs
+        # against its own .releaserc.json and decides independently.
+        run: npm run semantic-release --workspaces --if-present

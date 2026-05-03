@@ -5,60 +5,65 @@
 > patterns established while building `@browsonic/react`. Treat it
 > as a checklist, not a contract: you may diverge where the target
 > framework idiom demands, but document the divergence in the new
-> package's AGENTS.md.
+> package's `AGENTS.md`.
 
 ## Why a template
 
 `@browsonic/react` was built as the **pilot adapter** in Sprint 5
-(see [browsonic-sdk SPRINT_PLAN.md](https://github.com/Sangaibisi/browsonic-sdk/blob/main/docs/sprint-tracking/SPRINT_PLAN.md)).
-Sprints 6 (Vue + Svelte), 7 (Next + Astro), and 10 (Angular +
-Remix) replicate the same shape. Without a template, every adapter
-becomes a reinvention; with the template, four adapters take the
-time of one and a third.
+(see [SPRINT_PLAN.md](../../../docs/sprint-tracking/SPRINT_PLAN.md)).
+After the **S5.5 monorepo migration** (2026-05-04), every framework
+adapter ships as a new workspace inside the `browsonic-sdk` monorepo
+under `packages/<framework>/`. Sprints 6 (Vue + Svelte), 7 (Next +
+Astro), and 10 (Angular + Remix) replicate the same shape.
 
-## 1. Repo bootstrap
+Without a template, every adapter becomes a reinvention. With the
+template — and the workspace flow below — adding an adapter takes
+30 minutes instead of 2 hours.
 
-### 1.1 GitHub repo
+## 0. Monorepo workflow (post-S5.5)
+
+**No new GitHub repository is created.** The adapter is a new
+workspace inside `browsonic-sdk`'s `packages/` directory. Skeleton:
 
 ```bash
-gh repo create Sangaibisi/browsonic-<framework> \
-  --public \
-  --description "<framework> adapter for @browsonic/sdk — error boundary, hooks, HOC. Apache-2.0." \
-  --license apache-2.0 \
-  --gitignore Node
-gh repo clone Sangaibisi/browsonic-<framework>
+# from the browsonic-sdk repo root
+mkdir -p packages/<framework>/src packages/<framework>/docs
+cd packages/<framework>
+# copy starter files (see §8 below) from packages/react and edit
+# framework-specific bits.
+cd ../..
+npm install            # workspaces resolve the new package automatically
 ```
 
-`Node` gitignore + `apache-2.0` license seed the repo. Both are
-the agreed choices across the Browsonic stack — diverge only with
-a written justification.
+`node_modules/@browsonic/<framework>` symlinks back to
+`packages/<framework>` so other packages can import it via
+`@browsonic/<framework>` (registry-style name) and the resolution
+works identically in dev (workspace symlink) and at consumer
+install (npm registry).
 
-### 1.2 Files committed in M1 (scaffold milestone)
+## 1. Package bootstrap (M1 milestone)
 
-Mirror `@browsonic/react`:
+Mirror `@browsonic/react`. Files committed in M1:
 
-| File                                              | Purpose                                                                                                    |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `package.json`                                    | name `@browsonic/<framework>`, peer deps for the framework, devDeps mirror this repo's                     |
-| `tsconfig.json` + `tsconfig.{esm,cjs,types}.json` | strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` + `verbatimModuleSyntax`                |
-| `eslint.config.mjs`                               | flat config, type-aware rules scoped to `src/**`, `*.config.{js,mjs,ts}` ignored                           |
-| `.prettierrc.json` + `.prettierignore`            | match this repo (singleQuote, trailingComma all, printWidth 100)                                           |
-| `vitest.config.ts`                                | `happy-dom` environment, coverage thresholds 80/70/80/80                                                   |
-| `.releaserc.json`                                 | conventionalcommits preset, plugins: commit-analyzer, release-notes-generator, changelog, npm, git, github |
-| `.npmrc`                                          | `legacy-peer-deps=true` if the framework's lint plugin lags ESLint majors                                  |
-| `.husky/pre-commit`                               | `npx lint-staged`                                                                                          |
-| `.github/workflows/ci.yml`                        | lint + typecheck + test matrix Node 20/22 + build                                                          |
-| `.github/workflows/release.yml`                   | semantic-release on push to `main` / `next`                                                                |
-| `.github/dependabot.yml`                          | weekly npm + github-actions, framework runtime pinned out of safe-updates                                  |
-| `LICENSE` (Apache-2.0, gh seeded) + `NOTICE`      | `NOTICE` lists copyright + framework attribution                                                           |
-| `AGENTS.md`                                       | adapt from this repo (privacy section, defensive contract, pitfalls per framework)                         |
-| `README.md`                                       | "what this adapter ships" + compatibility table + privacy section                                          |
-| `ROADMAP.md`                                      | milestone breakdown 0.1 / 0.2 / 0.3 mirrors this repo                                                      |
+| File                                              | Purpose                                                                                                                                                                        |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `package.json`                                    | name `@browsonic/<framework>`, peer deps for the framework + `@browsonic/sdk: ^2.x`, devDeps mirror `packages/react`                                                           |
+| `tsconfig.json` + `tsconfig.{esm,cjs,types}.json` | strict + `noUncheckedIndexedAccess` + `exactOptionalPropertyTypes` + `verbatimModuleSyntax`                                                                                    |
+| `eslint.config.mjs`                               | flat config, type-aware rules scoped to `src/**`, `*.config.{js,mjs,ts}` + `examples/**` ignored                                                                               |
+| `.prettierrc.json` + `.prettierignore`            | match `packages/react`                                                                                                                                                         |
+| `vitest.config.ts`                                | `happy-dom` environment, coverage thresholds 80/70/80/80                                                                                                                       |
+| `.releaserc.json`                                 | conventionalcommits preset, plugins: commit-analyzer, release-notes-generator, changelog, npm, git, github                                                                     |
+| `.npmrc`                                          | `legacy-peer-deps=true` if the framework's lint plugin lags ESLint majors (root `.npmrc` already carries this — only override if you need different behaviour for the package) |
+| `NOTICE`                                          | copyright + framework attribution                                                                                                                                              |
+| `AGENTS.md`                                       | adapt from `packages/react/AGENTS.md` (privacy section, defensive contract, framework-specific pitfalls)                                                                       |
+| `README.md`                                       | "what this adapter ships" + compatibility table + privacy section                                                                                                              |
+| `ROADMAP.md`                                      | milestone breakdown 0.1 / 0.2 / 0.3 mirrors `packages/react/ROADMAP.md`                                                                                                        |
 
-### 1.3 Files NOT committed in M1
+**Files NOT in the package:**
 
-- Source maps, `dist/`, `coverage/` — generated.
-- A demo app — comes in M3.
+- `LICENSE` — the monorepo root carries one Apache-2.0 LICENSE that covers every workspace.
+- `.github/`, `.husky/`, `.gitignore` — root-level, inherited by every workspace.
+- A demo app — comes in M3 under `packages/<framework>/examples/<framework>-vite/`.
 - `CHANGELOG.md` — semantic-release generates it on first release.
 
 ## 2. Public API surface
@@ -99,7 +104,7 @@ Every adapter MUST:
 ## 4. Test discipline
 
 - Vitest one-shot is the CI gate; coverage thresholds 80/70/80/80
-  match this repo and the SDK.
+  match the SDK and the React adapter.
 - Use the **framework's official testing library**:
   - React → `@testing-library/react`
   - Vue → `@testing-library/vue`
@@ -113,28 +118,36 @@ Every adapter MUST:
 
 ## 5. Sprint discipline
 
-This adapter's work is tracked in the **SDK repo's** SPRINT_PLAN.md
+This adapter's work is tracked in the monorepo's
+[`docs/sprint-tracking/SPRINT_PLAN.md`](../../../docs/sprint-tracking/SPRINT_PLAN.md)
 under the matching sprint number — do NOT open a parallel sprint
-plan in the adapter repo. Cross-repo impacts (service tolerance,
-dashboard fields) go in `browsonic-sdk/docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.
+plan inside the package. Cross-package impacts (e.g. SDK API
+change forces adapter rev) become a **single PR** touching both
+packages — that is the whole point of the monorepo. Cross-repo
+impacts (service tolerance, dashboard fields) go in
+[`docs/sprint-tracking/CROSS_REPO_IMPACTS.md`](../../../docs/sprint-tracking/CROSS_REPO_IMPACTS.md).
 
 ## 6. Release flow
 
-- `semantic-release` on `push` to `main`. First push containing a
-  `feat:` commit cuts `0.1.0`.
+- `semantic-release` runs **per package** via the root
+  `release.yml` invocation `npm run semantic-release --workspaces
+--if-present`. Each workspace owns its own `.releaserc.json` +
+  CHANGELOG + version, decided independently from commit messages
+  scoped to that package's path.
 - Branches: `main` → `latest`, `next` → `next` prerelease. LTS
-  patch lines (if needed) live on `release/X.x`.
-- `NPM_TOKEN` secret must exist in the GitHub repo settings before
-  the first release push, or the workflow fails. Rotate the token
-  with the SDK token's cadence.
+  patch lines (if needed) on `release/X.x`.
+- `NPM_TOKEN` lives at the **monorepo root** GitHub secret. One
+  token covers every workspace publish — no per-package secret
+  setup. Rotate alongside the SDK token.
 
 ## 6.1 Demo app pattern (`examples/<framework>-vite/`)
 
 Every adapter ships a minimal demo that exercises every public
-surface. The demo lives at `examples/<framework>-vite/` and:
+surface. The demo lives at `packages/<framework>/examples/<framework>-vite/`
+and:
 
-- Consumes the adapter via `file:../..` (no npm publish required to
-  try it locally).
+- Consumes the parent adapter via `file:../..` (no npm publish
+  required to try it locally).
 - Initialises the SDK in the bootstrap module and exposes it on
   `window.Browsonic.getBrowsonic()` so the adapter's `resolveSdk()`
   helper finds it.
@@ -152,24 +165,21 @@ evaluating the adapter; CI matters for adapter correctness.
 
 ## 6.2 First publish checklist
 
-Before the first `feat:` push to `main` triggers semantic-release:
+Before the first `feat:` push to `main` triggers semantic-release
+for a new adapter:
 
-- [ ] `NPM_TOKEN` repository secret exists (`gh secret list`). The
-      release workflow fails loudly if missing — no silent
-      half-publish.
+- [ ] `NPM_TOKEN` repository secret already exists at the monorepo
+      root (it does — set during S5 / S5.5).
 - [ ] `npm view @browsonic/<framework>` returns 404 (package name
-      not taken). If it returns a record, the org owns the name —
-      proceed; otherwise reconcile with the squatter before push.
-- [ ] `package.json` `publishConfig.access: "public"` and
-      `provenance: true` set. `--provenance` is non-negotiable
-      across the Browsonic stack.
+      not taken).
+- [ ] Package's `package.json` `publishConfig.access: "public"` and
+      `provenance: true` set. `--provenance` is non-negotiable.
 - [ ] `peerDependencies` declares the framework version range AND
       `@browsonic/sdk` minimum compatible.
-- [ ] CI workflow is green for the previous commit. semantic-release
-      replays only on green builds.
-- [ ] CHANGELOG entries (`feat:` / `fix:`) since last tag are
-      readable and useful — they appear verbatim on the GitHub
-      Release notes.
+- [ ] Root CI is green for the previous commit. semantic-release
+      only replays on green builds.
+- [ ] CHANGELOG entries (`feat:` / `fix:`) since last package tag
+      are readable and useful.
 
 ## 7. Migration / divergence checklist
 
@@ -178,42 +188,75 @@ When the target framework idiom forces a deviation from this template:
 - [ ] Document the divergence in the adapter's AGENTS.md under a
       "Divergences from ADAPTER_TEMPLATE" section.
 - [ ] Cross-link from this template if the divergence reveals a
-      gap in the template itself (a PR back to `@browsonic/react`
-      updating this file is the right move).
+      gap in the template itself (a PR back to this file is the
+      right move; it lives in the same monorepo).
 - [ ] Keep the public-API capability table (§2) consistent —
       framework idioms shape the **shape** of the API, not the
       capabilities.
 
-## 8. Files to copy from this repo (literal starting point)
+## 8. Files to copy from this package (literal starting point)
 
 For an agent bootstrapping the next adapter:
 
 ```bash
-# After repo clone, copy these as starting point and edit:
-cp -r ../browsonic-react/.github .github
-cp ../browsonic-react/.npmrc .
-cp ../browsonic-react/.prettier* .
-cp ../browsonic-react/.releaserc.json .
-cp ../browsonic-react/.husky/pre-commit .husky/pre-commit
-cp ../browsonic-react/tsconfig*.json .
-cp ../browsonic-react/eslint.config.mjs .
-cp ../browsonic-react/vitest.config.ts .
-cp ../browsonic-react/AGENTS.md .          # then edit framework refs
-cp ../browsonic-react/NOTICE .
-cp ../browsonic-react/ROADMAP.md .
-cp ../browsonic-react/README.md .
-cp -r ../browsonic-react/docs .            # this template + future entries
+# from the browsonic-sdk repo root, scaffolding packages/<framework>:
+cd packages/<framework>
+cp ../react/.prettierrc.json .
+cp ../react/.prettierignore .
+cp ../react/.releaserc.json .
+cp ../react/tsconfig.json ../react/tsconfig.cjs.json ../react/tsconfig.esm.json ../react/tsconfig.types.json .
+cp ../react/eslint.config.mjs .
+cp ../react/vitest.config.ts .
+cp ../react/AGENTS.md .          # then edit framework refs
+cp ../react/NOTICE .
+cp ../react/ROADMAP.md .
+cp ../react/README.md .
+mkdir -p docs && cp ../react/docs/ADAPTER_TEMPLATE.md docs/   # propagate this file
 ```
+
+CI workflows + dependabot live at the **monorepo root**
+(`.github/workflows/`); the adapter inherits them automatically by
+being a workspace. **Do not create per-package `.github/`
+directories.**
+
+`.npmrc` is also at the monorepo root — only put a per-package
+`.npmrc` if the package needs different behaviour from the rest of
+the monorepo.
 
 Then edit:
 
-- `package.json` — adapter name, framework peer deps, devDeps
-- `AGENTS.md` — replace React-specific sections (concurrent rendering,
-  class boundary, server components) with framework equivalents
+- `package.json` — adapter name (`@browsonic/<framework>`),
+  framework peer deps (`peerDependencies` includes the framework
+  - `@browsonic/sdk: ^2.x`), devDeps for the framework's testing
+    library
+- `AGENTS.md` — replace React-specific sections (concurrent
+  rendering, class boundary, server components) with the target
+  framework's equivalents
 - `README.md` — translate the "Why this adapter" section to the
   framework's reconciler / error-handling model
 - `eslint.config.mjs` — swap react/react-hooks plugin for the
   framework's plugin
 
 The shipped patterns (defensive contract, truncation, test
-discipline, release flow) carry across without edits.
+discipline, release flow, file:../.. demo linking) carry across
+without edits — workspaces resolve `@browsonic/sdk` and the
+sibling adapters via symlinks at install time.
+
+## 9. Closing the old standalone repo (S5.5 + transitional)
+
+If the adapter previously lived in its own GitHub repo (the React
+adapter did, before S5.5), archive that repo **after** the content
+has been imported into the monorepo and the first monorepo-side
+release has shipped. Use:
+
+```bash
+gh repo archive Sangaibisi/browsonic-<framework>
+```
+
+`gh repo archive` keeps every commit reachable read-only; do NOT
+`gh repo delete`. Outbound links to commit hashes from CHANGELOG,
+GitHub Releases, npm provenance, and external blogs must keep
+resolving — deletion breaks all of those silently.
+
+For adapters opened directly in the monorepo (S6 onwards), this
+section does not apply.

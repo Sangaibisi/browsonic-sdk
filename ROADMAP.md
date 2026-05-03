@@ -15,7 +15,9 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 - **OSS foundation hygiene** _(2026-04-29)_ — Apache-2.0 license headers, SPDX identifiers in every source file, public roadmap.
 - **Multi-engine stack parser & linked errors** _(2026-04-29, SDK 2.3.0)_ — Chromium / Gecko / WebKit per-engine parsers, `Error.cause` chain unwinding (depth 5 + circular guard), frame-aware fingerprint that absorbs line/column variance across minified rebuilds. New public types `StackFrame` and `LinkedError` on `BrowsonicEvent`.
-- **`@browsonic/react` adapter** _(2026-04-29)_ — separate repo [Sangaibisi/browsonic-react](https://github.com/Sangaibisi/browsonic-react), Apache-2.0. Ships `<BrowsonicErrorBoundary>`, `useBrowsonic` / `useUser` / `useCaptureError` hooks, and the `withBrowsonic` HOC. The repo carries [`docs/ADAPTER_TEMPLATE.md`](https://github.com/Sangaibisi/browsonic-react/blob/main/docs/ADAPTER_TEMPLATE.md) — the checklist that the next framework adapters (Vue, Svelte, Angular) replicate.
+- **`@browsonic/react` adapter** _(2026-04-29)_ — Apache-2.0. Ships `<BrowsonicErrorBoundary>`, `useBrowsonic` / `useUser` / `useCaptureError` hooks, and the `withBrowsonic` HOC.
+- **Public scope/breadcrumb/tag API M1** _(2026-05-04, SDK 2.4-track)_ — `setTag` / `setContext` / `setExtra` Sentry-compatible surface added on top of existing `setMetadata` / `setUser`. New optional `BrowsonicEvent.contexts` and `extras` fields. Migrating teams from `@sentry/browser` keep their muscle memory. (M2/M3 follow: `addBreadcrumb`, `withScope`.)
+- **Monorepo migration** _(2026-05-04)_ — repo restructured into npm workspaces. `@browsonic/sdk` lives at `packages/sdk/`, `@browsonic/react` lives at `packages/react/`. Old standalone `Sangaibisi/browsonic-react` repo archived. Future framework adapters (Vue, Svelte, Next, Astro, Angular, Remix) ship as new workspaces inside this monorepo — see [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 
 ## Next (queued, in priority order)
 

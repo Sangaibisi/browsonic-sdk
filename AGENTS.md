@@ -1,10 +1,30 @@
-# AGENTS.md — browsonic-sdk
+# AGENTS.md — browsonic-sdk (monorepo root)
 
 > Operating manual for AI coding agents (Claude Code, Cursor, Codex,
 > Aider, Cascade) and human contributors. Every rule here was learned
 > the hard way — a production regression, a failed release, or a CI
 > red build. **Do not weaken a rule without a PR that explains what
 > replaced it.**
+
+## Repository shape
+
+`browsonic-sdk` is an **npm workspaces monorepo** holding the core
+SDK and the framework adapters that consume it. Workspaces:
+
+- `packages/sdk` — `@browsonic/sdk`, the framework-agnostic core SDK
+  (privacy-first browser RUM + error tracking).
+- `packages/react` — `@browsonic/react`, React adapter (Error
+  Boundary, hooks, HOC).
+- `packages/<framework>` — future adapters (Vue, Svelte, Next, Astro,
+  Angular, Remix). Each new adapter is `mkdir packages/<framework>`
+  - the bootstrap checklist in
+    [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
+
+Per-package details (privacy, defensive contracts, framework-specific
+pitfalls) live in `packages/<name>/AGENTS.md`. **Read the relevant
+package's AGENTS.md before editing inside a package.** This root
+file covers cross-package rules; it does NOT replace package-level
+agents files.
 
 ## Purpose
 
@@ -13,13 +33,41 @@ to ship telemetry (errors, navigation, XHR, console, pageview, visitor
 context) to an HTTP ingest endpoint. It is the **one piece of code
 that runs inside customer applications**, so the bar is
 bundle-obsessive, fail-safe, privacy-first, and backwards-compatible.
+Adapter packages (`@browsonic/react`, etc.) are thin wrappers that
+inherit the same defensive contracts.
 
 The ingest endpoint is operator-supplied — there is no hard-coded
 backend. The SDK is paired in production with the closed-source
 Browsonic SaaS backend, but anything that speaks the documented
 `/v1/events` payload works equally well.
 
-Breaking this SDK breaks customer apps. Act accordingly.
+Breaking any package breaks customer apps. Act accordingly.
+
+## Monorepo discipline
+
+- **Root-only tooling.** The root `package.json` carries husky,
+  lint-staged, prettier, and rimraf — and nothing else. Per-package
+  devDeps (TypeScript, ESLint, Vitest, framework-specific) belong
+  inside the package.
+- **Root scripts are aggregators.** `npm run lint`, `npm run typecheck`,
+  `npm run test:run`, `npm run build`, `npm run size`, `npm run bench`
+  all walk every workspace via `--workspaces --if-present`. Running a
+  script from a single package: `npm run <script> --workspace=packages/<name>`.
+- **One root lockfile.** `package-lock.json` lives at the repo root.
+  Per-package `package-lock.json` files break npm workspaces — never
+  commit one inside `packages/`.
+- **Root `.npmrc` carries `legacy-peer-deps=true`** because
+  `eslint-plugin-react@7.x` peer-range hasn't been bumped to ESLint 10
+  yet. Remove the flag once the plugin maintainer updates.
+- **Cross-package imports** must come through the published package
+  name (`@browsonic/sdk`) so they resolve consistently in dev (via
+  workspace symlink) and at consumer install (via npm registry).
+  Direct relative imports across packages (`../../sdk/src/...`) are
+  forbidden — they break tree-shaking and create circular workspace
+  dependencies.
+- **Per-package release.** Each package owns its own `.releaserc.json`
+  - CHANGELOG + version. semantic-release runs per workspace via the
+    release.yml `--workspaces --if-present` invocation.
 
 ## Tech stack (authoritative)
 
@@ -129,6 +177,35 @@ npm run perf:all                    # build + bench + size + e2e
 ## Project layout
 
 ```
+browsonic-sdk/                ← repo root (workspaces)
+├── package.json              # workspaces declaration + monorepo aggregator scripts
+├── package-lock.json         # unified lockfile
+├── .npmrc                    # legacy-peer-deps=true (root-level)
+├── .github/workflows/        # CI + release + security + e2e (workspace-aware)
+├── .husky/                   # pre-commit (lint-staged at root)
+├── docs/sprint-tracking/     # SPRINT_PLAN.md + CROSS_REPO_IMPACTS.md
+├── AGENTS.md                 # this file — monorepo discipline + cross-package rules
+├── README.md, ROADMAP.md, LICENSE, NOTICE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md
+└── packages/
+    ├── sdk/                                  → @browsonic/sdk (core)
+    │   ├── src/                              # see SDK package layout below
+    │   ├── bench/, e2e/, scripts/, dist/, coverage/
+    │   ├── package.json, tsconfig.*.json, eslint.config.mjs, vitest.config.ts
+    │   ├── playwright.config.ts, .size-limit.json, .releaserc.json
+    │   ├── BENCHMARKS.md, CHANGELOG.md, INTEGRATION.md, PRIVACY.md
+    │   └── (no AGENTS.md yet; this root file is canonical for sdk discipline)
+    └── react/                                → @browsonic/react (React adapter)
+        ├── src/                              # error-boundary.tsx, hooks.ts, hoc.tsx, ...
+        ├── docs/ADAPTER_TEMPLATE.md          # checklist for the next framework adapter
+        ├── examples/react-vite/              # demo app (file:../.. consumes parent adapter)
+        ├── package.json, tsconfig.*.json, eslint.config.mjs, vitest.config.ts
+        ├── .releaserc.json, .npmrc (legacy-peer-deps)
+        └── AGENTS.md                         # React-specific discipline + pitfalls
+```
+
+### `packages/sdk/src/` layout
+
+```
 src/
 ├── index.ts                 # main entry — ESM/CJS
 ├── core.ts                  # core-only entry (no widget) — slimmer bundle
@@ -151,13 +228,6 @@ src/
 ├── types/                   # shared type surface (public + internal)
 ├── utils/                   # leaf helpers; keep dep-free
 └── visitor/                 # visitor ID + fingerprinting
-
-bench/                       # perf microbenchmarks — vitest bench
-e2e/                         # Playwright specs + demo-app fixtures
-scripts/                     # build + bench helpers (Node, not src)
-docs/                        # public integration docs
-dist/                        # build output — NEVER edited by hand
-coverage/                    # vitest coverage — gitignored
 ```
 
 **Directory contract**:
