@@ -89,18 +89,19 @@ Sprint kapanmadan önce:
 
 ## 2. Sprint Özet Tablosu
 
-| #       | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                |
-| ------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------- |
-| **S1**  | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29   |
-| **S2**  | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
-| **S3**  | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
-| **S4**  | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
-| **S5**  | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
-| **S6**  | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
-| **S7**  | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
-| **S8**  | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | AÇILDI 2026-05-04    |
-| **S9**  | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
-| **S10** | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
+| #        | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                                                          |
+| -------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------------------------------------------------- |
+| **S1**   | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29                                             |
+| **S2**   | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29                                             |
+| **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29                                           |
+| **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29                                           |
+| **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29                                             |
+| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | AÇILDI 2026-05-04                                              |
+| **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI                                                       |
+| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI                                                       |
+| **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KISMEN — M1 KAPANDI 2026-05-04, M2/M3 BEKLEMEDE (S5.5 sonrası) |
+| **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI                                                       |
+| **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI                                                       |
 
 Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kalıp doğrulandıktan sonra S6/S7/S10 aynı şablonu çoğaltır.
 
@@ -464,6 +465,62 @@ Adapter pazarının %50'si tek başına React. Bu sprint **adapter şablonunu** 
   - **browsonic-dashboard** _(opsiyonel fırsat)_ — kendisi React tabanlı. `@browsonic/react` 0.1 yayınlanınca dashboard'ın direkt SDK kullanımını adapter'a geçirebilir (boundary + hooks); bu CROSS_REPO_IMPACTS.md'ye `pending` entry olarak eklendi.
   - **browsonic-landing-astro** _(opsiyonel)_ — landing'de "@browsonic/react" tanıtımı için CTA güncellemesi; CROSS_REPO_IMPACTS.md'ye `pending` entry.
 - CROSS_REPO_IMPACTS.md güncellendi (S5 entries).
+
+---
+
+### Sprint 5.5 — Monorepo Migration (P1, ~3-4 gün) — DURUM: AÇILDI 2026-05-04
+
+#### Pre-flight Check
+
+- [x] **2026-05-04** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md aynı session'da okundu — değişmedi.
+  - [x] (1.1.2) SPRINT_PLAN.md güncel; S5 KAPANDI, S8 M1 KAPANDI, S8 M2/M3 BEKLEMEDE notu işlendi.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — 5 pending entry; S5.5 bunlardan #3 (NPM_TOKEN browsonic-react) ile çakışır: archive sonrası entry kapanır.
+  - [x] (1.1.4) AGENTS.md çatışması yok. AGENTS.md monorepo kuralları S5.5 boyunca eklenecek.
+  - [x] (1.1.5) Working tree temiz; S8 M1 closure (`5eb4b6b`) push edildi.
+
+#### Sprint Hedefi
+
+`browsonic-sdk` reposu **npm workspaces monorepo**'ya çevrilir. Mevcut SDK içeriği `packages/sdk/`'a taşınır; `browsonic-react` reposundan içerik `packages/react/`'a alınır ve eski repo archive edilir. Gelecek 5 adapter sprintinde (S6/S7/S10) yeni repo açma + secret + CI setup duplicate yükü tek "yeni paket dizini = `mkdir packages/<framework>`"a indirgenir.
+
+#### Sabit Kararlar
+
+| Konu                 | Karar                                           | Gerekçe                                                                 |
+| -------------------- | ----------------------------------------------- | ----------------------------------------------------------------------- |
+| Repo adı             | `browsonic-sdk` korunur (rename yok)            | Kullanıcı tercihi                                                       |
+| Workspace tool       | **npm workspaces** (native)                     | `package-lock.json` zaten npm; pnpm/yarn ek tooling                     |
+| Lockfile             | Tek kök `package-lock.json`                     | Workspaces zorunlu                                                      |
+| Per-package release  | Her paket kendi `.releaserc.json`               | Bağımsız versiyon kümesi (`@browsonic/sdk@2.x`, `@browsonic/react@0.x`) |
+| browsonic-react repo | **Archive** (silinmez)                          | Eski commit hash'leri erişilebilir kalır                                |
+| CI break period      | **Yok** — M1+M2+M3 lokalde tamamla, atomic push | Workflow yml'leri M3'te güncellenmeden eski yapıyı işaret etmesin       |
+
+#### Milestone Bölümlemesi
+
+- **M1 (bu turun hedefi):** SDK içeriğini `packages/sdk/`'a `git mv` ile taşı (history korunur). Yeni kök `package.json` (workspaces declaration). Kök `README.md` monorepo çatı. AGENTS.md monorepo discipline bölümü eklenir. Lokal test/lint/typecheck workspace komutlarıyla yeşil. **Push edilmez** — M3 öncesi atomic push.
+
+- **M2:** `browsonic-react` içeriği `packages/react/`'a kopyalanır (cross-repo `git mv` mümkün değil — yeni dosyalar). `@browsonic/react`'in `@browsonic/sdk` peer-dep'i workspace dependency'sine geçer. Eski `browsonic-react` repo'su `gh repo archive` ile arşivlenir. CROSS_REPO_IMPACTS entry #3 (NPM_TOKEN browsonic-react) `done` ya da kapanır.
+
+- **M3:** CI workflow'ları monorepo'ya uyarla — `.github/workflows/{ci,release}.yml` per-package matrix. ADAPTER_TEMPLATE.md monorepo pattern'ine göre tamamen yeniden yazılır (artık "yeni repo aç" değil, "`mkdir packages/<framework>`"). ROADMAP + CROSS_REPO_IMPACTS update. S5.5 closure. S8 M2/M3 unblocked.
+
+#### Riskler
+
+| Risk                                  | Mitigasyon                                                                                                             |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `git mv` ile import path'leri kırılır | Relative imports zaten paket içinde, dış path yok                                                                      |
+| `package-lock.json` kirliliği         | Mevcut sil, kökte taze `npm install` ile unified üret                                                                  |
+| husky/lint-staged workspace-aware mi? | Husky kökte kalır; lint-staged otomatik per-workspace çalışır npm-workspaces ile                                       |
+| `.size-limit.json` paket-spesifik     | packages/sdk/'a taşınır, kendi paket script'inden çalışır                                                              |
+| CI workflow break period              | **Push yapılmaz M3 sonuna kadar**; atomic single-push kuralı                                                           |
+| browsonic-react'ta git history kaybı  | M2'de cross-repo dosya kopyalama git history'yi koruyamaz; eski repo archive olarak kalır → eski hash'ler erişilebilir |
+
+#### İş Logu
+
+(boş — M1 başlıyor)
+
+#### Sprint Sonu Cross-Repo Etki Kontrolü
+
+- [ ] Post-flight (1.3) tüm adımları geçildi.
+- Etkilenen repolar: **browsonic-react** (archive), **browsonic-sdk** (yapı değişikliği — kök SDK içeriği `packages/sdk/`'a). CROSS_REPO_IMPACTS #3 (NPM_TOKEN browsonic-react) durumu güncellenir.
 
 ---
 
