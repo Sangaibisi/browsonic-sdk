@@ -50,5 +50,8 @@ export { COMMON_THIRD_PARTY_PATTERNS, COMMON_IGNORABLE_MESSAGES } from './utils'
 // Plugin API — host apps register plugins (widget, tracing, etc.) here.
 export type { SdkPlugin, PluginContext } from './plugin';
 
+// Sprint 8 M3 — transient scope (Sentry-compatible)
+export type { Scope } from './sentinel/scope';
+
 // NOTE: no WidgetRule / WidgetManager exports here — import those
 // from `@browsonic/sdk/widget` when you need them.

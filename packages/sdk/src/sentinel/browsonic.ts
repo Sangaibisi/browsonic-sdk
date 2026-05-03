@@ -56,6 +56,8 @@ import {
 } from './user-metadata';
 // Sprint 8 M2 — breadcrumb timeline
 import { addBreadcrumb as addBreadcrumbImpl } from './breadcrumbs';
+// Sprint 8 M3 — transient scope
+import { withScope as withScopeImpl, type Scope } from './scope';
 import {
   enterCriticalPath as enterCriticalPathImpl,
   exitCriticalPath as exitCriticalPathImpl,
@@ -243,6 +245,25 @@ export class Browsonic {
    */
   addBreadcrumb(breadcrumb: Breadcrumb): void {
     addBreadcrumbImpl(this, breadcrumb);
+  }
+
+  /**
+   * Run a callback against a transient scope (Sprint 8 M3). Tags,
+   * contexts, extras, and the current user set inside the callback are
+   * visible to events captured during the call but are reverted to
+   * their previous values when the callback returns or throws.
+   *
+   * Sync and async callbacks are both supported; the overload that
+   * matches your callback decides whether the return value is `T` or
+   * `Promise<T>`. The state is restored even when the callback throws
+   * (sync) or its returned promise rejects (async). Breadcrumbs added
+   * inside the scope persist in the telemetry timeline — they are not
+   * undone, matching the "activity trail" semantic.
+   */
+  withScope<T>(fn: (scope: Scope) => Promise<T>): Promise<T>;
+  withScope<T>(fn: (scope: Scope) => T): T;
+  withScope<T>(fn: (scope: Scope) => T | Promise<T>): T | Promise<T> {
+    return withScopeImpl(this, fn as (scope: Scope) => T);
   }
 
   /**

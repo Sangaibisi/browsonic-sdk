@@ -9,23 +9,22 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- **Public scope / breadcrumb / tag API** _(queued — see "Next")_.
+- _No active work — natural break point after Sprint 8 closure (2026-05-04). Next up is the Vue + Svelte adapter pair (Sprint 6)._
 
 ## Recently shipped
 
 - **OSS foundation hygiene** _(2026-04-29)_ — Apache-2.0 license headers, SPDX identifiers in every source file, public roadmap.
 - **Multi-engine stack parser & linked errors** _(2026-04-29, SDK 2.3.0)_ — Chromium / Gecko / WebKit per-engine parsers, `Error.cause` chain unwinding (depth 5 + circular guard), frame-aware fingerprint that absorbs line/column variance across minified rebuilds. New public types `StackFrame` and `LinkedError` on `BrowsonicEvent`.
 - **`@browsonic/react` adapter** _(2026-04-29)_ — Apache-2.0. Ships `<BrowsonicErrorBoundary>`, `useBrowsonic` / `useUser` / `useCaptureError` hooks, and the `withBrowsonic` HOC.
-- **Public scope/breadcrumb/tag API M1** _(2026-05-04, SDK 2.4-track)_ — `setTag` / `setContext` / `setExtra` Sentry-compatible surface added on top of existing `setMetadata` / `setUser`. New optional `BrowsonicEvent.contexts` and `extras` fields. Migrating teams from `@sentry/browser` keep their muscle memory. (M2/M3 follow: `addBreadcrumb`, `withScope`.)
+- **Public scope / breadcrumb / tag API** _(2026-05-04, SDK 2.4-track)_ — full Sentry-compatible surface: `setTag` / `setContext` / `setExtra` (M1), `addBreadcrumb` (M2), `withScope` sync + async (M3). New public types `Breadcrumb`, `BreadcrumbLevel`, `BreadcrumbTelemetryEntry`, `Scope`. New optional `BrowsonicEvent.contexts` and `extras` fields plus a fifth `TelemetryTimeline.breadcrumb` channel. Migrating teams from `@sentry/browser` keep their muscle memory.
 - **Monorepo migration** _(2026-05-04)_ — repo restructured into npm workspaces. `@browsonic/sdk` lives at `packages/sdk/`, `@browsonic/react` lives at `packages/react/`. Old standalone `Sangaibisi/browsonic-react` repo archived. Future framework adapters (Vue, Svelte, Next, Astro, Angular, Remix) ship as new workspaces inside this monorepo — see [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 
 ## Next (queued, in priority order)
 
-1. **Public scope / breadcrumb / tag API.** `addBreadcrumb`, `setTag`, `setContext`, `setExtra`, `withScope` — Sentry-compatible naming so teams switching from `@sentry/browser` keep their muscle memory.
-2. **Vue + Svelte adapters.** Apply the React-pilot template ([`browsonic-react/docs/ADAPTER_TEMPLATE.md`](https://github.com/Sangaibisi/browsonic-react/blob/main/docs/ADAPTER_TEMPLATE.md)) to `@browsonic/vue` (Composition API plugin, `app.config.errorHandler` chaining, Vue Router instrumentation) and `@browsonic/svelte` (SvelteKit `handleError` hook, `+error.svelte` integration).
-3. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
-4. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
-5. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+1. **Vue + Svelte adapters.** Apply the React-pilot template ([`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md)) to `@browsonic/vue` (Composition API plugin, `app.config.errorHandler` chaining, Vue Router instrumentation) and `@browsonic/svelte` (SvelteKit `handleError` hook, `+error.svelte` integration).
+2. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
+3. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
+4. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
 
 ## Deferred (rejoining the queue after design review)
 

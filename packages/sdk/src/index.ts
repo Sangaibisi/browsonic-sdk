@@ -99,6 +99,9 @@ export { createTelemetryStore, type TelemetryStore } from './telemetry';
 // Plugin API (1.0)
 export type { SdkPlugin, PluginContext } from './plugin';
 
+// Sprint 8 M3 — transient scope (Sentry-compatible)
+export type { Scope } from './sentinel/scope';
+
 // Ignore rule utilities - for user convenience
 export { COMMON_THIRD_PARTY_PATTERNS, COMMON_IGNORABLE_MESSAGES } from './utils';
 

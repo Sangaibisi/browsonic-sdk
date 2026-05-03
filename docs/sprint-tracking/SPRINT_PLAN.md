@@ -89,19 +89,19 @@ Sprint kapanmadan önce:
 
 ## 2. Sprint Özet Tablosu
 
-| #        | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                                                          |
-| -------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------------------------------------------------- |
-| **S1**   | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29                                             |
-| **S2**   | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29                                             |
-| **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29                                           |
-| **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29                                           |
-| **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29                                             |
-| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04                                             |
-| **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI                                                       |
-| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI                                                       |
-| **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KISMEN — M1 KAPANDI 2026-05-04, M2/M3 BEKLEMEDE (S5.5 sonrası) |
-| **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI                                                       |
-| **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI                                                       |
+| #        | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                |
+| -------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------- |
+| **S1**   | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29   |
+| **S2**   | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
+| **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
+| **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
+| **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
+| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04   |
+| **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | AÇILMADI             |
+| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
+| **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KAPANDI 2026-05-04   |
+| **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
+| **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
 
 Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kalıp doğrulandıktan sonra S6/S7/S10 aynı şablonu çoğaltır.
 
@@ -626,7 +626,7 @@ Modern meta-framework adapter'ları. Server-side capture skop dışı (multi-run
 
 ---
 
-### Sprint 8 — Public Scope/Breadcrumb/Tag API (P2, 2 hafta) — DURUM: AÇILDI 2026-05-04
+### Sprint 8 — Public Scope/Breadcrumb/Tag API (P2, 2 hafta) — DURUM: KAPANDI 2026-05-04
 
 #### Pre-flight Check
 
@@ -705,11 +705,20 @@ Sentry'nin `addBreadcrumb` / `setTag` / `setContext` / `setExtra` / `withScope` 
   - Commit/PR: bkz. milestone 2 commit hash `2f2517a`
   - Test/CI: typecheck clean, lint 0/0, test **419/419 passed** (407 → 419, +12). size — main 19.26 → **19.36 KB / 22** (+0.10 KB), core 12.89 → **13.02 KB / 15** (+0.13 KB), widget 5.12 KB (no change), CJS 22.9 → **23.06 KB / 26** (+0.16 KB).
   - Notlar: `addBreadcrumb` `Browsonic` class üzerinde public method olarak eklendi; impl `sentinel/breadcrumbs.ts`'de `safeExecute` sarmalı + `telemetryStore` null koruması (pre-init no-op) + paused-store no-op (Critical Path uyumlu — store kendi `add()`'inde respect ediyor). Defaults: `level` → `'info'`, `timestamp` → store auto-fill (`new Date().toISOString()`); kullanıcı isterse override edebiliyor. Wire format `BreadcrumbTelemetryEntry`, mevcut `console`/`network`/`navigation`/`visitor` channellerine simetrik 5. kanal olarak `event.telemetry.breadcrumb` array'ında çıkar (boş array fallback — payload bloating yok). `TelemetryCategory` `'breadcrumb'` ile genişletildi; ring buffer kapasitesi mevcut `maxTelemetryEntries`'i paylaşıyor (eski telemetry kanallarıyla yarışır — beklenen davranış, FIFO oldest-drops). Sentry parite kategori örnekleri: `'navigation' | 'http' | 'ui' | 'auth' | 'log' | custom`. M3 (`withScope`) kalan tek iş, S8 closure orada.
+- [2026-05-04] **S8 milestone 3**: `withScope(fn)` transient scope public API + `Scope` public interface + sync/async overloads + try/finally + Promise.finally restore semantics + 11 yeni unit test (scope.test.ts) — durum: ✅
+  - Commit/PR: bkz. milestone 3 commit hash `<TBD-stamp>`
+  - Test/CI: typecheck clean, lint 0/0, test **430/430 passed** (419 → 430, +11). size — main 19.36 → **19.60 KB / 22** (+0.24 KB), core 13.02 → **13.24 KB / 15** (+0.22 KB), widget 5.12 KB (no change), CJS 23.06 → **23.33 KB / 26** (+0.27 KB).
+  - Notlar: `withScope<T>` iki overload sunuyor — sync `(scope) => T => T`, async `(scope) => Promise<T> => Promise<T>`. Runtime'da return değerinin `then` field'ı kontrol edilerek dallanma yapılıyor (thenable detection); Promise dalı `then(onResolve, onReject)` ile her iki path'te de snapshot'ı geri yüklüyor (Promise.finally kullanmak yerine sıralı handler — eski tarayıcılarda finally polyfill bağımlılığı yok). Sync dalı `try/catch` ile throw'da snapshot restore + rethrow. Snapshot kapsamı: `metadata`, `contexts`, `extras`, `user` shallow-copy ile alınıyor; `setContext` zaten yazımda yeni obje üretiyor (M1'de güvence altına alındı), bu yüzden snapshot referansı sonraki set'lerden etkilenmiyor — perf de O(N) anahtar sayısıyla sınırlı. `Scope` interface'i `setTag` / `setContext` / `setExtra` / `setUser` / `addBreadcrumb` 5 metoda sahip; `setUser` `UserContext` (null değil) — clear ihtiyacı varsa scope dışında `clearUser()`. **Bilinçli divergence**: `scope.addBreadcrumb` çağrısı global `telemetryStore`'a yazıyor ve scope çıkışında **rollback edilmiyor** (Sentry de aynı davranışta — breadcrumb "activity trail", transient değil). Test bu davranışı doğruluyor + dokümantasyon eklendi (scope.ts `Scope.addBreadcrumb` JSDoc'ta).
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi. _M3 closure'da işaretlenecek._
-- Etkilenen repolar (M3 sonunda doğrulanacak): **browsonic-service** (yeni `contexts` ve `extras` opsiyonel alanlarını ingest tarafı tolerate + persist etmeli — additive, breaking değil; tip mismatch ile reject olursa breaking. M2'de `breadcrumb` ek kategorisi telemetry timeline'a eklenince ek persist tip değişikliği gelebilir), **browsonic-dashboard** (yeni tag/context UI'ları — opsiyonel, sonra).
+- [x] **2026-05-04** Post-flight (1.3) tüm adımları geçildi.
+  - (1.3.1) İş Logu M1 + M2 + M3 kayıtlarını içeriyor.
+  - (1.3.2) Etkilenen repolar: **browsonic-service** — additive ingest tolerance (yeni opsiyonel alanlar `contexts` / `extras` / `telemetry.breadcrumb`); CROSS_REPO_IMPACTS.md entry #6/7/8. **browsonic-dashboard** — opsiyonel UI yüzey ekleme (tag/context paneli + breadcrumb timeline); entry #9.
+  - (1.3.3) CROSS_REPO_IMPACTS.md güncellendi — 4 yeni satır + S8 lesson-learned.
+  - (1.3.4) typecheck/lint/test/size hepsi yeşil; build:umd geçti. Bench/e2e bu sprint'te touched alan yok (bundle/parser/transport değişmedi); release.yml replay'inde otomatik koşacak.
+  - (1.3.5) Conventional Commits formatı korundu — `feat(sdk):` (work) + `docs(sprint-tracking):` (stamp).
+  - (1.3.6) S8 başlığı KAPANDI 2026-05-04, Sprint Özet Tablosu satırı güncellendi.
 
 ---
 
