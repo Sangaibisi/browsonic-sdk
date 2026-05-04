@@ -47,20 +47,40 @@ export interface BrowsonicHandleErrorReturn {
   [key: string]: unknown;
 }
 
-export interface HandleErrorOptions {
+export interface HandleErrorOptions<
+  TError extends BrowsonicHandleErrorReturn = BrowsonicHandleErrorReturn,
+> {
   /** SDK instance. Falls back to `window.Browsonic.getBrowsonic()`. */
   sdk?: Browsonic;
   /**
    * Optional next handler — your existing `handleError` hook, called
    * after the SDK has been notified. Receives the same input and may
-   * return the SvelteKit-shaped error payload.
+   * return the SvelteKit-shaped error payload. The return type is
+   * generic over the consumer's `App.Error` shape so the framework's
+   * own typing flows through unchanged (0.2 — pre-typed App.Error
+   * exports).
    */
-  chain?: (input: BrowsonicHandleErrorInput) => BrowsonicHandleErrorReturn | void;
+  chain?: (input: BrowsonicHandleErrorInput) => TError | void;
 }
 
-export function handleErrorWithBrowsonic(
-  options: HandleErrorOptions = {},
-): (input: BrowsonicHandleErrorInput) => BrowsonicHandleErrorReturn | void {
+/**
+ * SvelteKit `handleError` factory.
+ *
+ * The single type parameter `TError` defaults to the broad
+ * `BrowsonicHandleErrorReturn` (0.1 behaviour). Consumers who maintain
+ * an `App.Error` interface in `src/app.d.ts` can pass it explicitly:
+ *
+ * ```ts
+ * import type { HandleClientError } from '@sveltejs/kit';
+ * export const handleError: HandleClientError =
+ *   handleErrorWithBrowsonic<App.Error>({
+ *     chain: ({ error }) => ({ id: crypto.randomUUID(), message: 'oops' }),
+ *   });
+ * ```
+ */
+export function handleErrorWithBrowsonic<
+  TError extends BrowsonicHandleErrorReturn = BrowsonicHandleErrorReturn,
+>(options: HandleErrorOptions<TError> = {}): (input: BrowsonicHandleErrorInput) => TError | void {
   return (input) => {
     const sdk = resolveSdk(options.sdk);
     const errorObj = input.error instanceof Error ? input.error : new Error(String(input.error));

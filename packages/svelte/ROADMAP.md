@@ -12,17 +12,28 @@
 - Apache-2.0, npm provenance, CycloneDX SBOM via the monorepo
   release pipeline.
 
-## 0.2
+## 0.2 (partial — shipped 2026-05-04)
 
-- **`navigation` breadcrumb action** — `use:trackNavigation` Svelte
-  action that emits `addBreadcrumb({ category: 'navigation', ... })`
-  on every SvelteKit `afterNavigate`.
-- **Snippet-friendly fallback for Svelte 5 boundaries** — a small
-  helper that returns a snippet for `{#snippet failed(...)}` blocks
-  with a configurable component.
-- **Pre-typed exports for `App.Error`** — generic over the
-  consumer's `App.Error` shape so `handleErrorWithBrowsonic` returns
-  the exact framework type.
+- **Navigation breadcrumb instrumentation.** Two surfaces over one
+  engine: `instrumentNavigation()` returns an unsubscribe handle
+  (call once at app init), and `trackNavigation` is a Svelte action
+  wrapping the same engine for `<div use:trackNavigation>` ergonomics.
+  History API patches (`pushState`/`replaceState`) are ref-counted so
+  multiple callers share one set of patches and the last unsubscribe
+  restores the originals. Works without a `@sveltejs/kit` peer dep —
+  programmatic `goto()` calls fire via the synthetic
+  `browsonic:locationchange` event; back/forward fire via popstate.
+- **Pre-typed exports for `App.Error`.** `handleErrorWithBrowsonic`
+  is now generic: `handleErrorWithBrowsonic<App.Error>({ ... })`
+  returns the consumer's `App.Error` shape so
+  `HandleClientError`-typed exports flow through unchanged. Default
+  generic stays `BrowsonicHandleErrorReturn` so existing consumers
+  keep working.
+- **Snippet-friendly fallback for Svelte 5 boundaries** — _deferred_.
+  Requires Svelte 5 in the test setup + a snippet-aware helper
+  that the build chain doesn't currently support without
+  `@vue/compiler-sfc`-style additions. Will land alongside
+  Suspense / boundary integration in 0.3.
 
 ## 0.3
 

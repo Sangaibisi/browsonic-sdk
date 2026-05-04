@@ -3,20 +3,30 @@
 /**
  * `@browsonic/svelte` — Svelte / SvelteKit adapter for `@browsonic/sdk`.
  *
- * Public surface (0.1):
+ * Public surface:
+ *
+ * 0.1 — bootstrap:
  * - `handleErrorWithBrowsonic` — SvelteKit `handleError` hook factory
  * - `subscribeUser` — Svelte store → SDK user context bridge
  * - `captureError` / `captureMessage` / `addBreadcrumb` — ergonomic
  *   wrappers around the global SDK singleton
  * - `resolveSdk` — explicit SDK lookup helper
  *
+ * 0.2 — instrumentation + typing:
+ * - `instrumentNavigation` — function returning unsubscribe; emits a
+ *   `category: 'navigation'` breadcrumb on every URL change.
+ * - `trackNavigation` — Svelte action wrapping the same engine.
+ * - `handleErrorWithBrowsonic<App.Error>` — generic over the
+ *   consumer's `App.Error` shape so the framework's exact error type
+ *   flows through.
+ *
  * Why no boundary component?
  * Svelte 5 ships `<svelte:boundary>` natively; Svelte 4 has no clean
  * primitive for an error boundary. Rather than ship a half-working
  * shim, the adapter focuses on what works well: SvelteKit's
- * `handleError` hook, store-driven user identity, and the manual
- * capture API. The README's "What this package does NOT do" section
- * makes the boundary divergence explicit.
+ * `handleError` hook, store-driven user identity, navigation
+ * breadcrumbs, and the manual capture API. The README's "What this
+ * package does NOT do" section makes the boundary divergence explicit.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0
@@ -31,3 +41,8 @@ export {
 export { subscribeUser, type ReadableLike, type SubscribeUserOptions } from './user-store';
 export { captureError, captureMessage, addBreadcrumb } from './capture';
 export { resolveSdk } from './resolve-sdk';
+export {
+  instrumentNavigation,
+  trackNavigation,
+  type InstrumentNavigationOptions,
+} from './navigation';
