@@ -1,3 +1,9 @@
+## [2.7.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.6.0...v2.7.0) (2026-05-04)
+
+### Features
+
+- **nextjs:** ship 0.2 — Pages Router companions + App Router metadata enrichment ([a115a41](https://github.com/Sangaibisi/browsonic-sdk/commit/a115a417a93d3831c02b55755bcb37b2dea8a51a))
+
 ## [2.6.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.5.0...v2.6.0) (2026-05-04)
 
 ### Features
