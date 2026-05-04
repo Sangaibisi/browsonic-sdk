@@ -1,3 +1,9 @@
+## [2.6.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.5.0...v2.6.0) (2026-05-04)
+
+### Features
+
+- **angular:** ship 0.2 — Router instrumentation (NavigationEnd → breadcrumb) ([72c7995](https://github.com/Sangaibisi/browsonic-sdk/commit/72c7995d275f3755cdce1ab3f67a6fa8277737e0))
+
 ## [2.5.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.4.0...v2.5.0) (2026-05-04)
 
 ### Features
