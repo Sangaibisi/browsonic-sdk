@@ -50,10 +50,39 @@ import { resolveSdk } from './resolve-sdk';
  * `app/error.tsx` (and `app/global-error.tsx`) module. Mirroring the
  * shape from `@types/next` keeps consumers off our types — they
  * import the official ones for their app/error.tsx signature.
+ *
+ * 0.2 adds optional `pathname` + `params`. App Router consumers can
+ * thread these in via Next's client hooks:
+ *
+ * ```tsx
+ * 'use client';
+ * import { usePathname, useParams } from 'next/navigation';
+ * import { BrowsonicErrorPage } from '@browsonic/nextjs';
+ * export default function ErrorBoundary({ error, reset }) {
+ *   return (
+ *     <BrowsonicErrorPage
+ *       error={error}
+ *       reset={reset}
+ *       pathname={usePathname()}
+ *       params={useParams()}
+ *     />
+ *   );
+ * }
+ * ```
  */
 export interface NextErrorPageProps {
   error: Error & { digest?: string };
   reset: () => void;
+  /**
+   * Optional canonical pathname from `usePathname()`. Lands as the
+   * `nextjs.pathname` tag on the captured event.
+   */
+  pathname?: string;
+  /**
+   * Optional dynamic-segment params from `useParams()`. Lands as the
+   * `nextjs.params` context on the captured event. Skipped when empty.
+   */
+  params?: Record<string, string | string[] | undefined>;
 }
 
 /**
@@ -63,11 +92,34 @@ export interface NextErrorPageProps {
  * implementation and adjust the JSX — it's intentionally simple so
  * forking is a non-event.
  */
-export function BrowsonicErrorPage({ error, reset }: NextErrorPageProps): ReactNode {
+export function BrowsonicErrorPage({
+  error,
+  reset,
+  pathname,
+  params,
+}: NextErrorPageProps): ReactNode {
   useEffect(() => {
     const sdk = resolveSdk();
     if (!sdk) return;
     try {
+      // 0.2 — App Router metadata enrichment. Tags + context land on
+      // the active scope BEFORE captureError so they ride along with
+      // the event.
+      if (typeof pathname === 'string' && pathname.length > 0) {
+        try {
+          sdk.setTag('nextjs.pathname', pathname);
+        } catch {
+          // Tag failures don't block the captureError below.
+        }
+      }
+      if (params && Object.keys(params).length > 0) {
+        try {
+          sdk.setContext('nextjs.params', params);
+        } catch {
+          // Context failures don't block the captureError below.
+        }
+      }
+
       sdk.captureError(error);
       if (error.digest) {
         sdk.addMetadata('nextjsErrorDigest', error.digest);
@@ -76,7 +128,7 @@ export function BrowsonicErrorPage({ error, reset }: NextErrorPageProps): ReactN
       // Defensive isolation — error.tsx must not crash if reporting
       // throws. The page below still renders; reset() still works.
     }
-  }, [error]);
+  }, [error, pathname, params]);
 
   return (
     <div role="alert">
@@ -94,11 +146,11 @@ export function BrowsonicErrorPage({ error, reset }: NextErrorPageProps): ReactN
  * `<html>` / `<body>` shell that Next.js requires when the root
  * layout itself has crashed.
  */
-export function BrowsonicGlobalErrorPage({ error, reset }: NextErrorPageProps): ReactNode {
+export function BrowsonicGlobalErrorPage(props: NextErrorPageProps): ReactNode {
   return (
     <html lang="en">
       <body>
-        <BrowsonicErrorPage error={error} reset={reset} />
+        <BrowsonicErrorPage {...props} />
       </body>
     </html>
   );

@@ -13,13 +13,25 @@
 - Apache-2.0, npm provenance, CycloneDX SBOM via the monorepo
   release pipeline.
 
-## 0.2
+## 0.2 (shipped 2026-05-04)
 
-- **Pages Router companions.** `_error.tsx` / `_app.tsx` drop-ins
-  for consumers still on Pages Router (Next.js 14/15 still ship
-  it).
-- **App Router metadata enrichment.** Capture rendered route
-  segment + dynamic params alongside the error.
+- **Pages Router companions.**
+  - `browsonicPagesErrorInitialProps(ctx)` — `getInitialProps`
+    helper for `pages/_error.tsx`. Captures `ctx.err` to the SDK,
+    tags `nextjs.pagePath`, attaches `nextjsStatusCode` /
+    `nextjsAsPath` metadata, and returns `{ statusCode, pagePath }`
+    for the page component to render.
+  - `browsonicPagesAppInit()` — call once from `pages/_app.tsx`'s
+    top-level `useEffect`. Wires `window.error` and
+    `window.unhandledrejection` listeners that forward to the SDK.
+    Returns the teardown so React-Strict / fast-refresh doesn't
+    leak duplicate listeners.
+- **App Router metadata enrichment.** `BrowsonicErrorPage` now
+  accepts optional `pathname` + `params` props. App Router consumers
+  thread them in from `usePathname()` / `useParams()` — they land as
+  `nextjs.pathname` tag and `nextjs.params` context on the captured
+  event. `BrowsonicGlobalErrorPage` forwards the same props through
+  the `<html>`/`<body>` shell.
 
 ## 0.3
 

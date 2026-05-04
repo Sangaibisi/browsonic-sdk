@@ -15,6 +15,8 @@ function installFakeSdk(): Browsonic {
   const sdk = {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
   (window as typeof window & { Browsonic?: unknown }).Browsonic = {
     getBrowsonic: () => sdk,
@@ -86,6 +88,42 @@ describe('BrowsonicErrorPage', () => {
       render(<BrowsonicErrorPage error={new Error('x')} reset={() => {}} />),
     ).not.toThrow();
     expect(screen.getByText('x')).toBeDefined();
+  });
+
+  it('lands pathname as a tag when the optional prop is supplied (0.2)', () => {
+    render(
+      <BrowsonicErrorPage error={new Error('x')} reset={() => {}} pathname="/products/[id]" />,
+    );
+    expect(sdk.setTag).toHaveBeenCalledWith('nextjs.pathname', '/products/[id]');
+  });
+
+  it('lands params as a context when the optional prop is supplied (0.2)', () => {
+    render(
+      <BrowsonicErrorPage
+        error={new Error('x')}
+        reset={() => {}}
+        params={{ id: '42', slug: 'shoe' }}
+      />,
+    );
+    expect(sdk.setContext).toHaveBeenCalledWith('nextjs.params', {
+      id: '42',
+      slug: 'shoe',
+    });
+  });
+
+  it('skips the params context when the params object is empty', () => {
+    render(<BrowsonicErrorPage error={new Error('x')} reset={() => {}} params={{}} />);
+    expect(sdk.setContext).not.toHaveBeenCalled();
+  });
+
+  it('isolates setTag failures from the captureError call', () => {
+    (sdk.setTag as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('tag-store-exploded');
+    });
+    render(
+      <BrowsonicErrorPage error={new Error('x')} reset={() => {}} pathname="/products/[id]" />,
+    );
+    expect(sdk.captureError).toHaveBeenCalledTimes(1);
   });
 });
 
