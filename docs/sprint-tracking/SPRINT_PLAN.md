@@ -821,11 +821,16 @@ Production-grade entegrasyon detayları. Loader script async lazy init için, ex
 
 ---
 
-### Sprint 10 — Angular + Remix + Migration Guides (P3, 2 hafta) — DURUM: AÇILMADI
+### Sprint 10 — Angular + Remix + Migration Guides (P3, 2 hafta) — DURUM: KAPANDI 2026-05-04
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-05-04** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md taze; ADAPTER_TEMPLATE.md monorepo workflow ile kullanımda.
+  - [x] (1.1.2) SPRINT_PLAN.md tam okundu — S9 partial closure (M1+M2 KAPANDI), S10 framework matrix'i kapatma sprintidir.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — S9 closure sonrası 16 satır.
+  - [x] (1.1.4) AGENTS.md ↔ S10 çatışması yok; meta-framework adapter pattern (Remix → React) S7'de doğrulandı, Angular pure-TS şablonu yeni standalone.
+  - [x] (1.1.5) Working tree temiz — S9 closure (`37405ea`) push edildi.
 
 #### Sprint Hedefi
 
@@ -857,12 +862,31 @@ Adapter şablonu uygulanır + migration guide'lar yazılır. 19 haftalık plan k
 
 #### İş Logu
 
-(boş)
+- [2026-05-04] **S10 milestone 1**: `@browsonic/angular` 0.1 — `packages/angular/` workspace bootstrap + `BrowsonicErrorHandler` (Angular `ErrorHandler` duck-typed drop-in) + `BrowsonicService` (Injectable wrapper) + `provideBrowsonic()` (Angular 17+ standalone provider factory) + 22 unit test — durum: ✅
+  - Commit/PR: bkz. milestone 1 commit hash `ff106f7`
+  - Test/CI: typecheck clean, lint 0/0, test **22/22 passed** (error-handler × 7, service × 11, provide × 4). Build × 3 (esm/cjs/types).
+  - Notlar: **Pure-TS adapter pattern** — `@angular/core` peer + dev olarak alınıyor, type-only import (`import type { Provider, ErrorHandler }`); class'lar Angular'ın `ErrorHandler`'ını runtime'da extend ETMİYOR (framework duck-types `useClass` boundary'sinde) ve `@Injectable()` decorator KULLANMIYOR (Angular DI value providers ile çalışıyor). Sonuç: package'in own bundle'ı tiny (~1 KB gzip), `@angular/core` runtime graph'ında değil, host'un Angular install'u source of truth. `consoleFallback` default `true` — Angular'ın default `ErrorHandler.handleError`'unun `console.error`'a yansıması korunuyor (dev tools UX regress etmiyor).
+- [2026-05-04] **S10 milestone 2**: `@browsonic/remix` 0.1 — `packages/remix/` workspace bootstrap + `BrowsonicRouteErrorBoundary` (drop-in for routes' `ErrorBoundary` export) + `captureRouteError(error)` imperative companion + `withBrowsonicRemixAction` action/loader wrapper + full @browsonic/react re-export + 19 unit test — durum: ✅
+  - Commit/PR: bkz. milestone 2 commit hash `c134b89`
+  - Test/CI: typecheck clean, lint 0/0, test **19/19 passed** (route-error-boundary × 12, action-wrapper × 7). Build × 3 (esm/cjs/types).
+  - Notlar: Meta-framework adapter pattern (Sentry'nin `@sentry/remix → @sentry/react` ilişkisinin browsonic versiyonu). `@browsonic/react`'ı **peer + dev** olarak alıyor; React surface'i tüm tree-shake-friendly olarak re-export ediyor. **`@remix-run/react` runtime dep DEĞİL** — `useRouteError` consumer call site'ında, biz error'u prop olarak alıyoruz veya `captureRouteError` imperative API ile kullanıcı `useRouteError`'u kendisi çağırıyor. `coerceMessage()` helper ESLint `no-base-to-string` kuralı için eklendi (`'[object Object]'` default-stringification trap önlendi).
+- [2026-05-04] **S10 milestone 3**: Migration guides + S10 closure — durum: ✅
+  - Commit/PR: bkz. milestone 3 commit hash (S10 closure commit)
+  - `docs/migration/MIGRATION_FROM_SENTRY.md` yazıldı — TL;DR mapping tablosu, 10-step migration walkthrough, framework adapter mapping, ErrorBoundary mapping, plugin/config differences, "things Browsonic deliberately doesn't do" bölümü (tracing/replay/profiling/multi-runtime/AI/feature-flags out-of-scope listesi).
+  - `docs/migration/MIGRATION_FROM_TRACKJS.md` yazıldı — TrackJS aynı scope hedefliyor (focused error tracking), mapping çoğu zaman cosmetic (`trackJs.track → captureError`, `addMetadata → setTag/addMetadata`, etc.). 9-step walkthrough + framework adapters listesi + privacy/data residency notu.
+  - `docs/migration/README.md` yazıldı — index + per-framework quickstart linkleri.
+  - **NOT shipped (deferred)**: `jscodeshift` codemod scripti — mapping tabloları manual migration için yeterli; codemod follow-up release'de.
+  - **NOT shipped (deferred)**: `docs/quickstart/{react,vue,...}.md` per-framework quickstart dosyaları — bunlar zaten her paketin kendi `README.md`'sinde Quickstart bölümü olarak var; ayrı dosyalar duplikasyon olur. Migration guide README'sinde 7 paket README'sine link verildi.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-landing-astro** (migration guide CTA'ları, "Sentry'den geç" landing sayfası), **browsonic-dashboard** (onboarding flow'unda framework seçici).
+- [x] **2026-05-04** Post-flight (1.3) tüm adımları geçildi.
+  - (1.3.1) İş Logu M1 + M2 + M3 kayıtlarını içeriyor.
+  - (1.3.2) Etkilenen repolar: **browsonic-landing-astro** — migration guide CTA + "Switch from Sentry" landing sayfası fırsatı (entry #17, opsiyonel). **browsonic-dashboard** — onboarding flow'unda framework seçici (entry #18, opsiyonel). **browsonic-service** etkisi yok (adapter'lar mevcut SDK API'sini tüketiyor).
+  - (1.3.3) CROSS_REPO_IMPACTS.md güncellendi — 2 yeni opsiyonel satır + S10 + framework matrix tamamlanma lesson-learned.
+  - (1.3.4) typecheck/lint/test 7 framework paketinde + sdk paketi yeşil (toplam 8 paket).
+  - (1.3.5) Conventional Commits — `feat(angular):` (M1) + `feat(remix):` (M2) + `docs:` (M3 closure).
+  - (1.3.6) S10 başlığı KAPANDI 2026-05-04, Sprint Özet Tablosu satırı güncellendi. **19 haftalık plan kapandı** — framework matrix tamamlandı (react/vue/svelte/nextjs/astro/angular/remix = 7 adapter), 2 migration guide yayında.
 
 ---
 

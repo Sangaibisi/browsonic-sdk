@@ -9,7 +9,7 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- _No active work — natural break point after Sprint 9 partial closure (2026-05-04). Next up is the Angular + Remix adapter pair plus migration guides (Sprint 10)._
+- _No active work — **the original 19-week plan is complete** (2026-05-04). The framework matrix ships seven adapters (react / vue / svelte / nextjs / astro / angular / remix) plus the core SDK; the public API has reached Sentry-compatible breadth on the surface that intersects with our scope. Future work (deferred items + 0.2 follow-ups in each package's ROADMAP) rejoins the queue when prioritised._
 
 ## Recently shipped
 
@@ -23,10 +23,13 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 - **`@browsonic/nextjs` adapter** _(2026-05-04)_ — Apache-2.0. Drop-ins for App Router `app/error.tsx` (`BrowsonicErrorPage`) and `app/global-error.tsx` (`BrowsonicGlobalErrorPage`), `withBrowsonicRouteHandler` for `app/api/*/route.ts`, `withBrowsonicConfig` config wrapper (passthrough; reserved for future build-time integrations). Re-exports the full `@browsonic/react` surface so consumers install one package. Naming: `withBrowsonic` is the React HOC; `withBrowsonicConfig` is the Next config wrapper (Sentry-style collision avoidance). Peer: `next >=13.4`, `@browsonic/react ^0.1.0 || ^1.0.0`.
 - **`@browsonic/astro` adapter** _(2026-05-04)_ — Apache-2.0. `registerNavigationBreadcrumbs` listens for `astro:after-swap` and emits a navigation breadcrumb on every View Transitions swap; standalone `captureError` / `captureMessage` / `addBreadcrumb` wrappers round out the surface. No boundary component — Astro is multi-framework on the client (React + Vue + Svelte islands coexist), so per-island boundaries belong in the framework's own adapter. Peer: `astro >=4.0`.
 - **Extension / bot detection at init + session health** _(2026-05-04, SDK 2.4-track)_ — `isExtensionContext()` and `isBotUserAgent()` guard the SDK init flow so the SDK refuses to initialise inside `chrome-extension://` (and the equivalent Firefox / Safari / Edge protocols) and under known bot user agents (Googlebot, Slackbot, headless tooling — 28 default patterns, override-able). Three-state monotonic session health (`'ok'` → `'errored'` → `'crashed'`) is stamped on every event so backends can plot per-session timelines; the SDK's circuit breaker forces `'crashed'` automatically when the internal-error budget is exceeded. Public surface: `getSessionHealth()`, `markSessionCrashed()`, plus the new `BrowsonicEvent.sessionHealth` field. The CDN loader script milestone is **deferred** — it depends on a CDN distribution channel that hasn't been provisioned yet on the ops side; `<script async>` with the existing UMD bundle is the recommended pattern until then.
+- **`@browsonic/angular` adapter** _(2026-05-04)_ — Apache-2.0. `BrowsonicErrorHandler` (Angular `ErrorHandler` duck-typed drop-in), `BrowsonicService` (injectable wrapper), `provideBrowsonic()` (Angular 17+ standalone provider factory). Pure-TypeScript: `@angular/core` is a peer-only type import — the adapter does not pull Angular into its runtime graph. Peer: `@angular/core >=17`.
+- **`@browsonic/remix` adapter** _(2026-05-04)_ — Apache-2.0. `BrowsonicRouteErrorBoundary` drop-in for Remix routes' `ErrorBoundary` export, `captureRouteError(error)` imperative companion, `withBrowsonicRemixAction` action / loader wrapper. Re-exports the full `@browsonic/react` surface — a single `npm install @browsonic/remix` covers the framework. Peer: `@browsonic/react ^0.1.0 || ^1.0.0`.
+- **Migration guides** _(2026-05-04)_ — [`MIGRATION_FROM_SENTRY.md`](./docs/migration/MIGRATION_FROM_SENTRY.md) and [`MIGRATION_FROM_TRACKJS.md`](./docs/migration/MIGRATION_FROM_TRACKJS.md). API mapping tables, step-by-step walkthroughs, and explicit "things Browsonic deliberately does NOT do" notes so teams can decide whether the focused-scope tradeoff fits their use case.
 
 ## Next (queued, in priority order)
 
-1. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+_The original 19-week plan is complete. Subsequent work is sequenced from per-package ROADMAPs (each adapter has 0.2 / 0.3 ideas) and the deferred items below._
 
 ## Deferred (rejoining the queue after design review)
 
