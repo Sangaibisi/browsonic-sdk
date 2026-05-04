@@ -30,15 +30,25 @@
   an Astro island). Ship as a standalone helper once the API shape
   is settled.
 
-## 0.3
+## 0.3 (partial — shipped 2026-05-05)
 
+- **Astro Actions error wrapper** — shipped 2026-05-05.
+  `withBrowsonicAstroAction(handler, options?)` wraps a server-side
+  action handler so unhandled throws are reported (with
+  `astro.action.name` + `astro.runtime: 'action'` tags) and **then
+  re-thrown** so Astro returns the failure unchanged. Re-throw
+  order matters — consuming the error here would mask every
+  reported failure as a successful return value. Generic over the
+  handler's arg tuple so it composes with Astro's typed
+  `defineAction({ handler })` and any `(input, context)` shape.
+  SDK isolation: a thrown reporter cannot poison the re-throw
+  path. Mirrors `withBrowsonicRouteHandler` in the Next.js
+  adapter.
 - **Partial hydration awareness** — `tagAsAstroIsland(name)`
   scope-aware helper, paired with adapter integrations that
   recognise the tag.
 - **Astro Content Collections** breadcrumbs (page-build → page-load
   identity).
-- **Astro Actions** error wrapper, mirroring `withBrowsonicRouteHandler`
-  in the Next.js adapter.
 
 ## Later (parking lot)
 
