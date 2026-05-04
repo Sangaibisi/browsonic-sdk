@@ -13,6 +13,19 @@ name: release
 #                   the @browsonic scope. Generate at npmjs.com →
 #                   Access Tokens → Granular → "Publish".
 #
+# Token rotation (operational):
+#   If a release run fails with `EINVALIDNPMTOKEN Invalid npm token`,
+#   the secret has expired. Generate a new one with the same scope:
+#     1. npmjs.com → Profile → Access Tokens → Generate New Token
+#        → Granular → "Publish" → scope `@browsonic` → expiry 1y.
+#     2. GitHub: Settings → Secrets and variables → Actions →
+#        update `NPM_TOKEN` with the new value.
+#     3. Re-run the failed release workflow (gh run rerun <id>) or
+#        push a no-op commit on main.
+#   The token must be Granular (not Classic Automation) for npm
+#   provenance to work. Provenance reads the OIDC ID token from
+#   the Actions runtime and signs the publish via Sigstore.
+#
 # Branch policy (per package .releaserc.json):
 #   main         → stable releases (npm dist-tag: latest)
 #   next         → prereleases (npm dist-tag: next)
