@@ -34,6 +34,38 @@ function makeFakeRouter(): { router: RouterLike; navigate: Guard; off: ReturnTyp
   return { router, navigate, off };
 }
 
+interface FakeRouterWithIntent {
+  router: RouterLike;
+  navigateIntent: Guard;
+  navigateAfter: Guard;
+  offAfter: ReturnType<typeof vi.fn>;
+  offBefore: ReturnType<typeof vi.fn>;
+}
+
+function makeFakeRouterWithIntent(): FakeRouterWithIntent {
+  const beforeGuards: Guard[] = [];
+  const afterGuards: Guard[] = [];
+  const offAfter = vi.fn();
+  const offBefore = vi.fn();
+  const router: RouterLike = {
+    afterEach: (guard) => {
+      afterGuards.push(guard);
+      return offAfter;
+    },
+    beforeEach: (guard) => {
+      beforeGuards.push(guard);
+      return offBefore;
+    },
+  };
+  const navigateIntent: Guard = (to, from) => {
+    for (const g of beforeGuards) g(to, from);
+  };
+  const navigateAfter: Guard = (to, from) => {
+    for (const g of afterGuards) g(to, from);
+  };
+  return { router, navigateIntent, navigateAfter, offAfter, offBefore };
+}
+
 const route = (fullPath: string, name?: string | symbol | null): RouteLocationLike => ({
   fullPath,
   path: fullPath.split('?')[0] ?? fullPath,
@@ -145,5 +177,96 @@ describe('installRouterInstrumentation', () => {
 
     expect(() => navigate(route('/a'), route('/b'))).not.toThrow();
     expect(sdk.addBreadcrumb).toHaveBeenCalledTimes(1);
+  });
+
+  describe('includeIntent (0.3)', () => {
+    it('emits intent + completed breadcrumbs across a navigation when enabled', () => {
+      const sdk = makeFakeSdk();
+      const { router, navigateIntent, navigateAfter } = makeFakeRouterWithIntent();
+      installRouterInstrumentation(router, { sdk, includeIntent: true });
+
+      navigateIntent(route('/dashboard'), route('/'));
+      navigateAfter(route('/dashboard'), route('/'));
+
+      const calls = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls;
+      expect(calls).toHaveLength(2);
+      expect(calls[0]?.[0]).toMatchObject({
+        category: 'navigation',
+        message: '/ → /dashboard (intent)',
+        data: { from: '/', to: '/dashboard', phase: 'intent' },
+      });
+      expect(calls[1]?.[0]).toMatchObject({
+        category: 'navigation',
+        message: '/ → /dashboard',
+        data: { from: '/', to: '/dashboard', phase: 'completed' },
+      });
+    });
+
+    it('intent breadcrumb still fires when the after-each guard never runs (cancelled navigation)', () => {
+      // Simulates the failure mode the flag exists for: an error fires
+      // mid-navigation so `afterEach` is skipped — only the intent
+      // breadcrumb makes it into the trail.
+      const sdk = makeFakeSdk();
+      const { router, navigateIntent } = makeFakeRouterWithIntent();
+      installRouterInstrumentation(router, { sdk, includeIntent: true });
+
+      navigateIntent(route('/profile/42', 'profile'), route('/'));
+
+      const calls = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls;
+      expect(calls).toHaveLength(1);
+      expect(calls[0]?.[0]).toMatchObject({
+        message: '/ → /profile/42 (intent)',
+        data: { phase: 'intent', name: 'profile' },
+      });
+    });
+
+    it('does not subscribe to beforeEach when includeIntent is false (default)', () => {
+      const sdk = makeFakeSdk();
+      const { router, navigateIntent, navigateAfter } = makeFakeRouterWithIntent();
+      installRouterInstrumentation(router, { sdk });
+
+      navigateIntent(route('/a'), route('/b'));
+      navigateAfter(route('/a'), route('/b'));
+
+      const calls = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls;
+      expect(calls).toHaveLength(1);
+      expect(calls[0]?.[0]).not.toHaveProperty('data.phase');
+    });
+
+    it('returns a combined unsubscribe that calls both before+after handles', () => {
+      const sdk = makeFakeSdk();
+      const { router, offAfter, offBefore } = makeFakeRouterWithIntent();
+      const unsub = installRouterInstrumentation(router, { sdk, includeIntent: true });
+      unsub();
+      expect(offAfter).toHaveBeenCalledTimes(1);
+      expect(offBefore).toHaveBeenCalledTimes(1);
+    });
+
+    it('falls back to afterEach-only when the router lacks beforeEach', () => {
+      // Older RouterLike doubles that only implement `afterEach` must
+      // keep working — the intent channel silently no-ops.
+      const sdk = makeFakeSdk();
+      const { router, navigate } = makeFakeRouter();
+      const unsub = installRouterInstrumentation(router, { sdk, includeIntent: true });
+
+      expect(() => navigate(route('/a'), route('/b'))).not.toThrow();
+      expect((sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls[0]?.[0]).toMatchObject({
+        data: { phase: 'completed' },
+      });
+      expect(() => unsub()).not.toThrow();
+    });
+
+    it('swallows beforeEach addBreadcrumb errors', () => {
+      const sdk = {
+        addBreadcrumb: vi.fn(() => {
+          throw new Error('boom');
+        }),
+      } as unknown as Browsonic;
+      const { router, navigateIntent } = makeFakeRouterWithIntent();
+      installRouterInstrumentation(router, { sdk, includeIntent: true });
+
+      expect(() => navigateIntent(route('/a'), route('/b'))).not.toThrow();
+      expect(sdk.addBreadcrumb).toHaveBeenCalledTimes(1);
+    });
   });
 });

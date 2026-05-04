@@ -37,11 +37,14 @@ export interface RouteLocationLike {
 }
 
 /**
- * Minimal Router shape — the `afterEach(guard)` signature returns an
- * unsubscribe function in Vue Router 4. We only require that subset.
+ * Minimal Router shape — `afterEach(guard) → unsubscribe` is required
+ * (we always wire it). `beforeEach(guard) → unsubscribe` is optional
+ * and only consumed when {@link InstallRouterInstrumentationOptions.includeIntent}
+ * is enabled. Both shapes match Vue Router 4.x.
  */
 export interface RouterLike {
   afterEach: (guard: (to: RouteLocationLike, from: RouteLocationLike) => void) => () => void;
+  beforeEach?: (guard: (to: RouteLocationLike, from: RouteLocationLike) => void) => () => void;
 }
 
 export interface InstallRouterInstrumentationOptions {
@@ -63,6 +66,23 @@ export interface InstallRouterInstrumentationOptions {
    * a duplicate signal. Defaults to `false`.
    */
   skipInitial?: boolean;
+  /**
+   * 0.3 — also subscribe to `router.beforeEach` and emit an "intent"
+   * breadcrumb for the navigation that's about to start. Pairs with
+   * the `afterEach` breadcrumb to give a from/to trail with timing —
+   * useful when an error fires mid-navigation (the `afterEach` guard
+   * never runs in that case, so without `includeIntent` the trail
+   * would have no record of the attempted route).
+   *
+   * When enabled, both breadcrumbs tag `data.phase`
+   * (`'intent'` vs `'completed'`) so the dashboard renderer can group
+   * them or de-dupe per phase. Mirrors the Astro adapter's
+   * `registerNavigationBreadcrumbs({ includeIntent })` flag.
+   *
+   * No-op when the supplied router has no `beforeEach` method.
+   * Default: `false` (matches 0.2 behaviour).
+   */
+  includeIntent?: boolean;
 }
 
 /**
@@ -86,9 +106,15 @@ export function installRouterInstrumentation(
 ): () => void {
   const category = options.category ?? 'navigation';
   const skipInitial = options.skipInitial ?? false;
+  const includeIntent = options.includeIntent ?? false;
   let isFirst = true;
 
-  return router.afterEach((to, from) => {
+  const routeName = (loc: RouteLocationLike): string | undefined => {
+    if (loc.name === undefined || loc.name === null) return undefined;
+    return typeof loc.name === 'symbol' ? (loc.name.description ?? '') : loc.name;
+  };
+
+  const offAfter = router.afterEach((to, from) => {
     if (skipInitial && isFirst) {
       isFirst = false;
       return;
@@ -98,15 +124,15 @@ export function installRouterInstrumentation(
     const sdk = options.sdk ?? resolveSdk();
     if (!sdk) return;
 
+    const name = routeName(to);
     const breadcrumb: Breadcrumb = {
       category,
       message: `${from.fullPath} → ${to.fullPath}`,
       data: {
         from: from.fullPath,
         to: to.fullPath,
-        ...(to.name !== undefined && to.name !== null
-          ? { name: typeof to.name === 'symbol' ? (to.name.description ?? '') : to.name }
-          : {}),
+        ...(name !== undefined ? { name } : {}),
+        ...(includeIntent ? { phase: 'completed' } : {}),
       },
     };
 
@@ -116,4 +142,39 @@ export function installRouterInstrumentation(
       // Breadcrumb failures must never cancel a navigation.
     }
   });
+
+  // 0.3 — opt-in `beforeEach` instrumentation. Skipped silently if the
+  // router doesn't expose `beforeEach` (test doubles or older RouterLike
+  // implementations); the `afterEach` channel still works.
+  const offBefore =
+    includeIntent && typeof router.beforeEach === 'function'
+      ? router.beforeEach((to, from) => {
+          const sdk = options.sdk ?? resolveSdk();
+          if (!sdk) return;
+
+          const name = routeName(to);
+          const breadcrumb: Breadcrumb = {
+            category,
+            message: `${from.fullPath} → ${to.fullPath} (intent)`,
+            data: {
+              from: from.fullPath,
+              to: to.fullPath,
+              ...(name !== undefined ? { name } : {}),
+              phase: 'intent',
+            },
+          };
+
+          try {
+            sdk.addBreadcrumb(breadcrumb);
+          } catch {
+            // Same defensive contract as the afterEach channel — a
+            // thrown breadcrumb cannot block a navigation.
+          }
+        })
+      : undefined;
+
+  return () => {
+    offAfter();
+    offBefore?.();
+  };
 }

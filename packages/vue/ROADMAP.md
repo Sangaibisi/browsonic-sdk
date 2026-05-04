@@ -29,7 +29,15 @@
 
 ## 0.3
 
-- **Vue Router beforeEach instrumentation** for "intent" breadcrumbs.
+- **Vue Router beforeEach instrumentation** — shipped 2026-05-04.
+  `installRouterInstrumentation(router, { includeIntent: true })`
+  now also subscribes to `router.beforeEach` and emits an
+  `'intent'`-phase breadcrumb for the navigation about to start. The
+  existing `afterEach` breadcrumb gains a `phase: 'completed'` tag
+  when `includeIntent` is enabled. Pairs with the Astro adapter's
+  `registerNavigationBreadcrumbs({ includeIntent })` for renderer
+  consistency. Silently no-ops on `RouterLike` doubles that don't
+  implement `beforeEach`.
 - **Pinia integration** — optional `sdk.setContext('pinia', ...)` on
   unhandled action errors.
 - **Composition + Options API parity tests** — explicit suite that
