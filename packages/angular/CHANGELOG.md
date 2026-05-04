@@ -1,3 +1,9 @@
+## [2.5.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.4.0...v2.5.0) (2026-05-04)
+
+### Features
+
+- **svelte:** ship 0.2 navigation instrumentation + generic App.Error typing ([ad85836](https://github.com/Sangaibisi/browsonic-sdk/commit/ad858361e58eaad809894348ac3264b2822ed3b1))
+
 ## [2.4.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.3.1...v2.4.0) (2026-05-04)
 
 ### Features
