@@ -10,18 +10,25 @@
 - Apache-2.0, npm provenance, CycloneDX SBOM via the monorepo
   release pipeline.
 
-## 0.2
+## 0.2 (shipped 2026-05-04)
 
-- **`entry.client.tsx` helper** — `bootstrapBrowsonic({ apiEndpoint })`
-  that reads from `<script>window.__browsonic = {…}</script>`
-  injected by the server, initialises the SDK, and exposes the
-  singleton.
-- **Loader instrumentation** — wrap loaders too, not just actions.
-  The semantic is identical, but consumers who care can opt in
-  per-route.
-- **Pages-Router-equivalent companion** — Remix v2 supports both
-  the new `vite-based` and the legacy `@remix-run/react` modes;
-  cover the legacy variant too.
+- **`entry.client.tsx` helper.** `bootstrapBrowsonic(options?)`
+  reads any existing `window.Browsonic.config` (so the server-side
+  `entry.server.tsx` can serialise per-request fields like
+  `release` / `environment`), merges the caller's options on top,
+  and returns the SDK singleton if one is reachable. SSR-safe —
+  Node calls return `null` without touching globals.
+- **Loader instrumentation.** New `withBrowsonicRemixLoader` —
+  loader-side counterpart to `withBrowsonicRemixAction`. Both
+  wrappers share one engine; the captured event is tagged
+  `remix.handler: 'action' | 'loader'` so dashboards can
+  distinguish data-fetch errors from mutation errors. Legacy
+  `remixAction` / new `remixLoader` metadata keys preserved for
+  back-compat.
+- **vite + `@remix-run/react` parity.** None of the helpers
+  import from a runtime-Remix module, so both Remix v2 modes
+  (vite-based + legacy `@remix-run/react`) work without a code
+  branch. The adapter stays peer-only on `@remix-run/*` types.
 
 ## 0.3
 

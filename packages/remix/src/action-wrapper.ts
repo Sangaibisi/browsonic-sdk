@@ -12,7 +12,16 @@
  *
  * ```ts
  * // app/routes/checkout.tsx
- * import { withBrowsonicRemixAction } from '@browsonic/remix';
+ * import {
+ *   withBrowsonicRemixAction,
+ *   withBrowsonicRemixLoader,
+ * } from '@browsonic/remix';
+ *
+ * export const loader = withBrowsonicRemixLoader(async ({ params }) => {
+ *   const order = await db.order.findUnique({ where: { id: params.id } });
+ *   if (!order) throw new Response('Not found', { status: 404 });
+ *   return order;
+ * });
  *
  * export const action = withBrowsonicRemixAction(async ({ request }) => {
  *   const data = await request.formData();
@@ -21,31 +30,60 @@
  * });
  * ```
  *
+ * Both wrappers share the same engine. The `kind` tag distinguishes
+ * them on the captured event so dashboards can filter "loader
+ * errors" separately from "action errors".
+ *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0
  */
 
 import { resolveSdk } from './resolve-sdk';
 
-export function withBrowsonicRemixAction<TArgs extends unknown[], TReturn>(
-  handler: (...args: TArgs) => TReturn | Promise<TReturn>,
-): (...args: TArgs) => Promise<TReturn> {
-  return async (...args: TArgs): Promise<TReturn> => {
-    try {
-      return await handler(...args);
-    } catch (error) {
-      const sdk = resolveSdk();
-      if (sdk) {
-        try {
-          const errorObj = error instanceof Error ? error : new Error(String(error));
-          sdk.captureError(errorObj);
-          sdk.addMetadata('remixAction', 'true');
-        } catch {
-          // Defensive isolation — never poison the response because
-          // reporting threw.
+type RemixHandlerKind = 'action' | 'loader';
+
+function makeWrapper(kind: RemixHandlerKind) {
+  return function wrap<TArgs extends unknown[], TReturn>(
+    handler: (...args: TArgs) => TReturn | Promise<TReturn>,
+  ): (...args: TArgs) => Promise<TReturn> {
+    return async (...args: TArgs): Promise<TReturn> => {
+      try {
+        return await handler(...args);
+      } catch (error) {
+        const sdk = resolveSdk();
+        if (sdk) {
+          try {
+            const errorObj = error instanceof Error ? error : new Error(String(error));
+            sdk.captureError(errorObj);
+            // Legacy metadata key kept for back-compat with the
+            // 0.1 dashboard renderer; new structured tag replaces
+            // it as the canonical filter handle.
+            sdk.addMetadata(kind === 'action' ? 'remixAction' : 'remixLoader', 'true');
+            try {
+              sdk.setTag('remix.handler', kind);
+            } catch {
+              // Tag failures don't block the captureError above.
+            }
+          } catch {
+            // Defensive isolation — never poison the response because
+            // reporting threw.
+          }
         }
+        throw error;
       }
-      throw error;
-    }
+    };
   };
 }
+
+export const withBrowsonicRemixAction = makeWrapper('action');
+
+/**
+ * Loader-side counterpart. Wraps a Remix `loader` export the same
+ * way `withBrowsonicRemixAction` wraps an `action`. The captured
+ * event is tagged `remix.handler: 'loader'` so dashboards can
+ * distinguish data-fetch errors from mutation errors.
+ *
+ * 0.2 — added so consumers can opt loaders into capture per-route
+ * without copying the action-wrapper boilerplate.
+ */
+export const withBrowsonicRemixLoader = makeWrapper('loader');
