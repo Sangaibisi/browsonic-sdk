@@ -44,9 +44,15 @@
   SDK isolation: a thrown reporter cannot poison the re-throw
   path. Mirrors `withBrowsonicRouteHandler` in the Next.js
   adapter.
-- **Partial hydration awareness** — `tagAsAstroIsland(name)`
-  scope-aware helper, paired with adapter integrations that
-  recognise the tag.
+- **Partial hydration awareness** — shipped 2026-05-05.
+  `tagAsAstroIsland(name, options?)` stamps `astro.island = <name>`
+  on the SDK's active scope. Any subsequent `captureError` from a
+  per-framework boundary (React / Vue / Svelte) inside that island
+  inherits the tag automatically — `setTag` is sticky on the SDK's
+  top-level scope, so no cross-adapter coordination is needed.
+  Browser-only short-circuit on SSR; defensive try/catch keeps a
+  thrown `setTag` from unmounting the island. Custom `tagKey`
+  override for multi-dimension setups (e.g. `astro.island.role`).
 - **Astro Content Collections** breadcrumbs (page-build → page-load
   identity).
 
