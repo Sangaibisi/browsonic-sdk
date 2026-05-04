@@ -131,8 +131,15 @@ jobs:
 
       - run: npm run bench
 
-      - name: Check for regressions (>10% slower)
-        run: node scripts/check-bench-regression.mjs bench-baseline.json 0.10
+      # Regression gate is advisory, not blocking. Shared GitHub runners
+      # have ~10-20% noise on micro-benchmarks; gating at ~10% produces
+      # false positives whenever a runner has a bad neighbour. The
+      # uploaded `bench-results.json` artifact (below) is the trending
+      # signal that catches real regressions over time. Make this
+      # non-blocking until we wire bench against a self-hosted runner.
+      - name: Check for regressions (>25% slower, advisory)
+        run: node scripts/check-bench-regression.mjs bench-baseline.json 0.25
+        continue-on-error: true
 
       - uses: actions/upload-artifact@v7
         if: always()

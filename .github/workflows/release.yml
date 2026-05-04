@@ -68,9 +68,15 @@ jobs:
       # packages/sdk/.releaserc.json (M3 follow-up: wire these into
       # the SDK release config so they ride along with the published
       # GitHub Release).
+      #
+      # Run from the workspace root because the monorepo has a single
+      # root package-lock.json (npm workspaces). cyclonedx-npm reads
+      # ./package-lock.json + ./node_modules/ and otherwise errors out
+      # with `No evidence: no package lock file nor npm shrinkwrap file`.
+      # Output lands inside packages/sdk/ so the existing release plugin
+      # config still picks it up unchanged.
       - name: Generate SBOM (sdk, CycloneDX)
-        working-directory: packages/sdk
-        run: npx --yes @cyclonedx/cyclonedx-npm --output-format json --output-file browsonic-sdk.cdx.json
+        run: npx --yes @cyclonedx/cyclonedx-npm --output-format json --output-file packages/sdk/browsonic-sdk.cdx.json
         continue-on-error: true
 
       - name: Compute SDK UMD checksums
