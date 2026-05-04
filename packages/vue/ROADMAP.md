@@ -62,7 +62,23 @@
 - A built-in default fallback component (CSS-scoped) for plug-and-play
   error screens. Likely needs an SFC; we'd add `@vue/compiler-sfc` to
   the build chain at that point.
-- Suspense integration if Vue's RFC stabilises.
+
+## Suspense integration — shipped 2026-05-05
+
+The boundary's existing `onErrorCaptured` hook already catches errors
+from async `setup()` functions inside `<Suspense>` (Vue 3.0+ stable
+behaviour, no flag-gated APIs). The 0.3 sweep added an explicit
+test suite (`error-boundary.suspense.test.ts`) pinning the contract:
+
+- Async setup throws are forwarded to `sdk.captureError`.
+- The boundary's fallback renders, replacing Suspense's pending UI.
+- The `vue.errorCaptured.info` tag fires for async errors too
+  (same shape as sync errors).
+
+No public API change — this is purely a contract pin so a future
+Vue minor version that rewires async error propagation can't
+silently break consumers running `<script setup async>` /
+top-level-`await` setup.
 
 ## Out of scope
 
