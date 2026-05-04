@@ -30,11 +30,19 @@
   (vite-based + legacy `@remix-run/react`) work without a code
   branch. The adapter stays peer-only on `@remix-run/*` types.
 
-## 0.3
+## 0.3 (partial — shipped 2026-05-05)
 
-- **Route hierarchy breadcrumbs.** Subscribe to `useNavigation`
-  and emit `category: 'navigation'` breadcrumbs with the route
-  hierarchy path, not just the URL.
+- **Route hierarchy breadcrumbs** — shipped 2026-05-05.
+  `useRemixNavigationBreadcrumbs(useNavigation(), useMatches())`
+  emits a `category: 'navigation'` breadcrumb each time the
+  Remix navigation state transitions from non-`idle` → `'idle'`.
+  Each breadcrumb carries `from` / `to` paths plus the route
+  hierarchy: `routeId` (leaf) and `routeChain` (parent → leaf
+  joined with ›). This makes URLs that look identical across
+  shells distinguishable in incident triage. Default skips the
+  initial transition, treats `submitting → idle` as a navigation
+  (form actions). Structural `NavigationLike` / `MatchLike` shapes
+  keep the adapter free of a `@remix-run/react` runtime dep.
 - **`<RemoteCatch>` integration.** Pre-Remix-v2 `CatchBoundary` is
   going away; if community demand surfaces, ship a back-port
   helper.

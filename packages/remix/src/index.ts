@@ -28,6 +28,14 @@
  *   `remix.handler: 'action'`. The legacy `remixAction` metadata
  *   key is preserved for back-compat.
  *
+ * 0.3 — navigation breadcrumbs with route hierarchy:
+ * - `useRemixNavigationBreadcrumbs(useNavigation(), useMatches())`
+ *   — hook that emits `category: 'navigation'` breadcrumbs on
+ *   transition completion (state: non-idle → idle). Each
+ *   breadcrumb carries `routeId` (leaf) + `routeChain` (parent →
+ *   leaf joined with ›) so the dashboard can triage cross-route
+ *   incidents without parsing URLs.
+ *
  * Remix v2 supports both the new vite-based mode and the legacy
  * `@remix-run/react` mode. None of the helpers in this package
  * import from a runtime-Remix module, so both modes work — the
@@ -44,6 +52,12 @@ export {
 } from './route-error-boundary';
 export { withBrowsonicRemixAction, withBrowsonicRemixLoader } from './action-wrapper';
 export { bootstrapBrowsonic, type BrowsonicBootstrapOptions } from './bootstrap';
+export {
+  useRemixNavigationBreadcrumbs,
+  type NavigationLike,
+  type MatchLike,
+  type UseRemixNavigationBreadcrumbsOptions,
+} from './use-navigation-breadcrumbs';
 export { resolveSdk } from './resolve-sdk';
 
 // Re-export everything from @browsonic/react (Remix is React-based).
