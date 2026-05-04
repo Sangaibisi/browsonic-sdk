@@ -27,7 +27,7 @@
   `(breadcrumb: Breadcrumb) => void` callback. No-op when SDK is
   unreachable; throws are swallowed.
 
-## 0.3
+## 0.3 (shipped 2026-05-04)
 
 - **Vue Router beforeEach instrumentation** — shipped 2026-05-04.
   `installRouterInstrumentation(router, { includeIntent: true })`
@@ -47,8 +47,15 @@
   `maxLength` caps args/state JSON. Structural `PiniaLike` shape so
   the adapter still has no `pinia` peerDep. Defensive try/catch
   around `setContext` keeps the action-caller path clean.
-- **Composition + Options API parity tests** — explicit suite that
-  the boundary works under both authoring styles.
+- **Composition + Options API parity tests** — shipped 2026-05-04.
+  `error-boundary.parity.test.ts` exercises the boundary against
+  components authored in both styles. Each Composition test has an
+  Options API mirror (render throw, mounted hook, created hook,
+  computed-getter throw surfaced via render) so a future regression
+  on either path fails loudly instead of silently breaking
+  consumers who haven't migrated. Asserts the same SDK contract
+  (`captureError`, `setTag('vue.errorCaptured.info', …)`, fallback
+  shape) in both runs.
 
 ## Later (parking lot)
 
