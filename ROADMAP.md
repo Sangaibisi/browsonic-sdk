@@ -9,7 +9,7 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- _No active work — natural break point after Sprint 8 closure (2026-05-04). Next up is the Vue + Svelte adapter pair (Sprint 6)._
+- _No active work — natural break point after Sprint 6 closure (2026-05-04). Next up is the Next.js + Astro adapter pair (Sprint 7)._
 
 ## Recently shipped
 
@@ -18,13 +18,14 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 - **`@browsonic/react` adapter** _(2026-04-29)_ — Apache-2.0. Ships `<BrowsonicErrorBoundary>`, `useBrowsonic` / `useUser` / `useCaptureError` hooks, and the `withBrowsonic` HOC.
 - **Public scope / breadcrumb / tag API** _(2026-05-04, SDK 2.4-track)_ — full Sentry-compatible surface: `setTag` / `setContext` / `setExtra` (M1), `addBreadcrumb` (M2), `withScope` sync + async (M3). New public types `Breadcrumb`, `BreadcrumbLevel`, `BreadcrumbTelemetryEntry`, `Scope`. New optional `BrowsonicEvent.contexts` and `extras` fields plus a fifth `TelemetryTimeline.breadcrumb` channel. Migrating teams from `@sentry/browser` keep their muscle memory.
 - **Monorepo migration** _(2026-05-04)_ — repo restructured into npm workspaces. `@browsonic/sdk` lives at `packages/sdk/`, `@browsonic/react` lives at `packages/react/`. Old standalone `Sangaibisi/browsonic-react` repo archived. Future framework adapters (Vue, Svelte, Next, Astro, Angular, Remix) ship as new workspaces inside this monorepo — see [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
+- **`@browsonic/vue` adapter** _(2026-05-04)_ — Apache-2.0. Ships `browsonicPlugin` (`app.use()` install with `app.config.errorHandler` chaining), `<BrowsonicErrorBoundary>` (Vue 3 `defineComponent` + `onErrorCaptured`, pure TS render function — no `.vue` SFC), and `useBrowsonic` / `useUser` / `useCaptureError` composables. Peer: `vue ^3.3.0`.
+- **`@browsonic/svelte` adapter** _(2026-05-04)_ — Apache-2.0. Ships `handleErrorWithBrowsonic` (SvelteKit `handleError` hook factory), `subscribeUser` (Svelte readable-store → SDK user context bridge), and ergonomic `captureError` / `captureMessage` / `addBreadcrumb` wrappers around the global SDK singleton. **No `<BrowsonicErrorBoundary>`** — Svelte 5 ships `<svelte:boundary>` natively; we forward `onerror` to `captureError` instead of competing with the framework primitive. Peer: `svelte ^4.0.0 || ^5.0.0`.
 
 ## Next (queued, in priority order)
 
-1. **Vue + Svelte adapters.** Apply the React-pilot template ([`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md)) to `@browsonic/vue` (Composition API plugin, `app.config.errorHandler` chaining, Vue Router instrumentation) and `@browsonic/svelte` (SvelteKit `handleError` hook, `+error.svelte` integration).
-2. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
-3. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
-4. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+1. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
+2. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
+3. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
 
 ## Deferred (rejoining the queue after design review)
 
