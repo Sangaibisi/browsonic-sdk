@@ -98,7 +98,7 @@ Sprint kapanmadan önce:
 | **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
 | **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04   |
 | **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | KAPANDI 2026-05-04   |
-| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | AÇILMADI             |
+| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | KAPANDI 2026-05-04   |
 | **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KAPANDI 2026-05-04   |
 | **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
 | **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
@@ -602,11 +602,16 @@ S5 şablonunu (`docs/ADAPTER_TEMPLATE.md`) iki framework için uygula. Tek geli�
 
 ---
 
-### Sprint 7 — Next.js + Astro Adapters (P2, 2 hafta) — DURUM: AÇILMADI
+### Sprint 7 — Next.js + Astro Adapters (P2, 2 hafta) — DURUM: KAPANDI 2026-05-04
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-05-04** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md (root) S5.5 monorepo discipline'ı taze; ADAPTER_TEMPLATE.md S5.5 sonrası workflow ile güncel.
+  - [x] (1.1.2) SPRINT_PLAN.md tam okundu — S6 KAPANDI 2026-05-04 (Vue + Svelte yayında); S7 plan kalemleri (`@browsonic/nextjs` + `@browsonic/astro`) tutarlı.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — S6 closure sonrası 11 satır var (S2/S5/S8 pending + S6 done/opsiyonel).
+  - [x] (1.1.4) AGENTS.md ↔ S7 çatışması yok. Meta-framework adapter'lar React adapter'ını re-export ediyor (Sentry pattern).
+  - [x] (1.1.5) Working tree temiz — S6 closure (`1ccf6bc`) push edildi.
 
 #### Sprint Hedefi
 
@@ -634,12 +639,24 @@ Modern meta-framework adapter'ları. Server-side capture skop dışı (multi-run
 
 #### İş Logu
 
-(boş)
+- [2026-05-04] **S7 milestone 1**: `@browsonic/nextjs` 0.1 — `packages/nextjs/` workspace bootstrap + App Router error pages + route-handler wrapper + config wrapper + full @browsonic/react re-export + 19 test — durum: ✅
+  - Commit/PR: bkz. milestone 1 commit hash `db213f9`
+  - Test/CI: typecheck clean, lint 0/0 (test files'da `require-await` off — async-throw test handler'lar için), test **19/19 passed** (error-page × 8, route-handler × 7, with-browsonic × 4). Build × 3 (esm/cjs/types).
+  - Notlar: `@browsonic/react`'ı **peer + dev** olarak alıyor; kendi yüzeyinden React adapter'ın boundary + hooks + HOC tamamını re-export ediyor (Sentry pattern: `@sentry/nextjs` `@sentry/react`'a depend ediyor). **Naming**: `withBrowsonic` = React HOC (re-exported); Next config wrapper `withBrowsonicConfig` (Sentry-style — collision avoidance). Drop-in components: `BrowsonicErrorPage` (`app/error.tsx`), `BrowsonicGlobalErrorPage` (`app/global-error.tsx`, kendi `<html>`/`<body>` shell'ini render ediyor — Next.js global-error.tsx requirement). Route handler wrapper `nextjsRouteHandler: 'true'` metadata ile tag'liyor; preserve handler return value shape (typed routes break olmuyor). `withBrowsonicConfig` 0.1'de passthrough — sourcemap upload integration S3/S4 deferred sprintten geleceğinde activate olacak.
+- [2026-05-04] **S7 milestone 2**: `@browsonic/astro` 0.1 — `packages/astro/` workspace bootstrap + View Transitions navigation breadcrumbs + capture wrappers + 16 test — durum: ✅
+  - Commit/PR: bkz. milestone 2 commit hash `0ebfeaa`
+  - Test/CI: typecheck clean, lint 0/0, test **16/16 passed** (view-transitions × 7, capture × 9). Build × 3 (esm/cjs/types). `.astro` dosyası yok → Astro compiler build chain'de yok.
+  - Notlar: **Bilinçli divergence** — boundary component shipped EDİLMEDİ. Gerekçe: Astro multi-framework client (React + Vue + Svelte islands aynı projede); per-framework boundary kendi adapter'ında. Astro adapter'ın işi shared client instrumentation. `registerNavigationBreadcrumbs` `astro:after-swap` listener kuruyor; from→to chain ile her View Transitions navigation'ı `category: 'navigation'` breadcrumb olarak emit ediyor. Server-context safe (`typeof document === 'undefined'` short-circuit) — Astro build Node'da koşuyor, build-time import crash etmemeli. Test'te listener leak detection için per-test `track(off)` pattern eklendi (happy-dom `document` listener'ları test'ler arası temizlenmiyor; explicit unsubscribe gerekiyor).
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-landing-astro** (kendisi Astro; çıkan adapter'ı kendi içinde kullan), **browsonic-dashboard** (dashboard Next.js ise — kontrol et — adapter'a geçir).
+- [x] **2026-05-04** Post-flight (1.3) tüm adımları geçildi.
+  - (1.3.1) İş Logu M1 + M2 kayıtlarını içeriyor.
+  - (1.3.2) Etkilenen repolar: **browsonic-landing-astro** kendisi Astro — `@browsonic/astro` ile dogfooding fırsatı (entry #12 — opsiyonel). **browsonic-dashboard** Next.js / React tabanlı — `@browsonic/nextjs` adoption fırsatı (entry #13 — opsiyonel). **browsonic-service** etkisi yok (adapter'lar mevcut SDK API'sini tüketiyor; wire format değişmedi).
+  - (1.3.3) CROSS_REPO_IMPACTS.md güncellendi — 2 yeni opsiyonel satır + S7 lesson-learned.
+  - (1.3.4) typecheck/lint/test 5 paket için yeşil (sdk + react + vue + svelte + nextjs + astro = 6 paket aslında).
+  - (1.3.5) Conventional Commits — `feat(nextjs):` (M1) + `feat(astro):` (M2). Stamp commit'leri opsiyonel: hash'ler iş logunda inline.
+  - (1.3.6) S7 başlığı KAPANDI 2026-05-04, Sprint Özet Tablosu satırı güncellendi.
 
 ---
 

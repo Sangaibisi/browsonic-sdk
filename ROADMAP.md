@@ -9,7 +9,7 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- _No active work — natural break point after Sprint 6 closure (2026-05-04). Next up is the Next.js + Astro adapter pair (Sprint 7)._
+- _No active work — natural break point after Sprint 7 closure (2026-05-04). Next up is the CDN loader + extension/bot detection + session health pair (Sprint 9)._
 
 ## Recently shipped
 
@@ -20,12 +20,13 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 - **Monorepo migration** _(2026-05-04)_ — repo restructured into npm workspaces. `@browsonic/sdk` lives at `packages/sdk/`, `@browsonic/react` lives at `packages/react/`. Old standalone `Sangaibisi/browsonic-react` repo archived. Future framework adapters (Vue, Svelte, Next, Astro, Angular, Remix) ship as new workspaces inside this monorepo — see [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 - **`@browsonic/vue` adapter** _(2026-05-04)_ — Apache-2.0. Ships `browsonicPlugin` (`app.use()` install with `app.config.errorHandler` chaining), `<BrowsonicErrorBoundary>` (Vue 3 `defineComponent` + `onErrorCaptured`, pure TS render function — no `.vue` SFC), and `useBrowsonic` / `useUser` / `useCaptureError` composables. Peer: `vue ^3.3.0`.
 - **`@browsonic/svelte` adapter** _(2026-05-04)_ — Apache-2.0. Ships `handleErrorWithBrowsonic` (SvelteKit `handleError` hook factory), `subscribeUser` (Svelte readable-store → SDK user context bridge), and ergonomic `captureError` / `captureMessage` / `addBreadcrumb` wrappers around the global SDK singleton. **No `<BrowsonicErrorBoundary>`** — Svelte 5 ships `<svelte:boundary>` natively; we forward `onerror` to `captureError` instead of competing with the framework primitive. Peer: `svelte ^4.0.0 || ^5.0.0`.
+- **`@browsonic/nextjs` adapter** _(2026-05-04)_ — Apache-2.0. Drop-ins for App Router `app/error.tsx` (`BrowsonicErrorPage`) and `app/global-error.tsx` (`BrowsonicGlobalErrorPage`), `withBrowsonicRouteHandler` for `app/api/*/route.ts`, `withBrowsonicConfig` config wrapper (passthrough; reserved for future build-time integrations). Re-exports the full `@browsonic/react` surface so consumers install one package. Naming: `withBrowsonic` is the React HOC; `withBrowsonicConfig` is the Next config wrapper (Sentry-style collision avoidance). Peer: `next >=13.4`, `@browsonic/react ^0.1.0 || ^1.0.0`.
+- **`@browsonic/astro` adapter** _(2026-05-04)_ — Apache-2.0. `registerNavigationBreadcrumbs` listens for `astro:after-swap` and emits a navigation breadcrumb on every View Transitions swap; standalone `captureError` / `captureMessage` / `addBreadcrumb` wrappers round out the surface. No boundary component — Astro is multi-framework on the client (React + Vue + Svelte islands coexist), so per-island boundaries belong in the framework's own adapter. Peer: `astro >=4.0`.
 
 ## Next (queued, in priority order)
 
-1. **Next.js + Astro adapters.** App Router `error.tsx` / `global-error.tsx` integration, `instrumentation.ts` registry; Astro integration with View Transitions support. Browser-side capture only — server-runtime is out of scope.
-2. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
-3. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+1. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
+2. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
 
 ## Deferred (rejoining the queue after design review)
 
