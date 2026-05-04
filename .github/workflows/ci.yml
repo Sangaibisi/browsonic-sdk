@@ -92,13 +92,23 @@ jobs:
     name: Microbenchmarks + regression gate
     runs-on: ubuntu-latest
     needs: typecheck
+    # Bench + size-limit only target the SDK package (the only thing
+    # that ships a UMD bundle and a perf SLO). Adapter packages don't
+    # participate. After the monorepo migration, scripts/ + .size-limit.json
+    # live under packages/sdk/, so all per-bench/size steps run from there.
+    defaults:
+      run:
+        working-directory: packages/sdk
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: "npm"
+      # `npm ci` from the workspace root installs across all packages
+      # (single root lockfile). Done at repo root, not under packages/sdk.
       - run: npm ci
+        working-directory: .
 
       # Pull the previous run's artifact (if any) as baseline.
       - name: Download previous bench baseline
@@ -108,12 +118,12 @@ jobs:
           workflow: ci.yml
           branch: main
           name: bench-results
-          path: ./.bench-prev
+          path: packages/sdk/.bench-prev
 
       - name: Stage baseline
         run: |
-          if [ -f ./.bench-prev/bench-results.json ]; then
-            cp ./.bench-prev/bench-results.json ./bench-baseline.json
+          if [ -f .bench-prev/bench-results.json ]; then
+            cp .bench-prev/bench-results.json bench-baseline.json
             echo "Baseline prepared"
           else
             echo "No baseline yet — first run or artifact expired."
@@ -128,13 +138,16 @@ jobs:
         if: always()
         with:
           name: bench-results
-          path: bench-results.json
+          path: packages/sdk/bench-results.json
           retention-days: 30
 
   size:
     name: Bundle size budget
     runs-on: ubuntu-latest
     needs: typecheck
+    defaults:
+      run:
+        working-directory: packages/sdk
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
@@ -142,7 +155,11 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
+        working-directory: .
+      # Build the whole monorepo (topological order via root script)
+      # so size-limit can read packages/sdk/dist/.
       - run: npm run build
+        working-directory: .
 
       # Enforce hard budget (fails if exceeded)
       - run: npx size-limit
@@ -155,10 +172,12 @@ jobs:
         if: always()
         with:
           name: size-report
-          path: size-report.json
+          path: packages/sdk/size-report.json
           retention-days: 14
 
-      # Post/update a PR comment with the current size delta vs base
+      # Post/update a PR comment with the current size delta vs base.
+      # `directory` keeps the action scoped to packages/sdk so it picks
+      # up the workspace's .size-limit.json + dist/.
       - name: PR size comment
         if: github.event_name == 'pull_request'
         uses: andresz1/size-limit-action@v1
@@ -166,3 +185,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           skip_step: install
           package_manager: npm
+          directory: packages/sdk
