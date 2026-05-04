@@ -1,3 +1,9 @@
+## [2.9.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.8.0...v2.9.0) (2026-05-04)
+
+### Features
+
+- **remix:** ship 0.2 — bootstrapBrowsonic + loader instrumentation + vite/legacy parity ([4fc0862](https://github.com/Sangaibisi/browsonic-sdk/commit/4fc0862f9fa7a80dd87958aa866d36e74590667d))
+
 ## [2.8.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.7.0...v2.8.0) (2026-05-04)
 
 ### Features
