@@ -52,9 +52,13 @@
   peer-only on `@angular/common/http` and `rxjs`. README example
   shows the interceptor class shape.
 
+- **NgModule quickstart in README** — shipped 2026-05-05. The
+  README now documents the NgModule wiring path alongside
+  standalone bootstrap, plus a full HttpInterceptor wire-up
+  (standalone + NgModule provider shapes) and the Router
+  instrumentation example. Status banner bumped to 0.3 surface.
 - **`@Injectable` decorator path** in a separate
   `@browsonic/angular/decorated` entry-point.
-- **Pages / Module-NgModule quickstart** in README.
 - **Standalone signal integration.** When Angular signals stabilise
   for SDK-style state, mirror the user-context flow as a signal-
   based composable (similar to Vue's `useUser` pattern).
