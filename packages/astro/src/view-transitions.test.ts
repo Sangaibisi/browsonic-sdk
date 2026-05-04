@@ -115,4 +115,47 @@ describe('registerNavigationBreadcrumbs', () => {
     document.dispatchEvent(new Event('custom:swap'));
     expect(sdk.addBreadcrumb).toHaveBeenCalled();
   });
+
+  it('emits an intent-phase breadcrumb on astro:before-preparation when includeIntent: true (0.2)', () => {
+    track(registerNavigationBreadcrumbs({ sdk, includeIntent: true }));
+
+    // Astro's real before-preparation event carries `from` + `to` URL
+    // properties on the event itself. We mimic that shape.
+    const intent = Object.assign(new Event('astro:before-preparation'), {
+      from: new URL('https://x.test/'),
+      to: new URL('https://x.test/destination'),
+    });
+    document.dispatchEvent(intent);
+
+    expect(sdk.addBreadcrumb).toHaveBeenCalledTimes(1);
+    const arg = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      data: Record<string, unknown>;
+      message: string;
+    };
+    expect(arg.data).toMatchObject({
+      from: '/',
+      to: '/destination',
+      phase: 'intent',
+      source: 'astro:view-transitions',
+    });
+    expect(arg.message).toContain('(intent)');
+  });
+
+  it('tags both phases when includeIntent: true and a full swap fires (0.2)', () => {
+    track(registerNavigationBreadcrumbs({ sdk, includeIntent: true }));
+
+    document.dispatchEvent(
+      Object.assign(new Event('astro:before-preparation'), {
+        from: new URL('https://x.test/'),
+        to: new URL('https://x.test/n'),
+      }),
+    );
+    window.history.pushState({}, '', '/n');
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    const calls = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls;
+    expect(calls).toHaveLength(2);
+    expect((calls[0]![0] as { data: { phase: string } }).data.phase).toBe('intent');
+    expect((calls[1]![0] as { data: { phase: string } }).data.phase).toBe('completed');
+  });
 });

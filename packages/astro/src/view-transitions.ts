@@ -25,14 +25,37 @@ import { resolveSdk } from './resolve-sdk';
 export interface RegisterNavigationBreadcrumbsOptions {
   /** SDK instance. Falls back to `window.Browsonic.getBrowsonic()`. */
   sdk?: Browsonic;
-  /** Custom event name. Default: `'astro:after-swap'`. */
+  /** Custom event name for the swap-completed signal. Default: `'astro:after-swap'`. */
   eventName?: string;
+  /**
+   * 0.2 — also subscribe to `astro:before-preparation` and emit an
+   * "intent" breadcrumb for the navigation about to happen. Pairs
+   * with the after-swap breadcrumb to give a from/to trail with
+   * timing — useful when an error fires mid-navigation.
+   *
+   * The intent breadcrumb uses category `'navigation'` (same as
+   * after-swap) but tags `data.phase: 'intent'` vs
+   * `data.phase: 'completed'` so the dashboard renderer can group
+   * them or de-dupe per phase.
+   *
+   * Default: `false` (matches 0.1 behaviour).
+   */
+  includeIntent?: boolean;
+  /**
+   * Custom event name for the intent signal. Default:
+   * `'astro:before-preparation'`. Only consumed when `includeIntent`
+   * is `true`.
+   */
+  intentEventName?: string;
 }
 
 /**
  * Subscribe a `astro:after-swap` listener that emits a navigation
  * breadcrumb on every Astro View Transitions navigation. Returns the
  * unsubscribe handle. No-op when running outside a browser context.
+ *
+ * 0.2 adds an opt-in `includeIntent: true` flag that also subscribes
+ * to `astro:before-preparation` for a richer pre-swap trail.
  *
  * @example
  * ```astro
@@ -41,7 +64,7 @@ export interface RegisterNavigationBreadcrumbsOptions {
  * ---
  * <script>
  *   import { registerNavigationBreadcrumbs } from '@browsonic/astro';
- *   registerNavigationBreadcrumbs();
+ *   registerNavigationBreadcrumbs({ includeIntent: true });
  * </script>
  * ```
  */
@@ -52,10 +75,12 @@ export function registerNavigationBreadcrumbs(
     return () => {};
   }
 
-  const eventName = options.eventName ?? 'astro:after-swap';
+  const swapEventName = options.eventName ?? 'astro:after-swap';
+  const intentEventName = options.intentEventName ?? 'astro:before-preparation';
+  const includeIntent = options.includeIntent ?? false;
   let lastPath = typeof window !== 'undefined' ? window.location.pathname : '';
 
-  const handler = (): void => {
+  const swapHandler = (): void => {
     const sdk = resolveSdk(options.sdk);
     if (!sdk) return;
 
@@ -64,7 +89,12 @@ export function registerNavigationBreadcrumbs(
       sdk.addBreadcrumb({
         category: 'navigation',
         message: `${lastPath} → ${currentPath}`,
-        data: { from: lastPath, to: currentPath, source: 'astro:view-transitions' },
+        data: {
+          from: lastPath,
+          to: currentPath,
+          source: 'astro:view-transitions',
+          ...(includeIntent ? { phase: 'completed' } : {}),
+        },
       });
     } catch {
       // Defensive isolation — breadcrumb failures must never throw
@@ -73,6 +103,43 @@ export function registerNavigationBreadcrumbs(
     lastPath = currentPath;
   };
 
-  document.addEventListener(eventName, handler);
-  return () => document.removeEventListener(eventName, handler);
+  // Astro's `astro:before-preparation` event carries `from` + `to`
+  // URL objects on its detail. The cast covers Astro 4.x + 5.x;
+  // older Astro versions that lacked the event simply never fire it.
+  const intentHandler = (event: Event): void => {
+    const sdk = resolveSdk(options.sdk);
+    if (!sdk) return;
+
+    const detail = (event as Event & { from?: URL; to?: URL }).from
+      ? (event as Event & { from?: URL; to?: URL })
+      : ((event as unknown as { detail?: { from?: URL; to?: URL } }).detail ?? {});
+    const fromUrl = detail.from?.pathname ?? lastPath;
+    const toUrl = detail.to?.pathname ?? '';
+
+    try {
+      sdk.addBreadcrumb({
+        category: 'navigation',
+        message: `${fromUrl} → ${toUrl} (intent)`,
+        data: {
+          from: fromUrl,
+          to: toUrl,
+          source: 'astro:view-transitions',
+          phase: 'intent',
+        },
+      });
+    } catch {
+      // Same defensive contract as the swap handler.
+    }
+  };
+
+  document.addEventListener(swapEventName, swapHandler);
+  if (includeIntent) {
+    document.addEventListener(intentEventName, intentHandler);
+  }
+  return () => {
+    document.removeEventListener(swapEventName, swapHandler);
+    if (includeIntent) {
+      document.removeEventListener(intentEventName, intentHandler);
+    }
+  };
 }
