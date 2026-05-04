@@ -20,6 +20,14 @@
  *   consumer's `App.Error` shape so the framework's exact error type
  *   flows through.
  *
+ * 0.3 — SvelteKit form / error-page coverage:
+ * - `withBrowsonicAction` — wraps a SvelteKit `actions: {}` handler
+ *   so unhandled throws are reported, then re-thrown so the framework
+ *   returns the action's failure to the client unchanged.
+ * - `reportErrorPage` — one-shot, idempotent helper for
+ *   `+error.svelte` to capture errors that surfaced during SSR or
+ *   navigations where `handleError` never fired client-side.
+ *
  * Why no boundary component?
  * Svelte 5 ships `<svelte:boundary>` natively; Svelte 4 has no clean
  * primitive for an error boundary. Rather than ship a half-working
@@ -46,3 +54,9 @@ export {
   trackNavigation,
   type InstrumentNavigationOptions,
 } from './navigation';
+export {
+  withBrowsonicAction,
+  type ActionEventLike,
+  type WithBrowsonicActionOptions,
+} from './form-actions';
+export { reportErrorPage, type ReportErrorPageOptions } from './error-page';

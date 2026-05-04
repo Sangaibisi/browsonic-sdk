@@ -35,13 +35,23 @@
   `@vue/compiler-sfc`-style additions. Will land alongside
   Suspense / boundary integration in 0.3.
 
-## 0.3
+## 0.3 (shipped 2026-05-05)
 
-- **SvelteKit form-action capture** — a wrapper that catches throws
-  in `actions: {}` handlers and forwards them.
-- **`+error.svelte` integration helper** — boilerplate to attach
-  the SDK to the page's error page so unhandled framework errors
-  also reach Browsonic.
+- **SvelteKit form-action capture** — shipped 2026-05-05.
+  `withBrowsonicAction(handler, options?)` wraps an `actions: {}`
+  handler so unhandled throws are captured (with `sveltekit.action.name`
+  / `sveltekit.action.method` tags + `sveltekitPath` metadata) and
+  **then re-thrown** so SvelteKit returns the action's failure to
+  the client unchanged. Structural `ActionEventLike` shape — no
+  `@sveltejs/kit` peerDep. SDK isolation: a thrown reporter cannot
+  mask the original error in the re-throw path.
+- **`+error.svelte` integration helper** — shipped 2026-05-05.
+  `reportErrorPage(error, { status, pathname, sdk?, tagNamespace? })`
+  is a one-shot, idempotent capture for the page's `<script>`
+  block. Reference-keyed de-dupe via module-scope WeakSet so a
+  reactive `$:` binding doesn't re-report on every store tick.
+  Browser-only — SSR and "no SDK reachable" cases short-circuit
+  to `false` so the helper is safe to call unconditionally.
 
 ## Later (parking lot)
 
