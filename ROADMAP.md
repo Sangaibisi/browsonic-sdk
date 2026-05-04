@@ -9,7 +9,7 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 
 ## Now (in flight)
 
-- _No active work — natural break point after Sprint 7 closure (2026-05-04). Next up is the CDN loader + extension/bot detection + session health pair (Sprint 9)._
+- _No active work — natural break point after Sprint 9 partial closure (2026-05-04). Next up is the Angular + Remix adapter pair plus migration guides (Sprint 10)._
 
 ## Recently shipped
 
@@ -22,11 +22,11 @@ Browsonic is a **focused, privacy-first browser error tracking SDK**. We deliber
 - **`@browsonic/svelte` adapter** _(2026-05-04)_ — Apache-2.0. Ships `handleErrorWithBrowsonic` (SvelteKit `handleError` hook factory), `subscribeUser` (Svelte readable-store → SDK user context bridge), and ergonomic `captureError` / `captureMessage` / `addBreadcrumb` wrappers around the global SDK singleton. **No `<BrowsonicErrorBoundary>`** — Svelte 5 ships `<svelte:boundary>` natively; we forward `onerror` to `captureError` instead of competing with the framework primitive. Peer: `svelte ^4.0.0 || ^5.0.0`.
 - **`@browsonic/nextjs` adapter** _(2026-05-04)_ — Apache-2.0. Drop-ins for App Router `app/error.tsx` (`BrowsonicErrorPage`) and `app/global-error.tsx` (`BrowsonicGlobalErrorPage`), `withBrowsonicRouteHandler` for `app/api/*/route.ts`, `withBrowsonicConfig` config wrapper (passthrough; reserved for future build-time integrations). Re-exports the full `@browsonic/react` surface so consumers install one package. Naming: `withBrowsonic` is the React HOC; `withBrowsonicConfig` is the Next config wrapper (Sentry-style collision avoidance). Peer: `next >=13.4`, `@browsonic/react ^0.1.0 || ^1.0.0`.
 - **`@browsonic/astro` adapter** _(2026-05-04)_ — Apache-2.0. `registerNavigationBreadcrumbs` listens for `astro:after-swap` and emits a navigation breadcrumb on every View Transitions swap; standalone `captureError` / `captureMessage` / `addBreadcrumb` wrappers round out the surface. No boundary component — Astro is multi-framework on the client (React + Vue + Svelte islands coexist), so per-island boundaries belong in the framework's own adapter. Peer: `astro >=4.0`.
+- **Extension / bot detection at init + session health** _(2026-05-04, SDK 2.4-track)_ — `isExtensionContext()` and `isBotUserAgent()` guard the SDK init flow so the SDK refuses to initialise inside `chrome-extension://` (and the equivalent Firefox / Safari / Edge protocols) and under known bot user agents (Googlebot, Slackbot, headless tooling — 28 default patterns, override-able). Three-state monotonic session health (`'ok'` → `'errored'` → `'crashed'`) is stamped on every event so backends can plot per-session timelines; the SDK's circuit breaker forces `'crashed'` automatically when the internal-error budget is exceeded. Public surface: `getSessionHealth()`, `markSessionCrashed()`, plus the new `BrowsonicEvent.sessionHealth` field. The CDN loader script milestone is **deferred** — it depends on a CDN distribution channel that hasn't been provisioned yet on the ops side; `<script async>` with the existing UMD bundle is the recommended pattern until then.
 
 ## Next (queued, in priority order)
 
-1. **CDN loader, extension / bot detection, session health.** Async lazy-loading stub script (~3 KB), automatic shutdown inside browser-extension contexts, default ignore list for known bots, minimal "errored / healthy / crashed" session signal.
-2. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
+1. **Angular + Remix adapters, migration guides.** Closes the framework matrix. Migration guides from Sentry and TrackJS, including an opt-in `jscodeshift` codemod for the API surface that has direct one-to-one mapping.
 
 ## Deferred (rejoining the queue after design review)
 

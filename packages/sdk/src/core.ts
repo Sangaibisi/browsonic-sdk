@@ -53,5 +53,15 @@ export type { SdkPlugin, PluginContext } from './plugin';
 // Sprint 8 M3 — transient scope (Sentry-compatible)
 export type { Scope } from './sentinel/scope';
 
+// Sprint 9 M2 — session health
+export type { SessionHealth } from './sentinel/session-health';
+
+// Sprint 9 M1 — runtime environment guards
+export {
+  isExtensionContext,
+  isBotUserAgent,
+  DEFAULT_BOT_PATTERNS,
+} from './utils/runtime-environment';
+
 // NOTE: no WidgetRule / WidgetManager exports here — import those
 // from `@browsonic/sdk/widget` when you need them.

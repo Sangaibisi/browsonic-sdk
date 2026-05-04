@@ -150,6 +150,14 @@ export interface BrowsonicEvent {
    * everything else. Empty when no extras have been set.
    */
   extras?: Record<string, unknown>;
+  /**
+   * Session health at the moment this event was captured (Sprint
+   * 9 M2). Three-state monotonic machine — `'ok'` → `'errored'` →
+   * `'crashed'`. Stamped on every event so backends can plot the
+   * per-session timeline of state transitions. Absent on events
+   * captured before the SDK reached `'running'` state.
+   */
+  sessionHealth?: 'ok' | 'errored' | 'crashed';
   /** Async stack trace captured at callback bind time */
   bindStack?: string | null;
   /** Timestamp when bindStack was captured */
@@ -651,6 +659,30 @@ export interface BrowsonicConfig {
   ignoreExtensions?: boolean;
 
   /**
+   * Refuse to initialise when the SDK is loaded inside a browser
+   * extension context (chrome-extension://, moz-extension://, etc.).
+   * Default: `true`. Distinct from {@link ignoreExtensions}, which
+   * filters extension-origin events at capture time — this aborts
+   * init entirely so no telemetry pipeline runs. Added in Sprint 9 M1.
+   */
+  abortInExtensionContext?: boolean;
+
+  /**
+   * Refuse to initialise when the navigator user agent matches a known
+   * bot pattern (Googlebot, Bingbot, Slackbot, headless tooling, …).
+   * Default: `true`. Override the pattern list with {@link botPatterns}.
+   * Added in Sprint 9 M1.
+   */
+  abortForBots?: boolean;
+
+  /**
+   * Custom bot user-agent fragment list. When supplied, REPLACES the
+   * built-in `DEFAULT_BOT_PATTERNS` for the {@link abortForBots} check.
+   * Substring match, case-insensitive. Added in Sprint 9 M1.
+   */
+  botPatterns?: readonly string[];
+
+  /**
    * Ignore cross-origin "Script error" messages (default: true)
    * These occur when scripts from other domains throw errors but
    * don't have proper CORS headers, providing no useful information.
@@ -729,6 +761,9 @@ export interface ResolvedConfig extends Required<
     | 'captureCookieValues'
     | 'sampleRate'
     | 'onErrorStorm'
+    | 'abortInExtensionContext'
+    | 'abortForBots'
+    | 'botPatterns'
   >
 > {
   clientVersion: string | null;

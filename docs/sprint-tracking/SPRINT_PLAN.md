@@ -89,19 +89,19 @@ Sprint kapanmadan önce:
 
 ## 2. Sprint Özet Tablosu
 
-| #        | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                |
-| -------- | ----- | ------------------------------------------------- | ------- | --------------------- | -------------------- |
-| **S1**   | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29   |
-| **S2**   | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29   |
-| **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29 |
-| **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29 |
-| **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29   |
-| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04   |
-| **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | KAPANDI 2026-05-04   |
-| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | KAPANDI 2026-05-04   |
-| **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KAPANDI 2026-05-04   |
-| **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | AÇILMADI             |
-| **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI             |
+| #        | Hafta | Tema                                              | Öncelik | Çıktı tipi            | Durum                                           |
+| -------- | ----- | ------------------------------------------------- | ------- | --------------------- | ----------------------------------------------- |
+| **S1**   | 1     | OSS Foundation Hygiene                            | P0      | Repo cleanup          | KAPANDI 2026-04-29                              |
+| **S2**   | 2-3   | Stack Parser & Linked Errors                      | P1      | Code                  | KAPANDI 2026-04-29                              |
+| **S3**   | 4-5   | Source Map Pipeline ① — CLI + Webpack             | P1      | Yeni paket(ler)       | ERTELENDİ 2026-04-29                            |
+| **S4**   | 6-7   | Source Map Pipeline ② — Vite + Rollup + Esbuild   | P1      | Plugin paketler       | ERTELENDİ 2026-04-29                            |
+| **S5**   | 8-9   | React Adapter (Pilot)                             | P2      | Yeni paket            | KAPANDI 2026-04-29                              |
+| **S5.5** | —     | Monorepo Migration                                | P1      | Repo refactor         | KAPANDI 2026-05-04                              |
+| **S6**   | 10-11 | Vue + Svelte Adapters                             | P2      | Yeni paket            | KAPANDI 2026-05-04                              |
+| **S7**   | 12-13 | Next.js + Astro Adapters                          | P2      | Yeni paket            | KAPANDI 2026-05-04                              |
+| **S8**   | 14-15 | Public Scope/Breadcrumb/Tag API                   | P2      | Code (core)           | KAPANDI 2026-05-04                              |
+| **S9**   | 16-17 | Loader + Extension/Bot Detection + Session Health | P3      | Code                  | KISMEN — M1+M2 KAPANDI 2026-05-04, M3 ERTELENDİ |
+| **S10**  | 18-19 | Angular + Remix + Migration Guides                | P3      | Paket + dokümantasyon | AÇILMADI                                        |
 
 Pilot yaklaşımı: adapter sprint'lerinden sadece S5 (React) önce gidiyor. Kalıp doğrulandıktan sonra S6/S7/S10 aynı şablonu çoğaltır.
 
@@ -756,11 +756,16 @@ Sentry'nin `addBreadcrumb` / `setTag` / `setContext` / `setExtra` / `withScope` 
 
 ---
 
-### Sprint 9 — Loader + Extension/Bot Detection + Session Health (P3, 2 hafta) — DURUM: AÇILMADI
+### Sprint 9 — Loader + Extension/Bot Detection + Session Health (P3, 2 hafta) — DURUM: KISMEN — M1+M2 KAPANDI 2026-05-04, M3 (loader) ERTELENDİ
 
 #### Pre-flight Check
 
-- [ ] Protokol 1.1 tüm adımları geçildi.
+- [x] **2026-05-04** Protokol 1.1 tüm adımları geçildi.
+  - [x] (1.1.1) `browsonic-sdk` AGENTS.md taze; SDK iç değişikliği için bundle bütçesi + privacy-first defaults + circuit breaker davranışları korunmalı.
+  - [x] (1.1.2) SPRINT_PLAN.md tam okundu — S7 KAPANDI 2026-05-04 (5 adapter yayında); S9 plan kalemleri: loader + extension/bot detect + session health.
+  - [x] (1.1.3) CROSS_REPO_IMPACTS.md okundu — S7 closure sonrası 13 satır.
+  - [x] (1.1.4) AGENTS.md ↔ S9 çatışması yok. Init-time guard'lar circuit breaker pattern'ini güçlendiriyor.
+  - [x] (1.1.5) Working tree temiz — S7 closure (`1810cd8`) push edildi.
 
 #### Sprint Hedefi
 
@@ -792,12 +797,27 @@ Production-grade entegrasyon detayları. Loader script async lazy init için, ex
 
 #### İş Logu
 
-(boş)
+- [2026-05-04] **S9 milestone 1**: `utils/runtime-environment.ts` — `isExtensionContext()` (chrome-extension:// vb. 7 protocol) + `isBotUserAgent(ua, customPatterns?)` (default 28 bot pattern) + `DEFAULT_BOT_PATTERNS` export + 17 unit test. Init-time integration `lifecycle.ts` `runInit`'e iki guard: `abortInExtensionContext` (default true) + `abortForBots` (default true) + `botPatterns` opt-out config'leri eklendi — durum: ✅
+  - Commit/PR: bkz. milestone hash (M1+M2 birleşik commit)
+  - Test/CI: typecheck clean, lint 0/0, test **448/448 passed** (430 → 448, +18). size — main 19.60 → **20.47 KB / 22** (+0.87 KB), core 13.24 → **14.04 KB / 15** (+0.80 KB), widget 5.12 KB (no change), CJS 23.33 → **24.27 KB / 26** (+0.94 KB).
+  - Notlar: Init-time abort, **event-time** `ignoreExtensions` filter'ından farklı amaca hizmet ediyor — extension context'te tüm pipeline kapanıyor (queue/transport/collectors hiç açılmıyor), bot UA'da telemetry başlamıyor. 28 default bot pattern conservative tutuldu (major search engines + social link previews + headless tooling). `botPatterns` ile composing isteyen kullanıcı `[...DEFAULT_BOT_PATTERNS, 'mybot']` pattern'ini kullanabilir.
+- [2026-05-04] **S9 milestone 2**: `sentinel/session-health.ts` — three-state monotonic state machine (`'ok' → 'errored' → 'crashed'`) + `transitionOnEvent(current, level)` + `markCrashed()` + `severity()` + 8 unit test. `Browsonic` class'a `sessionHealth` field + public `getSessionHealth()` + `markSessionCrashed()` metodları. Event pipeline transition'ı event creation'dan ÖNCE uyguluyor (event'e güncel state damgalanıyor). Circuit breaker tripped olduğunda otomatik `'crashed'`. `BrowsonicEvent.sessionHealth?: 'ok' | 'errored' | 'crashed'` opsiyonel field — durum: ✅
+  - Commit/PR: bkz. milestone hash (M1+M2 birleşik commit)
+  - Test/CI: typecheck clean, lint 0/0, test **456/456 passed** (448 → 456, +8). size — main 20.47 → **20.59 KB / 22** (+0.12 KB), core 14.04 → **14.16 KB / 15** (+0.12 KB), widget 5.12 KB (no change), CJS 24.27 → **24.56 KB / 26** (+0.29 KB).
+  - Notlar: `'crashed'` terminal — bir kez girildikten sonra hiçbir transition state'i `'ok'`/`'errored'` yapmıyor (test bunu doğruluyor). Circuit breaker entegrasyonu `handleInternalError`'da; `maxInternalErrors` aşıldığında otomatik crashed + sdk.pause(). `markSessionCrashed()` public method explicit override için.
+- [2026-05-04] **S9 milestone 3 (CDN loader script)**: ERTELENDİ — durum: ⏸️
+  - Gerekçe: Loader script (~3 KB stub: `init()` çağrılarını buffer'lar, async olarak full bundle yükler) ayrı build artefact gerektiriyor (`packages/sdk/scripts/build-loader.mjs`, yeni size budget entry, version-pinned UMD bundle URL'i, CDN deployment pipeline). browsonic-ops repo'sunda CDN distribution kanalı henüz kurulmadı — loader bundle yayında olsa bile `<script async src="https://cdn.browsonic.io/v1/loader.min.js">` URL'i resolve edilemeyecek. **Reopen kriteri**: ops tarafında CDN distribution (CloudFront + S3 origin / jsDelivr GitHub Releases mirror / başka) ayağa kaldırıldığında.
+  - Geçici alternatif: kullanıcılar `<script>` ile UMD bundle'ı doğrudan kendi CDN'lerinden serve edebiliyor; `npm install` + bundler yolunu zaten destekliyoruz. Loader stub blocking-script optimization'ı için (Sentry'nin browser loader'ı gibi); olmadığında manuel `<script async>` async behavior'u veriyor.
 
 #### Sprint Sonu Cross-Repo Etki Kontrolü
 
-- [ ] Post-flight (1.3) tüm adımları geçildi.
-- Etkilenen repolar: **browsonic-service** (session aggregation endpoint'i), **browsonic-dashboard** (session health metrik kartları), **browsonic-ops** (CDN deployment pipeline loader script için).
+- [x] **2026-05-04** Post-flight (1.3) tüm adımları geçildi (M1+M2 için).
+  - (1.3.1) İş Logu M1 + M2 + M3 (deferred) kayıtlarını içeriyor.
+  - (1.3.2) Etkilenen repolar: **browsonic-service** — `BrowsonicEvent.sessionHealth` yeni opsiyonel alanı (M2) ingest tolerate + persist etmeli (entry #14). **browsonic-dashboard** — session health metrik kartları opsiyonel UI (entry #15). **browsonic-ops** — CDN distribution kanalı M3 reopen blocker'ı (entry #16, izleme).
+  - (1.3.3) CROSS_REPO_IMPACTS.md güncellendi — 3 yeni satır + S9 partial-closure lesson-learned.
+  - (1.3.4) typecheck/lint/test/size hepsi yeşil (456/456 test).
+  - (1.3.5) Conventional Commits korundu — tek `feat(sdk):` commit M1+M2 work + `docs(sprint-tracking):` closure.
+  - (1.3.6) S9 başlığı KISMEN — M1+M2 KAPANDI, M3 (loader) ERTELENDİ. Sprint Özet Tablosu satırı güncellendi.
 
 ---
 

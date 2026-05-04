@@ -460,3 +460,6 @@ export {
   DEFAULT_LINKED_ERRORS_MAX_DEPTH,
   type LinkedError,
 } from './linked-errors';
+
+// Re-export runtime environment guards (Sprint 9 M1)
+export { isExtensionContext, isBotUserAgent, DEFAULT_BOT_PATTERNS } from './runtime-environment';

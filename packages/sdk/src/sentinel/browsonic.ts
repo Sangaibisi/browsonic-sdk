@@ -58,6 +58,9 @@ import {
 import { addBreadcrumb as addBreadcrumbImpl } from './breadcrumbs';
 // Sprint 8 M3 — transient scope
 import { withScope as withScopeImpl, type Scope } from './scope';
+// Sprint 9 M2 — session health
+import type { SessionHealth } from './session-health';
+import { markCrashed } from './session-health';
 import {
   enterCriticalPath as enterCriticalPathImpl,
   exitCriticalPath as exitCriticalPathImpl,
@@ -113,6 +116,13 @@ export class Browsonic {
    * and the backend does not index them.
    */
   extras: Record<string, unknown> = {};
+  /**
+   * @internal Session health state machine (Sprint 9 M2). Initial
+   * value is `'ok'`; bumped by the event pipeline on captured
+   * `error` / `fatal` events, and forced to `'crashed'` by the
+   * circuit breaker or `markSessionCrashed()`.
+   */
+  sessionHealth: SessionHealth = 'ok';
 
   /**
    * Register a plugin with the SDK. MUST be called before `init()`.
@@ -264,6 +274,31 @@ export class Browsonic {
   withScope<T>(fn: (scope: Scope) => T): T;
   withScope<T>(fn: (scope: Scope) => T | Promise<T>): T | Promise<T> {
     return withScopeImpl(this, fn as (scope: Scope) => T);
+  }
+
+  /**
+   * Read the current session health state (Sprint 9 M2). One of
+   * `'ok'` (no error events captured yet), `'errored'` (at least
+   * one `error` / `fatal` event captured), or `'crashed'` (terminal
+   * — circuit breaker tripped, or the host called
+   * {@link markSessionCrashed}). Each captured event is also
+   * stamped with this value at capture time.
+   */
+  getSessionHealth(): SessionHealth {
+    return this.sessionHealth;
+  }
+
+  /**
+   * Force the session into the terminal `'crashed'` state. Use
+   * sparingly: typical usage relies on the event-driven transitions
+   * (`'ok'` → `'errored'` on error events, circuit breaker → `'crashed'`).
+   * This method is the explicit override for hosts that want to
+   * advertise an unrecoverable failure to the backend without waiting
+   * for an error event to fire. Once crashed, the state is terminal.
+   */
+  markSessionCrashed(): void {
+    this.sessionHealth = markCrashed();
+    this.debugLog('Session marked as crashed');
   }
 
   /**

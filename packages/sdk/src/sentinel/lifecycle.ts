@@ -19,6 +19,8 @@ import { createEventQueue } from '../queue';
 import { createTelemetryStore } from '../telemetry';
 import { createDiagnosticsStore, createDiagnosticsReporter } from '../diagnostics';
 import { getOrCreateSessionId, safeExecute } from '../utils';
+// Sprint 9 M1 — runtime environment guards
+import { isExtensionContext, isBotUserAgent } from '../utils/runtime-environment';
 import type { Browsonic } from './browsonic';
 import { activatePlugins, deactivatePlugins } from './plugins';
 import { handleEvent, handleInternalError } from './event-pipeline';
@@ -46,6 +48,23 @@ export function runInit(sdk: Browsonic, config: BrowsonicConfig): boolean {
 
       if (sdk.state === 'running' || sdk.state === 'initializing') {
         console.warn('[Browsonic] Already initialized. Call destroy() first.');
+        return false;
+      }
+
+      // Sprint 9 M1 — runtime environment guards. Refuse to initialise
+      // inside browser-extension contexts or under known bot user
+      // agents so we don't pollute the host's ingest endpoint with
+      // off-domain telemetry. Both checks are opt-out via config.
+      if (config.abortInExtensionContext !== false && isExtensionContext()) {
+        console.warn(
+          '[Browsonic] Browser extension context detected — init aborted (set abortInExtensionContext: false to override).'
+        );
+        return false;
+      }
+      if (config.abortForBots !== false && isBotUserAgent(undefined, config.botPatterns)) {
+        console.warn(
+          '[Browsonic] Bot user agent detected — init aborted (set abortForBots: false to override).'
+        );
         return false;
       }
 

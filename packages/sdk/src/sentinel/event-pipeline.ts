@@ -23,6 +23,8 @@
 import type { BrowsonicEvent, MetadataEntry } from '../types';
 import { collectEventContext } from '../context';
 import { safeExecute, truncate, truncateStack, cleanStackTrace, shouldIgnoreError } from '../utils';
+// Sprint 9 M2 — session health transitions
+import { transitionOnEvent } from './session-health';
 import type { Browsonic } from './browsonic';
 
 export function handleEvent(
@@ -74,6 +76,12 @@ export function handleEvent(
       const hasContexts = Object.keys(sdk.contexts).length > 0;
       const hasExtras = Object.keys(sdk.extras).length > 0;
 
+      // Sprint 9 M2 — apply the session-health transition BEFORE
+      // stamping it on the event, so an `error`-level capture lands
+      // in the backend already showing the `'errored'` state (rather
+      // than the pre-transition `'ok'`).
+      sdk.sessionHealth = transitionOnEvent(sdk.sessionHealth, partialEvent.level);
+
       const event: BrowsonicEvent = {
         ...partialEvent,
         message,
@@ -83,6 +91,7 @@ export function handleEvent(
         metadata: metadataEntries.length > 0 ? metadataEntries : undefined,
         ...(hasContexts ? { contexts: { ...sdk.contexts } } : {}),
         ...(hasExtras ? { extras: { ...sdk.extras } } : {}),
+        sessionHealth: sdk.sessionHealth,
         _truncated: stackTruncated || message !== partialEvent.message,
         // Sprint P14 (F3.2.B): tag events captured during an active
         // critical path window so the backend can group them by flow
@@ -135,12 +144,17 @@ export function handleEvent(
 /**
  * Circuit breaker — after `maxInternalErrors` consecutive SDK-internal
  * failures the SDK pauses itself to avoid runaway error loops.
+ *
+ * Sprint 9 M2: arming the breaker also forces session health to
+ * `'crashed'` — the SDK is no longer reliable, so any subsequent
+ * events the backend manages to receive carry that signal.
  */
 export function handleInternalError(sdk: Browsonic): void {
   sdk.internalErrorCount++;
   sdk.diagnostics?.incInternalError();
   if (sdk.internalErrorCount >= sdk.maxInternalErrors) {
     sdk.debugLog('Too many internal errors, disabling SDK (circuit breaker)');
+    sdk.sessionHealth = 'crashed';
     sdk.pause();
   }
 }
