@@ -9,22 +9,35 @@
 - Apache-2.0, npm provenance, CycloneDX SBOM via the monorepo
   release pipeline.
 
-## 0.2
+## 0.2 (partial — shipped 2026-05-04)
 
-- **Router instrumentation.** `withRouterInstrumentation()` factory
-  that subscribes to `Router.events` and emits navigation
-  breadcrumbs.
-- **`@Injectable` decorator path.** Optional decorated variant of
-  `BrowsonicService` with `providedIn: 'root'` for tree-shake-
-  friendly opt-in.
-- **Pages / Module-NgModule mode docs.** First-class quickstart
-  for non-standalone apps still on Angular 14/15/16.
+- **Router instrumentation.** `installRouterInstrumentation(router, options?)`
+  subscribes to a `RouterLike.events` Observable, filters for
+  NavigationEnd via the `urlAfterRedirects` structural discriminator,
+  and emits a `category: 'navigation'` breadcrumb (with optional
+  `trigger: 'imperative' | 'popstate' | 'hashchange'` data). Returns
+  an unsubscribe handle that calls the upstream
+  `Subscription.unsubscribe()` for HMR-friendly teardown. Pure-TS
+  structural Router shape — `@angular/router` stays peer-only,
+  matches the rest of the adapter's no-runtime-Angular contract.
+- **`@Injectable` decorator path** — _deferred to 0.3_. Adding
+  `@Injectable({ providedIn: 'root' })` would force `@angular/core`
+  into our runtime graph, breaking the type-only-import contract
+  documented in `provide.ts`. Re-evaluate when we ship a separate
+  `@browsonic/angular/decorated` entry-point that DOES depend on
+  `@angular/core`, so consumers can opt in.
+- **Pages / Module-NgModule mode docs** — _deferred_. Adding the
+  README quickstart needs example NgModule wiring; covered in 0.3
+  alongside the HttpInterceptor companion.
 
 ## 0.3
 
 - **HttpInterceptor companion.** Wrap HttpClient errors via
   `HTTP_INTERCEPTORS` token so failed requests surface as captured
   errors with route + status metadata.
+- **`@Injectable` decorator path** in a separate
+  `@browsonic/angular/decorated` entry-point.
+- **Pages / Module-NgModule quickstart** in README.
 - **Standalone signal integration.** When Angular signals stabilise
   for SDK-style state, mirror the user-context flow as a signal-
   based composable (similar to Vue's `useUser` pattern).
