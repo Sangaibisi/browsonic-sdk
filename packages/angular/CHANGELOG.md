@@ -1,3 +1,9 @@
+## [2.4.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.3.1...v2.4.0) (2026-05-04)
+
+### Features
+
+- **vue:** ship 0.2 — Vue Router instrumentation, useBreadcrumb, errorCaptured tag ([4fb62d9](https://github.com/Sangaibisi/browsonic-sdk/commit/4fb62d959f705ae91ddb6f0baebc897f3ab19e70))
+
 ## [2.3.1](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.3.0...v2.3.1) (2026-05-04)
 
 ### Bug Fixes
