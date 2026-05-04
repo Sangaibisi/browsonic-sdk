@@ -6,7 +6,9 @@
 > root file covers cross-package rules, the template covers what
 > every adapter must do, this file covers the Vue-specific bits.
 
-## Public API surface (0.1)
+## Public API surface (0.3)
+
+**0.1 bootstrap:**
 
 - `browsonicPlugin` — `app.use(browsonicPlugin, { sdk?, chainErrorHandler? })`.
 - `BrowsonicErrorBoundary` — Vue 3 component built with `defineComponent`
@@ -17,6 +19,28 @@
   mirror the React adapter's hook names so docs translate one-to-one.
 - `browsonicInjectionKey` — `InjectionKey<Browsonic>` for hand-rolled
   DI.
+
+**0.2 instrumentation + ergonomics:**
+
+- `installRouterInstrumentation(router, options?)` — Vue Router 4
+  `afterEach` subscriber, emits `category: 'navigation'` breadcrumbs.
+  Structural `RouterLike` shape — no `vue-router` runtime dep.
+- `useBreadcrumb()` — typed `addBreadcrumb` wrapper composable.
+- Boundary's `errorCaptured` info now lands as
+  `vue.errorCaptured.info` tag (truncated to 64 chars).
+
+**0.3 richer signals:**
+
+- `installRouterInstrumentation(router, { includeIntent: true })` —
+  also subscribes to `beforeEach`, emits `phase: 'intent'` breadcrumb
+  before navigation begins; afterEach gets `phase: 'completed'`.
+- `installPiniaIntegration(pinia, options?)` — Pinia plugin that
+  hooks `$onAction.onError` and stamps `setContext('pinia', { storeId,
+action, args, errorMessage, state? })` on the SDK scope. Opt-in
+  `captureState`, `ignoreStores`, `maxLength`. Structural `PiniaLike`
+  shape — no `pinia` runtime dep.
+- `error-boundary.parity.test.ts` — Composition + Options API parity
+  suite pinning the boundary's contract across both authoring styles.
 
 ## Defensive contract (non-negotiable)
 
@@ -81,6 +105,8 @@ impacts (service tolerance, dashboard fields) go in
 
 ## Divergences from ADAPTER_TEMPLATE
 
-None at 0.1 — the Vue adapter follows the template exactly. If a
-divergence appears in 0.2+ (router instrumentation, SSR, etc.),
-record it here with a reason.
+None through 0.3 — the Vue adapter follows the template exactly.
+Router instrumentation (0.2), Pinia integration (0.3), and the
+parity test suite all use the structural-types-only contract the
+template prescribes. If a future divergence is needed (SFC default
+fallback, Suspense integration), record it here with a reason.

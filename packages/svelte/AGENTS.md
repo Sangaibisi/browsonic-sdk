@@ -4,7 +4,9 @@
 > Svelte adapter. Pair with monorepo root `AGENTS.md` and the shared
 > `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.1)
+## Public API surface (0.3)
+
+**0.1 bootstrap:**
 
 - `handleErrorWithBrowsonic(options?)` — SvelteKit `handleError` hook
   factory.
@@ -14,6 +16,31 @@
 - `captureError` / `captureMessage` / `addBreadcrumb` — ergonomic
   standalone wrappers around `resolveSdk` + SDK calls.
 - `resolveSdk(explicit?)` — lower-level lookup.
+
+**0.2 instrumentation + typing:**
+
+- `instrumentNavigation(options?)` + `trackNavigation` Svelte action
+  — two surfaces over one engine; emits `category: 'navigation'`
+  breadcrumb on every URL change. Ref-counted `pushState` /
+  `replaceState` patches so multiple callers share one set; popstate
+  - synthetic `browsonic:locationchange` event fan-out. No
+    `@sveltejs/kit` runtime dep.
+- `handleErrorWithBrowsonic<App.Error>` — generic over the
+  consumer's `App.Error` shape so `HandleClientError` typing flows
+  through unchanged. Default generic stays `BrowsonicHandleErrorReturn`.
+
+**0.3 SvelteKit form + error-page coverage:**
+
+- `withBrowsonicAction(handler, options?)` — wraps `actions: {}`
+  handlers; reports + re-throws so SvelteKit returns the failure
+  unchanged. Structural `ActionEventLike` shape (no `@sveltejs/kit`
+  runtime dep). Custom `tagNamespace`, fallback name = `route.id` →
+  `'default'`.
+- `reportErrorPage(error, options?)` — one-shot, idempotent capture
+  for `+error.svelte`'s `<script>` block. Reference-keyed `WeakSet`
+  de-dupe so reactive `$:` doesn't re-report on tick. Browser-only
+  short-circuit; returns `boolean` so callers can distinguish
+  de-dupe from no-SDK.
 
 ## Divergences from ADAPTER_TEMPLATE
 

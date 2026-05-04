@@ -4,7 +4,9 @@
 > root `AGENTS.md` and the shared
 > `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.1)
+## Public API surface (0.3)
+
+**0.1 bootstrap:**
 
 - `BrowsonicErrorHandler` — duck-typed implementation of Angular's
   `ErrorHandler.handleError(error)`. Forwards to `sdk.captureError`,
@@ -14,8 +16,30 @@
   `captureMessage` / `addBreadcrumb` / `setTag` / `getSdk`.
 - `provideBrowsonic(options?)` — Angular 17+ standalone provider
   factory. Returns the providers array that registers the two
-  classes as singletons.
+  classes as singletons. Plain `Provider[]` so it works in
+  `AppModule.providers` for pre-standalone consumers too.
 - `resolveSdk(explicit?)` — lower-level lookup helper.
+
+**0.2 instrumentation:**
+
+- `installRouterInstrumentation(router, options?)` — subscribes to
+  `Router.events`, filters `NavigationEnd` via `urlAfterRedirects`
+  structural discriminator, emits `category: 'navigation'`
+  breadcrumb. Returns `unsubscribe()` for HMR teardown. Structural
+  `RouterLike` / `RouterEventLike` / `ObservableLike` shapes — no
+  `@angular/router` runtime dep.
+
+**0.3 HttpClient companion:**
+
+- `createBrowsonicHttpReporter(options?)` — factory returning
+  `(request, error) => void` consumers wire into a 5-line
+  `HttpInterceptor` class. Filters `ignoreUrls` (string | RegExp) +
+  `ignoreStatuses`, tags `<ns>.method` + `<ns>.status`, attaches
+  `httpUrl` (truncated 256 chars) + `httpResponseBody`
+  (`maxBodyLength: 0` opts out). Coerces non-Error throws into
+  `<METHOD> <URL> <status> <statusText>`. Structural
+  `HttpRequestLike` / `HttpErrorResponseLike` — no
+  `@angular/common/http` or `rxjs` runtime dep.
 
 ## Why no `@angular/core` runtime dependency
 

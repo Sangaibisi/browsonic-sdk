@@ -4,16 +4,48 @@
 > `AGENTS.md` and the shared
 > `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.1)
+## Public API surface (0.3)
+
+**0.1 bootstrap:**
 
 - `BrowsonicRouteErrorBoundary` — drop-in for Remix routes'
   `ErrorBoundary` export. Captures the error on mount via
   `useEffect`, renders the default fallback (or custom children).
 - `captureRouteError(error)` — imperative companion for consumers
   who already use `useRouteError` from `@remix-run/react` directly.
-- `withBrowsonicRemixAction(handler)` — wraps `action` / `loader`
-  exports. Mirrors the Next.js adapter's route-handler wrapper.
+- `withBrowsonicRemixAction(handler)` — wraps `action` exports.
+  Mirrors the Next.js adapter's route-handler wrapper.
 - All `@browsonic/react` exports re-exported.
+
+**0.2 entry helper + loader instrumentation:**
+
+- `bootstrapBrowsonic(options?)` — `entry.client.tsx` ergonomic
+  helper. Reads any pre-existing `window.Browsonic.config` (set by
+  the server-side `entry.server.tsx`), merges caller's options on
+  top, returns the SDK singleton. Node-side calls return `null`.
+- `withBrowsonicRemixLoader(handler)` — loader-side counterpart to
+  `withBrowsonicRemixAction`. Both wrappers tag the captured event
+  `remix.handler: 'action' | 'loader'` so dashboards can split
+  data-fetch errors from mutation errors. Legacy `remixAction` /
+  new `remixLoader` metadata keys preserved for back-compat.
+
+**0.3 navigation breadcrumbs with route hierarchy:**
+
+- `useRemixNavigationBreadcrumbs(navigation, matches, options?)` —
+  hook that emits `category: 'navigation'` breadcrumb on
+  non-`idle` → `'idle'` transitions. Each breadcrumb carries
+  `routeId` (leaf) + `routeChain` (parent → leaf joined with `›`).
+  Hook takes plain values — consumer calls `useNavigation()` /
+  `useMatches()` themselves. Structural `NavigationLike` /
+  `MatchLike` shapes — no `@remix-run/react` runtime dep.
+  `submitting → idle` counted as a navigation; `skipInitial: true`
+  default suppresses the first transition.
+
+**0.3 (deferred):**
+
+- `<RemoteCatch>` / pre-Remix-v2 `CatchBoundary` back-port — waits
+  on community demand; the v2 ErrorBoundary path covers the
+  common case.
 
 ## Why depend on @browsonic/react
 

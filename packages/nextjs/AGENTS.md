@@ -4,7 +4,9 @@
 > Next.js adapter. Pair with monorepo root `AGENTS.md` and the
 > shared `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.1)
+## Public API surface (0.2)
+
+**0.1 bootstrap:**
 
 - `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` — drop-ins for
   `app/error.tsx` and `app/global-error.tsx`. Capture on mount via
@@ -13,9 +15,29 @@
   handlers. Forwards thrown errors, tags `nextjsRouteHandler: 'true'`,
   re-throws.
 - `withBrowsonicConfig(nextConfig, options?)` — Next.js config
-  wrapper. 0.1 is a passthrough.
+  wrapper. Passthrough until 0.3 sourcemap pipeline lands.
 - All `@browsonic/react` exports re-exported (`BrowsonicErrorBoundary`,
   `useBrowsonic`, `useUser`, `useCaptureError`, `withBrowsonic` HOC).
+
+**0.2 route context + Pages Router:**
+
+- `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` accept optional
+  `pathname?: string` + `params?: Record<string, string | string[]>`.
+  Consumers thread these from `usePathname()` / `useParams()`; the
+  boundary lands them as `nextjs.pathname` tag + `nextjs.params`
+  context bucket.
+- `browsonicPagesAppInit(options)` — Pages Router `_app.tsx` helper.
+  Initialises the SDK once on the client, no-op on the server.
+- `browsonicPagesErrorInitialProps(ctx)` — Pages Router `_error.tsx`
+  helper inside `getInitialProps`. Captures `ctx.err`, tags
+  `nextjs.runtime: 'pages-error'`.
+
+**0.3 (deferred):**
+
+- Build-time sourcemap upload through `withBrowsonicConfig` — waiting
+  on the Sprint 3 / Sprint 4 source-map pipeline.
+- `instrumentation.ts` auto-registration — paired with sourcemap
+  pipeline.
 
 ## Naming convention — HOC vs config wrapper
 

@@ -4,7 +4,9 @@
 > `AGENTS.md` and the shared
 > `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.1)
+## Public API surface (0.3)
+
+**0.1 bootstrap:**
 
 - `registerNavigationBreadcrumbs(options?)` — `astro:after-swap`
   listener that emits a navigation breadcrumb on every View
@@ -12,6 +14,35 @@
 - `captureError` / `captureMessage` / `addBreadcrumb` — standalone
   wrappers around the global SDK singleton.
 - `resolveSdk(explicit?)` — lower-level lookup.
+
+**0.2 integration + intent:**
+
+- Default export of `@browsonic/astro/integration` — Astro
+  Integration that auto-injects the navigation hookup (and
+  optionally `window.Browsonic.config`) on every page via
+  `astro:config:setup` → `injectScript('page', …)`. Structural
+  Astro types — adapter stays peer-only.
+- `registerNavigationBreadcrumbs({ includeIntent: true })` —
+  also subscribes to `astro:before-preparation` for an intent
+  breadcrumb (`data.phase: 'intent'`); after-swap breadcrumb
+  gets `data.phase: 'completed'`.
+
+**0.3 Actions + Islands:**
+
+- `withBrowsonicAstroAction(handler, options?)` — wraps a
+  server-side action handler; reports on throw + re-throws so
+  Astro's error path runs unchanged. Tags
+  `astro.action.name` + `astro.runtime: 'action'`. Generic over
+  the handler's arg tuple so it composes with `defineAction`.
+- `tagAsAstroIsland(name, options?)` — stamps `astro.island =
+<name>` on the SDK's active scope. Sticky on top-level scope,
+  so per-framework boundaries inside the island automatically
+  inherit the tag on their captured events.
+
+**0.3 (deferred):**
+
+- Astro Content Collections breadcrumbs — needs upstream API
+  alignment for the page-build → page-load identity bridge.
 
 ## Divergences from ADAPTER_TEMPLATE
 
