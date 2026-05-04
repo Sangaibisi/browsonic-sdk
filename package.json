@@ -16,13 +16,14 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react && npm run build -w @browsonic/vue -w @browsonic/svelte -w @browsonic/angular -w @browsonic/astro && npm run build -w @browsonic/nextjs -w @browsonic/remix",
+    "_build:prereq": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react",
     "test": "npm run test --workspaces --if-present",
     "test:run": "npm run test:run --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "lint:fix": "npm run lint:fix --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run _build:prereq && npm run lint --workspaces --if-present",
+    "lint:fix": "npm run _build:prereq && npm run lint:fix --workspaces --if-present",
+    "typecheck": "npm run _build:prereq && npm run typecheck --workspaces --if-present",
     "format": "prettier --write \"packages/*/src/**/*.{ts,tsx,mjs}\" \"packages/*/*.{json,md}\" \"docs/**/*.md\" \"*.md\"",
     "format:check": "prettier --check \"packages/*/src/**/*.{ts,tsx,mjs}\" \"packages/*/*.{json,md}\" \"docs/**/*.md\" \"*.md\"",
     "size": "npm run size --workspaces --if-present",

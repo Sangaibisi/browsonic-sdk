@@ -22,8 +22,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
@@ -48,10 +48,13 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci
-      - run: npx tsc --noEmit -p tsconfig.json
+      # Workspace-aware: `npm run typecheck` first builds sdk + react
+      # (so adapters can resolve `@browsonic/sdk` / `@browsonic/react`
+      # types from dist/), then fans out `tsc --noEmit` per workspace.
+      - run: npm run typecheck
 
   # Node compatibility matrix. The SDK ships `engines: ">=20"` and is
   # consumed by browsers + Node tools, so every supported major must
@@ -65,13 +68,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['20', '22']
+        node: ["20", "22"]
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-          cache: 'npm'
+          cache: "npm"
       - run: npm ci
       # Coverage gate is enforced inside vitest.config.ts via thresholds.
       # Every node version runs the same suite — coverage thresholds
@@ -93,8 +96,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci
 
       # Pull the previous run's artifact (if any) as baseline.
@@ -136,8 +139,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
       - run: npm ci
       - run: npm run build
 
