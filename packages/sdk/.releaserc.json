@@ -17,7 +17,14 @@
           { "type": "ci", "release": false },
           { "type": "test", "release": false },
           { "type": "docs", "release": false },
-          { "type": "chore", "release": false }
+          { "type": "chore", "release": false },
+          { "scope": "react", "release": false },
+          { "scope": "vue", "release": false },
+          { "scope": "svelte", "release": false },
+          { "scope": "angular", "release": false },
+          { "scope": "nextjs", "release": false },
+          { "scope": "astro", "release": false },
+          { "scope": "remix", "release": false }
         ]
       }
     ],
