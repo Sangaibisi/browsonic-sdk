@@ -1,3 +1,9 @@
+## [2.3.1](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.3.0...v2.3.1) (2026-05-04)
+
+### Bug Fixes
+
+- **release:** pin semantic-release to ^24.2.7 + fix react package URL + scope SBOM to root ([19cde33](https://github.com/Sangaibisi/browsonic-sdk/commit/19cde3368373104c9f306aef779715599266b5e4))
+
 ## [2.3.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.2.1...v2.3.0) (2026-05-04)
 
 ### Features

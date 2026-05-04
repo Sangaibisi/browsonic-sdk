@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/angular",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Angular adapter for @browsonic/sdk — ErrorHandler, BrowsonicService, standalone provideBrowsonic() factory. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
