@@ -19,7 +19,7 @@
  */
 
 import { inject, watch, type Ref } from 'vue';
-import type { Browsonic, UserContext } from '@browsonic/sdk';
+import type { Breadcrumb, Browsonic, UserContext } from '@browsonic/sdk';
 import { browsonicInjectionKey } from './inject-key';
 import { resolveSdk } from './resolve-sdk';
 
@@ -83,6 +83,30 @@ export function useCaptureError(): (error: Error) => void {
       sdk.captureError(error);
     } catch {
       // Same defensive contract as the boundary.
+    }
+  };
+}
+
+/**
+ * Typed wrapper around `sdk.addBreadcrumb`. Returns a stable callback
+ * that takes a {@link Breadcrumb} payload and forwards it to the SDK.
+ * No-op when the SDK is not reachable; throws are swallowed to keep
+ * the host app stable.
+ *
+ * @example
+ * ```ts
+ * const addBreadcrumb = useBreadcrumb();
+ * addBreadcrumb({ category: 'ui', message: 'cart cleared' });
+ * ```
+ */
+export function useBreadcrumb(): (breadcrumb: Breadcrumb) => void {
+  const sdk = useBrowsonic();
+  return (breadcrumb: Breadcrumb): void => {
+    if (!sdk) return;
+    try {
+      sdk.addBreadcrumb(breadcrumb);
+    } catch {
+      // Defensive: a thrown breadcrumb must not bubble.
     }
   };
 }

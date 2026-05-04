@@ -20,6 +20,7 @@ function makeFakeSdk(): Browsonic {
   return {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setTag: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -137,5 +138,33 @@ describe('BrowsonicErrorBoundary', () => {
     expect(onError).toHaveBeenCalled();
     const errArg = onError.mock.calls[0]![0] as Error;
     expect(errArg.message).toBe('child-render-failure');
+  });
+
+  it('surfaces the Vue errorCaptured info as a structured tag (0.2)', () => {
+    const sdk = makeFakeSdk();
+    render(BrowsonicErrorBoundary, {
+      props: { sdk, fallback: () => h('div', 'fallback') },
+      slots: { default: () => h(Throwing) },
+    });
+    const setTag = sdk.setTag as ReturnType<typeof vi.fn>;
+    expect(setTag).toHaveBeenCalled();
+    const [tagKey, tagValue] = setTag.mock.calls[0]!;
+    expect(tagKey).toBe('vue.errorCaptured.info');
+    // Vue's render-time errors land with info string 'render function'
+    // (or similar). The tag is truncated to 64 chars.
+    expect(typeof tagValue).toBe('string');
+    expect((tagValue as string).length).toBeLessThanOrEqual(64);
+  });
+
+  it('isolates a setTag failure so captureError still fires', () => {
+    const sdk = makeFakeSdk();
+    (sdk.setTag as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('tag-store-exploded');
+    });
+    render(BrowsonicErrorBoundary, {
+      props: { sdk, fallback: () => h('div', 'fallback') },
+      slots: { default: () => h(Throwing) },
+    });
+    expect(sdk.captureError).toHaveBeenCalledTimes(1);
   });
 });

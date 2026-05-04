@@ -9,7 +9,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { defineComponent, h, ref } from 'vue';
 import { render, cleanup } from '@testing-library/vue';
 import type { Browsonic, UserContext } from '@browsonic/sdk';
-import { useBrowsonic, useUser, useCaptureError } from './composables';
+import { useBrowsonic, useUser, useCaptureError, useBreadcrumb } from './composables';
 import { browsonicInjectionKey } from './inject-key';
 
 function makeFakeSdk(): Browsonic {
@@ -17,6 +17,7 @@ function makeFakeSdk(): Browsonic {
     setUser: vi.fn(),
     clearUser: vi.fn(),
     captureError: vi.fn(),
+    addBreadcrumb: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -163,5 +164,49 @@ describe('useCaptureError', () => {
     });
     render(Comp, { global: { provide: { [browsonicInjectionKey as symbol]: fakeSdk } } });
     expect(() => capture!(new Error('x'))).not.toThrow();
+  });
+});
+
+describe('useBreadcrumb', () => {
+  it('forwards the payload to sdk.addBreadcrumb', () => {
+    const fakeSdk = makeFakeSdk();
+    let addBreadcrumb:
+      | ((b: Parameters<NonNullable<Browsonic['addBreadcrumb']>>[0]) => void)
+      | null = null;
+    const Comp = harness(() => {
+      addBreadcrumb = useBreadcrumb();
+    });
+    render(Comp, { global: { provide: { [browsonicInjectionKey as symbol]: fakeSdk } } });
+    addBreadcrumb!({ category: 'ui', message: 'cart cleared' });
+    expect(fakeSdk.addBreadcrumb).toHaveBeenCalledWith({
+      category: 'ui',
+      message: 'cart cleared',
+    });
+  });
+
+  it('is a no-op when the SDK is unreachable', () => {
+    let addBreadcrumb:
+      | ((b: Parameters<NonNullable<Browsonic['addBreadcrumb']>>[0]) => void)
+      | null = null;
+    const Comp = harness(() => {
+      addBreadcrumb = useBreadcrumb();
+    });
+    render(Comp);
+    expect(() => addBreadcrumb!({ category: 'ui', message: 'x' })).not.toThrow();
+  });
+
+  it('swallows errors thrown by addBreadcrumb', () => {
+    const fakeSdk = makeFakeSdk();
+    (fakeSdk.addBreadcrumb as ReturnType<typeof vi.fn>).mockImplementation(() => {
+      throw new Error('breadcrumb exploded');
+    });
+    let addBreadcrumb:
+      | ((b: Parameters<NonNullable<Browsonic['addBreadcrumb']>>[0]) => void)
+      | null = null;
+    const Comp = harness(() => {
+      addBreadcrumb = useBreadcrumb();
+    });
+    render(Comp, { global: { provide: { [browsonicInjectionKey as symbol]: fakeSdk } } });
+    expect(() => addBreadcrumb!({ category: 'ui', message: 'x' })).not.toThrow();
   });
 });

@@ -10,16 +10,22 @@
 - Apache-2.0, npm provenance, CycloneDX SBOM via the monorepo
   release pipeline.
 
-## 0.2
+## 0.2 (shipped 2026-05-04)
 
-- **Vue Router instrumentation.** `router.afterEach` integration that
-  emits `sdk.addBreadcrumb({ category: 'navigation', ... })` on every
-  route change.
-- **`errorCaptured` info enrichment.** Surface the
-  Vue-supplied `info` string (`'render function'`, `'setup function'`,
-  `'errorCaptured'`, …) as a structured tag.
-- **Composable `useBreadcrumb`** — typed wrapper that calls
-  `sdk.addBreadcrumb(...)` with a `Breadcrumb` payload.
+- **Vue Router instrumentation.** `installRouterInstrumentation(router, options?)`
+  subscribes to a `RouterLike.afterEach` and emits
+  `sdk.addBreadcrumb({ category: 'navigation', message: '/from → /to', data: { from, to, name? } })`
+  on every successful route change. Returns the unsubscribe handle from
+  Vue Router for HMR-friendly teardown. Structural `RouterLike` shape
+  keeps the adapter free of a `vue-router` peerDep.
+- **`errorCaptured` info enrichment.** Boundary now calls
+  `sdk.setTag('vue.errorCaptured.info', info)` (truncated to 64 chars)
+  on top of the existing `addMetadata('componentStack', info)` so the
+  Vue-supplied source string lands as a structured, filterable tag.
+  Tag failures are isolated — `captureError` still fires.
+- **Composable `useBreadcrumb`.** Typed wrapper that returns a stable
+  `(breadcrumb: Breadcrumb) => void` callback. No-op when SDK is
+  unreachable; throws are swallowed.
 
 ## 0.3
 

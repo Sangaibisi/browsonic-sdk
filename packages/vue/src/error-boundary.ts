@@ -89,6 +89,21 @@ export const BrowsonicErrorBoundary = defineComponent({
 
       if (sdk) {
         try {
+          // 0.2: surface Vue's `info` string as a structured tag
+          // BEFORE captureError, so the tag is on the active scope and
+          // rides along with the event. Common values:
+          //   'render function', 'setup function', 'errorCaptured hook',
+          //   'created hook', 'mounted hook', 'updated hook', etc.
+          // Tags are truncated to 64 chars to fit dashboard column
+          // budgets — the full string still lands as metadata below.
+          if (info && typeof info === 'string' && info.length > 0) {
+            const tagValue = info.length > 64 ? info.slice(0, 64) : info;
+            try {
+              sdk.setTag('vue.errorCaptured.info', tagValue);
+            } catch {
+              // Tag failures don't block the captureError below.
+            }
+          }
           sdk.captureError(errorObj);
           if (info && typeof info === 'string' && info.length > 0) {
             sdk.addMetadata('componentStack', info.slice(0, MAX_COMPONENT_STACK_LENGTH));
