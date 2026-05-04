@@ -1,8 +1,8 @@
 # @browsonic/astro
 
-Astro adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — Astro View Transitions navigation breadcrumbs and ergonomic capture wrappers.
+Astro adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — auto-injecting Astro Integration, View Transitions navigation breadcrumbs (with optional intent phase), Astro Actions error wrapper, partial-hydration island awareness, and ergonomic capture wrappers.
 
-> **Status:** 0.1 surface — pure-TypeScript helpers. No `.astro` components shipped. Astro is multi-framework on the client; per-framework boundaries belong in the framework's own adapter (`@browsonic/react`, `@browsonic/vue`, `@browsonic/svelte`).
+> **Status:** 0.3 surface — pure-TypeScript helpers. No `.astro` components shipped. Astro is multi-framework on the client; per-framework boundaries belong in the framework's own adapter (`@browsonic/react`, `@browsonic/vue`, `@browsonic/svelte`). Load-bearing surfaces: Astro Integration default export (auto-injects navigation hookup), View Transitions instrumentation with intent phase, Astro Actions wrapper (`withBrowsonicAstroAction`), and `tagAsAstroIsland(name)` for cross-framework island context.
 
 ## Why this adapter
 
@@ -19,7 +19,32 @@ npm install @browsonic/sdk @browsonic/astro
 
 `@browsonic/sdk` is a peer dependency. `astro` (4.x or 5.x) is a peer dependency.
 
-## Quickstart — Navigation breadcrumbs
+## Quickstart — Astro Integration (recommended)
+
+The default export of `@browsonic/astro/integration` auto-wires the navigation hookup on every page via `astro:config:setup` → `injectScript`. Pass `apiEndpoint` / `appKey` / `environment` to also inject `window.Browsonic.config = { ... }`.
+
+```ts
+// astro.config.mjs
+import { defineConfig } from 'astro/config';
+import browsonic from '@browsonic/astro/integration';
+
+export default defineConfig({
+  integrations: [
+    browsonic({
+      apiEndpoint: 'https://your-ingest-endpoint.test/v1/events',
+      appKey: 'your-app-key',
+      environment: 'production',
+      includeIntent: true, // emit `phase: 'intent'` breadcrumb on `astro:before-preparation`
+    }),
+  ],
+});
+```
+
+That's the entire wire-up. Skip to [Astro Actions](#astro-actions) if you want server-side action capture too.
+
+## Quickstart — Navigation breadcrumbs (manual)
+
+If you'd rather not use the integration, drop the listener in a root layout:
 
 ```astro
 ---
@@ -31,7 +56,7 @@ npm install @browsonic/sdk @browsonic/astro
     <slot />
     <script>
       import { registerNavigationBreadcrumbs } from '@browsonic/astro';
-      registerNavigationBreadcrumbs();
+      registerNavigationBreadcrumbs({ includeIntent: true });
     </script>
   </body>
 </html>
@@ -84,6 +109,51 @@ Browser-only — short-circuits to a no-op when `typeof document === 'undefined'
 
 Standalone wrappers around the global SDK singleton. Resolve the SDK from `window.Browsonic.getBrowsonic()` at call time. All three are no-ops when the SDK is unreachable.
 
+### Astro Actions
+
+`withBrowsonicAstroAction(handler, options?)` wraps a server-side action handler so unhandled throws are reported (with `astro.action.name` + `astro.runtime: 'action'` tags) and **then re-thrown** so Astro returns the failure unchanged.
+
+```ts
+// src/actions/index.ts
+import { defineAction } from 'astro:actions';
+import { z } from 'astro:schema';
+import { withBrowsonicAstroAction } from '@browsonic/astro';
+
+export const server = {
+  signup: defineAction({
+    accept: 'form',
+    input: z.object({ email: z.string().email() }),
+    handler: withBrowsonicAstroAction(
+      async ({ email }) => {
+        // ... business logic that may throw
+      },
+      { actionName: 'signup' },
+    ),
+  }),
+};
+```
+
+Re-throw order matters — consuming the error here would mask every reported failure as a successful return value. Mirrors `withBrowsonicRouteHandler` from `@browsonic/nextjs`.
+
+### `tagAsAstroIsland(name, options?)`
+
+Stamp `astro.island = <name>` on the SDK's active scope so subsequent captured events (from a per-framework boundary inside the island) carry the island name as a filterable tag. Works because `setTag` is sticky on the SDK's top-level scope — no cross-adapter coordination is needed.
+
+```tsx
+// src/components/ContactForm.tsx — a React island
+import { useEffect } from 'react';
+import { tagAsAstroIsland } from '@browsonic/astro';
+
+export function ContactForm() {
+  useEffect(() => {
+    tagAsAstroIsland('ContactForm');
+  }, []);
+  // ... island content
+}
+```
+
+Browser-only short-circuit on SSR. Defensive try/catch keeps a thrown `setTag` from unmounting the island.
+
 ### `resolveSdk(explicit?)`
 
 Lower-level lookup helper for when you need explicit SDK access.
@@ -96,9 +166,9 @@ Lower-level lookup helper for when you need explicit SDK access.
 
 ## What this package does NOT do
 
-- **Component-framework error boundaries.** Use the framework-specific adapter (`@browsonic/react`, `@browsonic/vue`, `@browsonic/svelte`) inside the corresponding island.
-- **Server-side rendering capture.** Astro's SSR runs in Node; the SDK is browser-only.
-- **An Astro Integration that auto-injects the SDK script.** That belongs in 0.2; for now consumers add a `<script>` block to their root layout.
+- **Component-framework error boundaries.** Use the framework-specific adapter (`@browsonic/react`, `@browsonic/vue`, `@browsonic/svelte`) inside the corresponding island. Pair it with `tagAsAstroIsland(name)` to attribute captured errors to the island they came from.
+- **Server-side rendering capture.** Astro's SSR runs in Node; the SDK is browser-only. `withBrowsonicAstroAction` runs on the server and reports _if_ a browser SDK is reachable — pure server contexts re-throw cleanly without a report.
+- **Astro Content Collections breadcrumbs.** Tracked for a future release; needs upstream API design alignment for the page-build → page-load identity bridge.
 
 ## License
 

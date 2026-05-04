@@ -1,8 +1,8 @@
 # @browsonic/nextjs
 
-Next.js adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — App Router error-page components, route-handler capture wrapper, config wrapper, plus all the React-side primitives re-exported from [`@browsonic/react`](https://www.npmjs.com/package/@browsonic/react).
+Next.js adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — App Router error-page components (with optional `pathname` / `params` context), route-handler capture wrapper, Pages Router companions (`browsonicPagesAppInit` / `browsonicPagesErrorInitialProps`), config wrapper, plus all the React-side primitives re-exported from [`@browsonic/react`](https://www.npmjs.com/package/@browsonic/react).
 
-> **Status:** 0.1 surface — drop-in `app/error.tsx` / `app/global-error.tsx` components, route-handler wrapper, and a passthrough `withBrowsonicConfig` for future build-time integrations.
+> **Status:** 0.2 surface — App Router `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` accept optional `pathname` + `params` props that consumers thread from `usePathname()` / `useParams()` and land as `nextjs.pathname` tag + `nextjs.params` context. Pages Router companions ship for `pages/_app.tsx` (`browsonicPagesAppInit`) and `pages/_error.tsx` (`browsonicPagesErrorInitialProps`). 0.3 features (build-time sourcemap upload via `withBrowsonicConfig`, `instrumentation.ts` auto-registration) are deferred until the Sprint 3 / Sprint 4 source-map pipeline lands.
 
 ## Why this adapter
 
@@ -40,6 +40,64 @@ export default BrowsonicGlobalErrorPage;
 
 The components capture `{ error, digest }` to the SDK on mount, then render a minimal "Something went wrong" UI with a Try Again button. To customise, copy the 30-line implementation from [`src/error-page.tsx`](./src/error-page.tsx) and adjust the JSX.
 
+To attach route-context to captured errors, wrap the default export with `pathname` and `params` from Next's hooks:
+
+```tsx
+// app/error.tsx
+'use client';
+import { usePathname, useParams } from 'next/navigation';
+import { BrowsonicErrorPage } from '@browsonic/nextjs';
+
+export default function ErrorPage(props: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
+  return <BrowsonicErrorPage {...props} pathname={usePathname()} params={useParams()} />;
+}
+```
+
+The boundary tags the captured event with `nextjs.pathname` and lands `params` under the `nextjs.params` context bucket so dashboards can group errors by route shape.
+
+## Quickstart — Pages Router (Next ≤ 12 / opt-in 13+)
+
+For projects on the Pages Router, two companions cover the equivalent surfaces:
+
+```tsx
+// pages/_app.tsx
+import type { AppProps } from 'next/app';
+import { browsonicPagesAppInit } from '@browsonic/nextjs';
+
+browsonicPagesAppInit({
+  apiEndpoint: 'https://your-ingest-endpoint.test/v1/events',
+  appKey: 'your-app-key',
+});
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+```
+
+```tsx
+// pages/_error.tsx
+import type { NextPage, NextPageContext } from 'next';
+import { browsonicPagesErrorInitialProps } from '@browsonic/nextjs';
+
+interface ErrorProps {
+  statusCode: number;
+}
+
+const Error: NextPage<ErrorProps> = ({ statusCode }) => <div>Error {statusCode}</div>;
+
+Error.getInitialProps = async (ctx: NextPageContext) => {
+  await browsonicPagesErrorInitialProps(ctx);
+  return { statusCode: (ctx.res?.statusCode ?? ctx.err) ? 500 : 404 };
+};
+
+export default Error;
+```
+
+`browsonicPagesAppInit` initialises the SDK once on the client and is a no-op on the server. `browsonicPagesErrorInitialProps` captures whatever Next put on `ctx.err`, tagged with `nextjs.runtime: 'pages-error'`.
+
 ## Quickstart — Route handlers
 
 ```ts
@@ -67,7 +125,7 @@ export default withBrowsonicConfig({
 });
 ```
 
-In 0.1 this is a passthrough. Adopt it now and pick up future build-time integrations (sourcemap upload, instrumentation hook auto-registration) without touching your config file again.
+In 0.2 this is a passthrough. Adopt it now and pick up future build-time integrations (sourcemap upload, `instrumentation.ts` auto-registration) without touching your config file again. Both planned for 0.3 once the Sprint 3 / Sprint 4 source-map pipeline lands.
 
 ## Quickstart — Boundary inside Client Components
 
@@ -103,9 +161,11 @@ Same as every other adapter:
 
 ## What this package does NOT do (yet)
 
-- **Sourcemap upload at build time.** The deferred Sprint 3 / Sprint 4 source-map pipeline will wire this through `withBrowsonicConfig`.
+- **Sourcemap upload at build time.** The deferred Sprint 3 / Sprint 4 source-map pipeline will wire this through `withBrowsonicConfig`. Tracked for 0.3.
+- **`instrumentation.ts` auto-registration.** Planned for 0.3 alongside the sourcemap pipeline so the SDK can register itself without consumer wiring.
 - **Server-runtime capture.** The SDK is a browser library; route-handler errors that occur in pure Node have no `window` to write to. The wrapper still re-throws so your handler returns its expected status.
 - **Edge runtime instrumentation.** Edge runtimes lack a stable global Browsonic singleton — adopt the SDK in the client layer and use the route-handler wrapper for opportunistic capture.
+- **Pages Router data layer instrumentation** (`getServerSideProps` / `getStaticProps`). Will be revisited only if Pages Router consumer demand surfaces.
 
 ## License
 

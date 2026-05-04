@@ -1,8 +1,8 @@
 # @browsonic/remix
 
-Remix adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — drop-in for route `ErrorBoundary` exports, action / loader wrapper, plus all the React-side primitives re-exported from [`@browsonic/react`](https://www.npmjs.com/package/@browsonic/react).
+Remix adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — drop-in for route `ErrorBoundary` exports, action / loader wrappers (with `remix.handler` runtime tag), `entry.client.tsx` bootstrap helper, route-hierarchy navigation breadcrumb hook, plus all React-side primitives re-exported from [`@browsonic/react`](https://www.npmjs.com/package/@browsonic/react).
 
-> **Status:** 0.1 surface — route-error boundary drop-in, imperative `captureRouteError` companion, action wrapper, full React surface re-export.
+> **Status:** 0.3 surface — route-error boundary drop-in, imperative `captureRouteError` companion, action + loader wrappers, `bootstrapBrowsonic({ apiEndpoint, … })` `entry.client.tsx` helper, `useRemixNavigationBreadcrumbs(useNavigation(), useMatches())` hook with route hierarchy in breadcrumb data, full React surface re-export. Vite + `@remix-run/react` legacy mode both supported (no runtime Remix imports — peer-only types).
 
 ## Why this adapter
 
@@ -51,11 +51,42 @@ export function ErrorBoundary() {
 }
 ```
 
+## Quickstart — `entry.client.tsx` bootstrap
+
+```tsx
+// app/entry.client.tsx
+import { RemixBrowser } from '@remix-run/react';
+import { startTransition, StrictMode } from 'react';
+import { hydrateRoot } from 'react-dom/client';
+import { bootstrapBrowsonic } from '@browsonic/remix';
+
+bootstrapBrowsonic({
+  apiEndpoint: 'https://your-ingest-endpoint.test/v1/events',
+  appKey: 'your-app-key',
+  environment: 'production',
+});
+
+startTransition(() => {
+  hydrateRoot(
+    document,
+    <StrictMode>
+      <RemixBrowser />
+    </StrictMode>,
+  );
+});
+```
+
+`bootstrapBrowsonic` reads any existing `window.Browsonic.config` (so the server-side `entry.server.tsx` can serialise per-request fields like `release`), merges your options on top, and returns the SDK singleton. SSR-safe — Node calls return `null` without touching globals.
+
 ## Quickstart — Action / loader wrappers
 
 ```ts
 // app/routes/checkout.tsx
-import { withBrowsonicRemixAction } from '@browsonic/remix';
+import { withBrowsonicRemixAction, withBrowsonicRemixLoader } from '@browsonic/remix';
+
+export const loader = withBrowsonicRemixLoader(async ({ request }) => {
+  // ... data fetch that may throw
+});
 
 export const action = withBrowsonicRemixAction(async ({ request }) => {
   const data = await request.formData();
@@ -64,7 +95,35 @@ export const action = withBrowsonicRemixAction(async ({ request }) => {
 });
 ```
 
-The wrapper forwards the thrown `Error` to `sdk.captureError`, tags it with `remixAction: 'true'`, and re-throws — Remix's normal response path is preserved.
+Both wrappers tag the captured event with `remix.handler: 'action' | 'loader'` so dashboards can distinguish data-fetch errors from mutation errors. Legacy `remixAction` / new `remixLoader` metadata keys preserved for back-compat.
+
+## Quickstart — Navigation breadcrumbs with route hierarchy
+
+`useRemixNavigationBreadcrumbs(useNavigation(), useMatches())` emits a `category: 'navigation'` breadcrumb each time the Remix navigation state transitions from non-`idle` → `'idle'`. Each breadcrumb carries the route hierarchy alongside the URL.
+
+```tsx
+// app/root.tsx
+import { Outlet, useNavigation, useMatches } from '@remix-run/react';
+import { useRemixNavigationBreadcrumbs } from '@browsonic/remix';
+
+export default function App() {
+  useRemixNavigationBreadcrumbs(useNavigation(), useMatches());
+  return <Outlet />;
+}
+```
+
+Breadcrumb data:
+
+```ts
+{
+  from: '/',
+  to: '/dashboard/users/42',
+  routeId: 'routes/_app.dashboard.users.$userId',           // leaf
+  routeChain: 'routes/_app › routes/_app.dashboard › routes/_app.dashboard.users › routes/_app.dashboard.users.$userId',
+}
+```
+
+Cross-shell URLs that look identical (e.g. `/users/42` inside `_app` vs a public route) become distinguishable in incident triage.
 
 ## Quickstart — React surface
 
@@ -96,7 +155,7 @@ Same as every other adapter:
 
 - **Server-runtime capture in Node.** The SDK is a browser library; action / loader errors that occur in pure Node have no `window` to write to. The wrapper still re-throws so Remix returns the expected status. Wire your own server logging if needed.
 - **Edge runtime instrumentation.** Edge runtimes lack a stable global Browsonic singleton.
-- **Auto-injection of the SDK script.** Add the SDK init to your `app/entry.client.tsx` manually.
+- **`<RemoteCatch>` / pre-Remix-v2 `CatchBoundary` back-port.** Tracked for a future release if community demand surfaces; the v2 ErrorBoundary path covers the common case.
 
 ## License
 
