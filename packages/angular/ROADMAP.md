@@ -30,11 +30,28 @@
   README quickstart needs example NgModule wiring; covered in 0.3
   alongside the HttpInterceptor companion.
 
-## 0.3
+## 0.3 (partial — shipped 2026-05-05)
 
-- **HttpInterceptor companion.** Wrap HttpClient errors via
-  `HTTP_INTERCEPTORS` token so failed requests surface as captured
-  errors with route + status metadata.
+- **HttpInterceptor companion** — shipped 2026-05-05.
+  `createBrowsonicHttpReporter(options?)` ships the SDK side as a
+  reporter factory: returns `(request, error) => void` that
+  consumers call from inside their own 5-line `HttpInterceptor`
+  class. The reporter:
+  - Filters out URLs / statuses (`ignoreUrls` accepts `string` or
+    `RegExp`; `ignoreStatuses` accepts numeric codes).
+  - Tags the active scope with `angular.http.method` /
+    `angular.http.status` (override namespace via `tagNamespace`).
+  - Attaches `httpUrl` + truncated `httpResponseBody` metadata
+    (`maxBodyLength` cap, `0` to skip body capture entirely).
+  - Coerces non-Error throws into a synthesised
+    `<METHOD> <URL> <status> <statusText>` Error.
+  - Defensive isolation — a thrown SDK call cannot propagate into
+    the interceptor's `catchError` re-throw path.
+
+  Wire-up is intentionally consumer-owned so this adapter stays
+  peer-only on `@angular/common/http` and `rxjs`. README example
+  shows the interceptor class shape.
+
 - **`@Injectable` decorator path** in a separate
   `@browsonic/angular/decorated` entry-point.
 - **Pages / Module-NgModule quickstart** in README.

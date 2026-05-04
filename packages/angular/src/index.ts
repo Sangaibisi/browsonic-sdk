@@ -22,6 +22,15 @@
  *   breadcrumbs on `NavigationEnd`. Structural router type so the
  *   adapter stays free of an `@angular/router` runtime dep.
  *
+ * 0.3 — HttpClient companion:
+ * - `createBrowsonicHttpReporter(options?)` — factory returning a
+ *   `(request, error) => void` callback consumers wire into a
+ *   5-line `HttpInterceptor` class (or any other transport surface).
+ *   Filters by `ignoreUrls` / `ignoreStatuses`, tags the active
+ *   scope with `angular.http.method` / `angular.http.status`,
+ *   attaches `httpUrl` + truncated `httpResponseBody` metadata,
+ *   and forwards the error to `captureError`.
+ *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0
  */
@@ -38,3 +47,10 @@ export {
   type SubscriptionLike,
   type InstallRouterInstrumentationOptions,
 } from './router';
+export {
+  createBrowsonicHttpReporter,
+  type BrowsonicHttpReporter,
+  type CreateBrowsonicHttpReporterOptions,
+  type HttpRequestLike,
+  type HttpErrorResponseLike,
+} from './http-interceptor';
