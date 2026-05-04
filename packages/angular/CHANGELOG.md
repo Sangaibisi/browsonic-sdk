@@ -1,3 +1,9 @@
+## [2.8.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.7.0...v2.8.0) (2026-05-04)
+
+### Features
+
+- **astro:** ship 0.2 — Astro Integration + intent breadcrumbs ([6a8ec0b](https://github.com/Sangaibisi/browsonic-sdk/commit/6a8ec0b5acd6cda0ae22ead6a5aed8ec358646c5))
+
 ## [2.7.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.6.0...v2.7.0) (2026-05-04)
 
 ### Features
