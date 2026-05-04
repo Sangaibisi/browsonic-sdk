@@ -17,6 +17,13 @@
  * - `errorCaptured` info now lands as a structured tag
  *   (`vue.errorCaptured.info`) on top of the existing metadata.
  *
+ * 0.3 — richer signals:
+ * - `installRouterInstrumentation({ includeIntent })` — opt-in
+ *   `beforeEach` "intent" breadcrumbs that complement the existing
+ *   `afterEach` channel.
+ * - `installPiniaIntegration` — Pinia plugin that stamps a `pinia`
+ *   context bucket on the SDK scope when a store action throws.
+ *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0
  */
@@ -31,3 +38,10 @@ export {
   type RouteLocationLike,
   type InstallRouterInstrumentationOptions,
 } from './router';
+export {
+  installPiniaIntegration,
+  type PiniaLike,
+  type PiniaStoreLike,
+  type PiniaActionContextLike,
+  type InstallPiniaIntegrationOptions,
+} from './pinia';

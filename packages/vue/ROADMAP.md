@@ -38,8 +38,15 @@
   `registerNavigationBreadcrumbs({ includeIntent })` for renderer
   consistency. Silently no-ops on `RouterLike` doubles that don't
   implement `beforeEach`.
-- **Pinia integration** — optional `sdk.setContext('pinia', ...)` on
-  unhandled action errors.
+- **Pinia integration** — shipped 2026-05-04.
+  `installPiniaIntegration(pinia, options?)` registers a Pinia plugin
+  that hooks `store.$onAction(({ onError }) => ...)` and stamps the
+  SDK scope with `setContext('pinia', { storeId, action, args, errorMessage, state? })`
+  before the action error keeps bubbling. State capture is opt-in
+  (`captureState: true`); `ignoreStores` skips specific stores;
+  `maxLength` caps args/state JSON. Structural `PiniaLike` shape so
+  the adapter still has no `pinia` peerDep. Defensive try/catch
+  around `setContext` keeps the action-caller path clean.
 - **Composition + Options API parity tests** — explicit suite that
   the boundary works under both authoring styles.
 
