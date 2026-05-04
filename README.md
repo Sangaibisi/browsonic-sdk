@@ -6,16 +6,20 @@ This is the Browsonic monorepo. It contains the core SDK and the framework adapt
 
 ## Packages
 
-| Package                                                                       | npm                                                                                                         | Purpose                                                                                                                                     |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [`@browsonic/sdk`](./packages/sdk)                                            | [![npm](https://img.shields.io/npm/v/@browsonic/sdk.svg)](https://www.npmjs.com/package/@browsonic/sdk)     | The core SDK — privacy-first browser RUM and error tracking, ~14-22 KB gzipped, framework-agnostic.                                         |
-| [`@browsonic/react`](./packages/react) _(coming after monorepo migration M2)_ | [![npm](https://img.shields.io/npm/v/@browsonic/react.svg)](https://www.npmjs.com/package/@browsonic/react) | React adapter — `<BrowsonicErrorBoundary>`, hooks, HOC. Catches the render-time errors React boundaries swallow before they reach `window`. |
-| `@browsonic/vue` _(planned, S6)_                                              | —                                                                                                           | Vue adapter — Composition API plugin + Vue Router instrumentation.                                                                          |
-| `@browsonic/svelte` _(planned, S6)_                                           | —                                                                                                           | SvelteKit adapter — `handleError` hook + `+error.svelte` integration.                                                                       |
-| `@browsonic/nextjs` _(planned, S7)_                                           | —                                                                                                           | Next.js adapter — App Router `error.tsx` / `global-error.tsx` integration.                                                                  |
-| `@browsonic/astro` _(planned, S7)_                                            | —                                                                                                           | Astro adapter — View Transitions support.                                                                                                   |
-| `@browsonic/angular` _(planned, S10)_                                         | —                                                                                                           | Angular adapter — `ErrorHandler` provider + Router instrumentation.                                                                         |
-| `@browsonic/remix` _(planned, S10)_                                           | —                                                                                                           | Remix adapter — `entry.client.tsx` integration.                                                                                             |
+All seven framework adapters ship from this monorepo. Pick the package that matches your runtime — peer-only typing on the framework keeps every adapter's published bundle pure-TypeScript.
+
+| Package                                    | npm                                                                                                             | Surface                                                                                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`@browsonic/sdk`](./packages/sdk)         | [![npm](https://img.shields.io/npm/v/@browsonic/sdk.svg)](https://www.npmjs.com/package/@browsonic/sdk)         | Core SDK — privacy-first browser RUM and error tracking, ~14–22 KB gzipped, framework-agnostic. Public scope/breadcrumb/tag API, session-health rollups.   |
+| [`@browsonic/react`](./packages/react)     | [![npm](https://img.shields.io/npm/v/@browsonic/react.svg)](https://www.npmjs.com/package/@browsonic/react)     | `<BrowsonicErrorBoundary>` class component, `useBrowsonic` / `useUser` / `useCaptureError` hooks, `withBrowsonic` HOC.                                     |
+| [`@browsonic/vue`](./packages/vue)         | [![npm](https://img.shields.io/npm/v/@browsonic/vue.svg)](https://www.npmjs.com/package/@browsonic/vue)         | 0.3 — Vue 3 boundary + four composables, plugin install, Vue Router 4 navigation breadcrumbs (with intent phase), Pinia integration.                       |
+| [`@browsonic/svelte`](./packages/svelte)   | [![npm](https://img.shields.io/npm/v/@browsonic/svelte.svg)](https://www.npmjs.com/package/@browsonic/svelte)   | 0.3 — SvelteKit `handleError` factory (generic over `App.Error`), navigation breadcrumb instrumentation, `withBrowsonicAction`, `+error.svelte` reporter.  |
+| [`@browsonic/nextjs`](./packages/nextjs)   | [![npm](https://img.shields.io/npm/v/@browsonic/nextjs.svg)](https://www.npmjs.com/package/@browsonic/nextjs)   | 0.2 — App Router error pages (with `pathname` / `params` context), Pages Router companions, route-handler wrapper, `withBrowsonicConfig`.                  |
+| [`@browsonic/astro`](./packages/astro)     | [![npm](https://img.shields.io/npm/v/@browsonic/astro.svg)](https://www.npmjs.com/package/@browsonic/astro)     | 0.3 — auto-injecting Astro Integration, View Transitions breadcrumbs (intent + completed), `withBrowsonicAstroAction`, `tagAsAstroIsland`.                 |
+| [`@browsonic/angular`](./packages/angular) | [![npm](https://img.shields.io/npm/v/@browsonic/angular.svg)](https://www.npmjs.com/package/@browsonic/angular) | 0.3 — `ErrorHandler` drop-in, `BrowsonicService`, `provideBrowsonic()`, Router instrumentation, `createBrowsonicHttpReporter` HttpClient companion.        |
+| [`@browsonic/remix`](./packages/remix)     | [![npm](https://img.shields.io/npm/v/@browsonic/remix.svg)](https://www.npmjs.com/package/@browsonic/remix)     | 0.3 — Route ErrorBoundary drop-in, action + loader wrappers, `bootstrapBrowsonic` entry helper, `useRemixNavigationBreadcrumbs` hook with route hierarchy. |
+
+Each adapter ships independently via per-workspace semantic-release. See per-package READMEs for full Quickstart + API surface. Framework migration guides live in [`docs/migration/`](./docs/migration/).
 
 ## Why a monorepo?
 
@@ -28,18 +32,24 @@ The repo follows the same shape as Sentry's [`getsentry/sentry-javascript`](http
 ```
 browsonic-sdk/                       ← this repo (npm workspaces root)
 ├── packages/
-│   ├── sdk/                         → @browsonic/sdk (core SDK)
-│   ├── react/                       → @browsonic/react (planned, S5.5 M2)
-│   └── ...                          → vue / svelte / nextjs / astro / angular / remix
+│   ├── sdk/                         → @browsonic/sdk
+│   ├── react/                       → @browsonic/react
+│   ├── vue/                         → @browsonic/vue (0.3)
+│   ├── svelte/                      → @browsonic/svelte (0.3)
+│   ├── nextjs/                      → @browsonic/nextjs (0.2)
+│   ├── astro/                       → @browsonic/astro (0.3)
+│   ├── angular/                     → @browsonic/angular (0.3)
+│   └── remix/                       → @browsonic/remix (0.3)
 ├── docs/
-│   └── sprint-tracking/             → SPRINT_PLAN.md, CROSS_REPO_IMPACTS.md
+│   ├── sprint-tracking/             → SPRINT_PLAN.md, CROSS_REPO_IMPACTS.md
+│   └── migration/                   → MIGRATION_FROM_SENTRY.md, MIGRATION_FROM_TRACKJS.md
 ├── examples/                        → demo apps (per-adapter)
-├── .github/workflows/               → CI + release
+├── .github/workflows/               → CI + release.yml (per-workspace semantic-release)
 ├── AGENTS.md                        → operating manual for AI agents + contributors
 ├── ROADMAP.md                       → public-facing milestones
 ├── SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md
 ├── LICENSE (Apache-2.0), NOTICE
-└── package.json                     → workspaces declaration + monorepo scripts
+└── package.json                     → workspaces + npm overrides for transitive vuln pins
 ```
 
 ## Getting started (development)
