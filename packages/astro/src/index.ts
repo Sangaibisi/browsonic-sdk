@@ -54,6 +54,11 @@ export {
 export { captureError, captureMessage, addBreadcrumb } from './capture';
 export { withBrowsonicAstroAction, type WithBrowsonicAstroActionOptions } from './actions';
 export { tagAsAstroIsland, type TagAsAstroIslandOptions } from './island';
+export {
+  renderContentCollectionMeta,
+  readContentCollectionFromDocument,
+  type ContentCollectionMetaOptions,
+} from './content-collections';
 export { resolveSdk } from './resolve-sdk';
 // Re-export the integration's default + named types so consumers can
 // `import browsonic from '@browsonic/astro'` if they prefer the

@@ -37,6 +37,11 @@ afterEach(() => {
     delete (window as typeof window & { Browsonic?: unknown }).Browsonic;
     window.history.pushState({}, '', '/');
   }
+  // Clear any meta tags injected by the content-collection tests
+  // so the next test starts from a known DOM state.
+  if (typeof document !== 'undefined') {
+    document.head.innerHTML = '';
+  }
 });
 
 function track(off: () => void): () => void {
@@ -157,5 +162,31 @@ describe('registerNavigationBreadcrumbs', () => {
     expect(calls).toHaveLength(2);
     expect((calls[0]![0] as { data: { phase: string } }).data.phase).toBe('intent');
     expect((calls[1]![0] as { data: { phase: string } }).data.phase).toBe('completed');
+  });
+
+  it('reads `browsonic:content-collection` meta and lands it as breadcrumb data (0.3)', () => {
+    // Simulate a content-collection page: it shipped the meta tag
+    // via `renderContentCollectionMeta` at build time. The
+    // after-swap reader picks it up.
+    document.head.innerHTML = '<meta name="browsonic:content-collection" content="blog/post-1">';
+    track(registerNavigationBreadcrumbs({ sdk }));
+    window.history.pushState({}, '', '/blog/post-1');
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    const arg = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      data: { contentCollection?: string };
+    };
+    expect(arg.data.contentCollection).toBe('blog/post-1');
+  });
+
+  it('omits `contentCollection` when the page has no meta tag', () => {
+    track(registerNavigationBreadcrumbs({ sdk }));
+    window.history.pushState({}, '', '/about');
+    document.dispatchEvent(new Event('astro:after-swap'));
+
+    const arg = (sdk.addBreadcrumb as ReturnType<typeof vi.fn>).mock.calls[0]![0] as {
+      data: Record<string, unknown>;
+    };
+    expect(arg.data.contentCollection).toBeUndefined();
   });
 });

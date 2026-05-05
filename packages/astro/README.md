@@ -135,6 +135,41 @@ export const server = {
 
 Re-throw order matters — consuming the error here would mask every reported failure as a successful return value. Mirrors `withBrowsonicRouteHandler` from `@browsonic/nextjs`.
 
+### Content Collections breadcrumbs
+
+If your pages render from an Astro Content Collection
+(`src/content/<collection>/<entry>.md`), the navigation breadcrumb
+can carry the collection identity by adding a build-time meta tag.
+The runtime listener already reads it on every after-swap.
+
+```astro
+---
+// src/pages/blog/[slug].astro
+import { renderContentCollectionMeta } from '@browsonic/astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog');
+  return posts.map((post) => ({ params: { slug: post.slug }, props: { post } }));
+}
+
+const { post } = Astro.props;
+const meta = renderContentCollectionMeta({ collection: 'blog', entry: post.slug });
+---
+<html>
+  <head>
+    <Fragment set:html={meta} />
+    <title>{post.data.title}</title>
+  </head>
+  <body><slot /></body>
+</html>
+```
+
+Result: every navigation breadcrumb fired from this page now carries
+`data.contentCollection: 'blog/<slug>'` alongside the URL. Pages
+that don't call `renderContentCollectionMeta` simply omit the field
+— no error.
+
 ### `tagAsAstroIsland(name, options?)`
 
 Stamp `astro.island = <name>` on the SDK's active scope so subsequent captured events (from a per-framework boundary inside the island) carry the island name as a filterable tag. Works because `setTag` is sticky on the SDK's top-level scope — no cross-adapter coordination is needed.
@@ -168,7 +203,7 @@ Lower-level lookup helper for when you need explicit SDK access.
 
 - **Component-framework error boundaries.** Use the framework-specific adapter (`@browsonic/react`, `@browsonic/vue`, `@browsonic/svelte`) inside the corresponding island. Pair it with `tagAsAstroIsland(name)` to attribute captured errors to the island they came from.
 - **Server-side rendering capture.** Astro's SSR runs in Node; the SDK is browser-only. `withBrowsonicAstroAction` runs on the server and reports _if_ a browser SDK is reachable — pure server contexts re-throw cleanly without a report.
-- **Astro Content Collections breadcrumbs.** Tracked for a future release; needs upstream API design alignment for the page-build → page-load identity bridge.
+- **Auto-injecting per-collection metadata.** The Content Collections breadcrumb (above) requires consumers to call `renderContentCollectionMeta` from their `[slug].astro` page or layout — we don't auto-detect collection-rendered pages from the Astro Integration. A build-time auto-injector would need a transform on every `astro:content`-using page, which is more invasive than the consumer-opt-in convention.
 
 ## License
 

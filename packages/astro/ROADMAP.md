@@ -53,8 +53,18 @@
   Browser-only short-circuit on SSR; defensive try/catch keeps a
   thrown `setTag` from unmounting the island. Custom `tagKey`
   override for multi-dimension setups (e.g. `astro.island.role`).
-- **Astro Content Collections** breadcrumbs (page-build → page-load
-  identity).
+- **Astro Content Collections breadcrumbs** — shipped 2026-05-05.
+  Build-time helper `renderContentCollectionMeta({ collection,
+entry })` returns an HTML string the page (or layout) injects via
+  `set:html` into the `<head>`:
+  `<meta name="browsonic:content-collection" content="<collection>/<entry>">`.
+  Runtime: `registerNavigationBreadcrumbs` reads the meta on every
+  after-swap and lands the value under
+  `breadcrumb.data.contentCollection`. No coordination between the
+  two sides — the meta tag is the bridge. `readContentCollectionFromDocument`
+  is exposed for consumers running custom navigation tracking. The
+  helper is a pure-TS string function so we ship no `.astro`
+  components and the `astro` compiler stays out of our build chain.
 
 ## Later (parking lot)
 

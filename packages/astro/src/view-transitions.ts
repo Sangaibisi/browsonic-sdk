@@ -21,6 +21,7 @@
 
 import type { Browsonic } from '@browsonic/sdk';
 import { resolveSdk } from './resolve-sdk';
+import { readContentCollectionFromDocument } from './content-collections';
 
 export interface RegisterNavigationBreadcrumbsOptions {
   /** SDK instance. Falls back to `window.Browsonic.getBrowsonic()`. */
@@ -85,6 +86,14 @@ export function registerNavigationBreadcrumbs(
     if (!sdk) return;
 
     const currentPath = window.location.pathname;
+    // Content Collections bridge — pages that called
+    // `renderContentCollectionMeta` in their build-time frontmatter
+    // ship a `<meta name="browsonic:content-collection">` tag whose
+    // value identifies the collection + entry. The runtime read is
+    // a single querySelector on each swap; absent on non-collection
+    // pages, in which case `contentCollection` stays out of the
+    // breadcrumb data.
+    const contentCollection = readContentCollectionFromDocument();
     try {
       sdk.addBreadcrumb({
         category: 'navigation',
@@ -93,6 +102,7 @@ export function registerNavigationBreadcrumbs(
           from: lastPath,
           to: currentPath,
           source: 'astro:view-transitions',
+          ...(contentCollection !== null ? { contentCollection } : {}),
           ...(includeIntent ? { phase: 'completed' } : {}),
         },
       });
