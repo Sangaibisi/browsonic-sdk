@@ -33,13 +33,27 @@
   event. `BrowsonicGlobalErrorPage` forwards the same props through
   the `<html>`/`<body>` shell.
 
-## 0.3
+## 0.3 (partial — shipped 2026-05-05)
 
+- **`instrumentation.ts` helper** — shipped 2026-05-05.
+  `@browsonic/nextjs/instrumentation` sub-entry exports
+  `browsonicInstrumentation(options)` that returns the
+  `{ register, onRequestError }` pair Next.js's `instrumentation.ts`
+  file convention expects. `register()` validates `apiEndpoint` +
+  `appKey` and warns to `console.warn` on missing fields.
+  `onRequestError(error, request, context)` forwards the error
+  with structured Next.js context (`nextjs.path`,
+  `nextjs.routerKind`, `nextjs.routePath`, `nextjs.routeType`,
+  etc.) to a configurable report sink. The factory is
+  forward-compatible — the entry point is shipped today as a
+  console-fallback shim; future versions plug in real
+  server-runtime capture without changing the call signature.
+  `BROWSONIC_INSTRUMENTATION_VERSION` constant tags the wire-up
+  generation. Server-only entry — main `@browsonic/nextjs` bundle
+  unaffected.
 - **Build-time sourcemap upload** through `withBrowsonicConfig` —
-  unblocked once the deferred Sprint 3 / Sprint 4 source-map
-  pipeline lands.
-- **`instrumentation.ts` auto-registration** — generate a stub for
-  consumers who want zero-touch SDK init.
+  still deferred until the Sprint 3 / Sprint 4 source-map pipeline
+  lands. The wrapper stays a passthrough until then.
 
 ## Later (parking lot)
 

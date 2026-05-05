@@ -113,6 +113,35 @@ export const POST = withBrowsonicRouteHandler(async (req: Request) => {
 
 The wrapper forwards the thrown `Error` to `sdk.captureError`, tags it with `nextjsRouteHandler: 'true'`, and re-throws — Next.js's normal 500 path is preserved.
 
+## Quickstart — `instrumentation.ts` (Next 13.4+)
+
+Next.js's project-root `instrumentation.ts` file convention runs once at server startup (`register()`) and on every unhandled server error (`onRequestError`). The `@browsonic/nextjs/instrumentation` sub-entry ships a one-line wire-up:
+
+```ts
+// instrumentation.ts (project root, alongside `next.config.mjs`)
+import { browsonicInstrumentation } from '@browsonic/nextjs/instrumentation';
+
+const { register, onRequestError } = browsonicInstrumentation({
+  apiEndpoint: process.env.BROWSONIC_API_ENDPOINT,
+  appKey: process.env.BROWSONIC_APP_KEY,
+  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV,
+});
+
+export { register, onRequestError };
+```
+
+What ships today:
+
+- `register()` validates that `apiEndpoint` + `appKey` are present and emits one `console.warn` per missing field. Misconfiguration surfaces at server boot instead of silently shipping pages with no telemetry.
+- `onRequestError(error, request, context)` forwards the error to `console.error` with a structured `nextjs.*` context object (`nextjs.path`, `nextjs.routerKind`, `nextjs.routePath`, `nextjs.routeType`, etc.). Tests / custom log sinks override the report path via the `reportError` option.
+
+What ships later (without a code change in your `instrumentation.ts`):
+
+- Real server-runtime capture once the Sprint 3 / Sprint 4 source-map pipeline lands the ingest contract.
+- `BROWSONIC_INSTRUMENTATION_VERSION` already tags emitted events so future dashboards can distinguish wire-up generations.
+
+Server-only sub-entry — the main `@browsonic/nextjs` bundle has no server code.
+
 ## Quickstart — `next.config.js`
 
 ```js
@@ -162,7 +191,7 @@ Same as every other adapter:
 ## What this package does NOT do (yet)
 
 - **Sourcemap upload at build time.** The deferred Sprint 3 / Sprint 4 source-map pipeline will wire this through `withBrowsonicConfig`. Tracked for 0.3.
-- **`instrumentation.ts` auto-registration.** Planned for 0.3 alongside the sourcemap pipeline so the SDK can register itself without consumer wiring.
+- **Auto-detected `instrumentation.ts` injection.** The 0.3 helper is opt-in (consumer paste a 5-line wire-up). A build-time injector that creates the file automatically would need a transform on every project's root, which is more invasive than the consumer-opt-in convention. Tracked alongside any future Sprint 3 / Sprint 4 sourcemap-pipeline auto-registration.
 - **Server-runtime capture.** The SDK is a browser library; route-handler errors that occur in pure Node have no `window` to write to. The wrapper still re-throws so your handler returns its expected status.
 - **Edge runtime instrumentation.** Edge runtimes lack a stable global Browsonic singleton — adopt the SDK in the client layer and use the route-handler wrapper for opportunistic capture.
 - **Pages Router data layer instrumentation** (`getServerSideProps` / `getStaticProps`). Will be revisited only if Pages Router consumer demand surfaces.

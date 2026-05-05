@@ -10,6 +10,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./instrumentation": {
+      "types": "./dist/types/instrumentation/index.d.ts",
+      "import": "./dist/esm/instrumentation/index.js",
+      "require": "./dist/cjs/instrumentation/index.js"
     }
   },
   "sideEffects": false,
