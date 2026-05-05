@@ -10,6 +10,11 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./decorated": {
+      "types": "./dist/types/decorated/index.d.ts",
+      "import": "./dist/esm/decorated/index.js",
+      "require": "./dist/cjs/decorated/index.js"
     }
   },
   "sideEffects": false,

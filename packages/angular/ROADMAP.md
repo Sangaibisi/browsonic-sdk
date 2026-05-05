@@ -57,11 +57,22 @@
   standalone bootstrap, plus a full HttpInterceptor wire-up
   (standalone + NgModule provider shapes) and the Router
   instrumentation example. Status banner bumped to 0.3 surface.
-- **`@Injectable` decorator path** in a separate
-  `@browsonic/angular/decorated` entry-point.
-- **Standalone signal integration.** When Angular signals stabilise
-  for SDK-style state, mirror the user-context flow as a signal-
-  based composable (similar to Vue's `useUser` pattern).
+- **`@Injectable` decorator path + Standalone signal integration** —
+  shipped 2026-05-05 via the `@browsonic/angular/decorated` entry
+  point. This sub-package depends on `@angular/core` at runtime
+  (the main entry stays type-only / peer-only) and ships:
+  - `BrowsonicDecoratedService` — `BrowsonicService` registered
+    with `@Injectable({ providedIn: 'root' })`. Consumers no
+    longer need `provideBrowsonic()` in their `app.config.ts` —
+    `inject(BrowsonicDecoratedService)` resolves directly.
+  - `provideBrowsonicUserSignal(options?)` — provider factory that
+    bridges a `WritableSignal<UserContext | null>` to
+    `sdk.setUser` / clear-user via Angular's `effect`. Mirrors the
+    Vue adapter's `useUser` pattern. Token is `BROWSONIC_USER_SIGNAL`;
+    `injectBrowsonicUserSignal()` is the typed sugar.
+  - `applyUserToSdk(value, sdk)` — test-friendly helper exposing
+    the effect's SDK-write semantics (also useful for consumers
+    running a custom signal pipeline like an RxJS bridge).
 
 ## Later (parking lot)
 

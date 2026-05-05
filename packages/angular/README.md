@@ -187,9 +187,45 @@ Returns a `(request, error) => void` callback that captures HttpClient failures.
 - `BrowsonicErrorHandler.handleError` never throws — even when both the SDK and `console.error` raise, the method returns silently.
 - All forwarders are no-ops when the SDK is unreachable.
 
+## Optional `/decorated` entry-point — `@Injectable` + signals
+
+If you don't mind `@angular/core` running at runtime in this package's bundle (rather than the default type-only contract), you can import from `@browsonic/angular/decorated` to get:
+
+- `BrowsonicDecoratedService` — `@Injectable({ providedIn: 'root' })` version of `BrowsonicService`. No more provider wiring; just `inject(BrowsonicDecoratedService)` from any component.
+- `provideBrowsonicUserSignal(options?)` — provider factory that bridges a `WritableSignal<UserContext | null>` to `sdk.setUser`. Set the signal to `null` to clear the user.
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideBrowsonicUserSignal } from '@browsonic/angular/decorated';
+import { provideBrowsonic, BrowsonicErrorHandler } from '@browsonic/angular';
+import { ErrorHandler } from '@angular/core';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    ...provideBrowsonic({ sdk }),
+    { provide: ErrorHandler, useExisting: BrowsonicErrorHandler },
+    ...provideBrowsonicUserSignal({ initial: null }),
+  ],
+};
+
+// any component
+import { Component, inject } from '@angular/core';
+import { BROWSONIC_USER_SIGNAL } from '@browsonic/angular/decorated';
+
+@Component({ selector: 'app-login', template: '...' })
+export class LoginComponent {
+  private readonly user = inject(BROWSONIC_USER_SIGNAL);
+  onLogin(profile: { id: string; email: string }) {
+    this.user.set(profile);
+  }
+}
+```
+
+The default `@browsonic/angular` entry stays peer-only on `@angular/core`. Pick `/decorated` only if you want the decorator + signal ergonomics.
+
 ## What this package does NOT do
 
-- **`@Injectable({ providedIn: 'root' })` decorator entry-point.** Adding the decorator to `BrowsonicService` would force `@angular/core` into the runtime graph and break the type-only-import contract. Tracked for a follow-up `@browsonic/angular/decorated` entry-point that opts in to the runtime dep — for now, register `BrowsonicService` via `provideBrowsonic()` (it's a singleton in the providers array).
 - **NgZone-aware error capture.** The default Angular zone catches errors; our `ErrorHandler` runs inside the zone. If your app uses `NgZone.runOutsideAngular`, errors there don't reach `ErrorHandler` — call `browsonic.captureError(err)` from your `try/catch` block manually.
 - **Server-side rendering capture.** Angular SSR runs in Node; the SDK is browser-only. Wire your own server-side telemetry.
 
