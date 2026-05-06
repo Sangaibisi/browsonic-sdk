@@ -80,19 +80,16 @@ install.
 ## Test discipline
 
 - Vitest + happy-dom + @testing-library/react.
-- 19+ tests (route-error-boundary × 12, action-wrapper × 7).
+- Covers route-error-boundary, action/loader wrappers, bootstrap
+  helper, navigation-breadcrumbs hook.
 - We don't boot Remix; we exercise the public surface as plain
   React + plain TS.
 
-## Sprint discipline
-
-Sprint 10. Cross-package impacts → single PR. Cross-repo impacts →
-top-level `docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.
-
 ## Roadmap pointers
 
-- 0.2: `entry.client.tsx` helper that auto-initialises the SDK
-  with a config object loaded from environment variables
-  (Remix-specific bootstrap pattern).
-- 0.3: Remix data-loader breadcrumbs — record the route hierarchy
-  as breadcrumbs on every navigation.
+- 0.4 candidates: form-action breadcrumbs (capture `useActionData`
+  / fetcher submissions), session-replay-style navigation timeline,
+  deeper integration with the source-map pipeline for SSR stack
+  rewrites.
+- Parking lot: `<RemoteCatch>` / pre-Remix-v2 `CatchBoundary`
+  back-port — gated on community demand.

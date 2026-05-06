@@ -55,14 +55,6 @@ If a future feature genuinely needs the runtime decorator API
 (e.g. `@Injectable({ providedIn: 'root' })` for tree-shake-friendly
 opt-in), revisit. Until then, the duck-typed approach wins.
 
-## Why no Router instrumentation in 0.1
-
-Router instrumentation requires `Router` to be injected, which
-needs Angular's DI runtime active. That's straightforward in a
-host app but adds another peer dep boundary to test. 0.1 scope
-focuses on the universal three primitives (handler / service /
-factory). 0.2 adds `withRouterInstrumentation()`.
-
 ## Defensive contract (non-negotiable)
 
 1. **Never crash the host app.** SDK calls in try/catch.
@@ -80,11 +72,14 @@ factory). 0.2 adds `withRouterInstrumentation()`.
 ## Test discipline
 
 - Vitest + happy-dom.
-- 23+ tests (error-handler × 7, service × 11, provide × 5).
+- 59 tests across the public surface (error-handler × 7,
+  service × 11, provide × 4, router × 9, http-interceptor × 18,
+  decorated × 10).
 - Tests don't bootstrap Angular — they instantiate the classes
   directly and verify the public contract.
 
-## Sprint discipline
+## Change discipline
 
-Sprint 10. Cross-package impacts → single PR. Cross-repo impacts →
-top-level `docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.
+Cross-package impacts land in a single PR. Cross-repo impacts get
+flagged in the monorepo root `AGENTS.md` so dependent repos
+(dashboard, landing, services) can sync.

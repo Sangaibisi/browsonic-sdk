@@ -1,13 +1,23 @@
-# Source-map pipeline — design draft
+# Source-map pipeline — design (v0.1 implemented 2026-05-06)
 
-> **Status:** Draft — design review pending. Sprint S3 + S4 of the
-> original 19-week plan deferred this work; this document captures
-> the open design decisions so the reopen sprint can land
-> implementation without re-deriving the architecture.
+> **Status:** **v0.1 shipped 2026-05-06** across `browsonic-sdk`
+> (`@browsonic/cli` + `@browsonic/build-tools`), `browsonic-service`
+> (`POST /v1/sourcemaps` + `POST /v1/symbolicate`, Flyway V18
+> `sourcemap_uploads` table, custom Java VLQ decoder),
+> `browsonic-dashboard` (SourceMapsPage rebuild + EventDetail
+> symbolicate flow), and `browsonic-compose` (MinIO bucket auto-init
 >
-> **Last updated:** 2026-05-05
-> **Owner (when scheduled):** SDK team + service team joint
-> **Blocked by:** none — ready for design review
+> - S3 env contract). End-to-end pipeline live.
+>
+> **Deferred to v0.2:** admin surface polish — token CRUD endpoints
+> and id-keyed list/delete on `sourcemap_uploads`. Tracked in
+> `ROADMAP.md`.
+>
+> **Queued for SDK 1.x:** in-bundle `debugId` injection so events can
+> be matched to a sourcemap without relying on the operator-supplied
+> release tag.
+>
+> **Last updated:** 2026-05-06
 
 ---
 
@@ -19,17 +29,15 @@ line numbers in the 50,000s. Operators reading those frames in the
 dashboard see opaque coordinates without source-map symbolication.
 Every other browser observability product (Sentry, TrackJS, Bugsnag,
 Rollbar) ships some flavour of sourcemap upload + ingest-side
-symbolication. Browsonic's ingest currently stores frames verbatim;
-the dashboard renders them verbatim.
+symbolication.
 
-This is the missing piece for production-grade triage. With this
-pipeline:
+With this pipeline live:
 
 - Every dashboard stack-frame view shows the original `.ts` / `.tsx`
   / `.svelte` line — not `chunks/abc123.js:1`.
-- Release attribution becomes meaningful: the dashboard can group
-  events by `release` tag and surface "this bug only exists in
-  v2.4.1 onwards".
+- Release attribution becomes meaningful: the dashboard groups events
+  by `release` tag and surfaces "this bug only exists in v2.4.1
+  onwards".
 - Source-map upload is gated by app key + a separate scoped token,
   so source code never leaks even if read-only API keys are
   compromised.
@@ -41,9 +49,9 @@ pipeline:
   a privacy disaster.
 - **Server-side runtime instrumentation.** Already documented as
   out of scope across the adapter ROADMAPs.
-- **Symbolication at ingest time.** The original sprint plan briefly
-  considered ingest-side symbolication and rejected it (see
-  Open question 3 below). Symbolicate lazily at dashboard read time.
+- **Symbolication at ingest time.** Ingest-side symbolication was
+  considered and rejected (see "Symbolication strategy" below).
+  Symbolicate lazily at dashboard read time.
 - **Hosting consumer source code.** We index source maps to look up
   original positions; we don't re-host the application source for
   customer consumption.
@@ -57,18 +65,19 @@ pipeline:
 
   ┌─────────────┐                       ┌──────────────────┐
   │ Bundler     │  webpack / vite /     │  /v1/sourcemaps  │
-  │ output:     │──┐  rollup plugin     │   ingest         │
+  │ output:     │──┐  rollup / esbuild  │   ingest         │
   │ chunks/*.js │  │  (or @browsonic/   │                  │
-  │ chunks/*.js │  │   cli)             │  ┌─ S3 / R2 ──┐  │
-  │ .map        │  │                    │  │ object     │  │
-  └─────────────┘  │  multipart upload  │  │ store      │  │
-                   ├──────────────────► │  └────────────┘  │
+  │ chunks/*.js │  │   cli)             │  ┌─ S3 / R2 /  ┐ │
+  │ .map        │  │                    │  │ MinIO       │ │
+  └─────────────┘  │  multipart upload  │  │ object store│ │
+                   ├──────────────────► │  └─────────────┘ │
                    │  POST              │                  │
-                   │  Authorization:    │  ┌─ ClickHouse ─┐│
-                   │   Bearer <token>   │  │ releases     ││
-                   │  Form fields:      │  │ sourcemap_   ││
-                   │   release          │  │ index        ││
-                   │   filename         │  └──────────────┘│
+                   │  Authorization:    │  ┌─ Postgres ──┐ │
+                   │   Bearer <token>   │  │ sourcemap_  │ │
+                   │  Form fields:      │  │ uploads     │ │
+                   │   release          │  └─────────────┘ │
+                   │   filename         │                  │
+                   │   appKey           │                  │
                    │   sourcemap (file) │                  │
                    └────────────────────┘                  │
 
@@ -76,17 +85,19 @@ pipeline:
 
   User opens an event ───► Dashboard ─►/v1/symbolicate ─► fetch
                                        (release, frames)   sourcemap
-                                                           from S3,
-                                                           run sourcemap
-                                                           query, return
+                                                           from object
+                                                           store, run
+                                                           VLQ decoder,
+                                                           return
                                                            original line
                                                            + column +
                                                            source URL
 ```
 
 The pipeline is **strictly additive** — events with no matching
-release upload symbolicate to verbatim minified frames (today's
-behaviour). Adopting sourcemap upload is opt-in per app.
+release upload symbolicate to verbatim minified frames (the
+pre-pipeline behaviour). Adopting sourcemap upload is opt-in per
+app.
 
 ---
 
@@ -95,23 +106,45 @@ behaviour). Adopting sourcemap upload is opt-in per app.
 ### 1. Build-time CLI / bundler plugins
 
 Two surfaces over one engine, mirroring the pattern Sentry already
-established:
+established. Both are dependency-free at runtime — Node 20+ built-ins
+only (`fetch`, `FormData`, `Blob`, `parseArgs`, `fs/promises`).
 
-- **`@browsonic/cli`** — new published package. Single command:
+- **`@browsonic/cli`** — published package. Single command:
   `browsonic upload-sourcemaps --release v1.2.3 --dist-path ./dist
 --token "$BROWSONIC_SOURCEMAP_TOKEN" --app-key "$BROWSONIC_APP_KEY"`.
   Walks the dist tree, finds every `.map` file, POSTs to the ingest.
   Idempotent — duplicate uploads of the same `(release, filename)`
-  return 200 without re-storing.
-- **`@browsonic/build-tools`** — bundler plugins:
-  - `BrowsonicWebpackPlugin({ release, dryRun? })`
-  - `browsonicVitePlugin({ release })`
-  - `browsonicRollupPlugin({ release })`
-    All thin wrappers over the CLI's HTTP client.
+  return 200 / 409 without re-storing.
+- **`@browsonic/build-tools`** — bundler plugins, one subpath each:
+  - `@browsonic/build-tools/vite` — Vite plugin (hooks `closeBundle`).
+  - `@browsonic/build-tools/webpack` — `BrowsonicSourceMapsPlugin`
+    (hooks `afterEmit`).
+  - `@browsonic/build-tools/rollup` — Rollup plugin (hooks
+    `writeBundle`).
+  - `@browsonic/build-tools/esbuild` — esbuild plugin (hooks `onEnd`).
 
-Existing `withBrowsonicConfig` in `@browsonic/nextjs` becomes the
-fourth surface — wraps the Next.js config to register the webpack
-plugin automatically.
+  All four are thin wrappers over the CLI's HTTP client via
+  `runUploadFromOptions`. Each plugin defines a structural type for
+  its bundler's hook surface so `@browsonic/build-tools` does **not**
+  pull vite / webpack / rollup / esbuild as dependencies.
+
+#### Plugin option surface
+
+`BrowsonicSourceMapsOptions` is shared across all four plugins:
+
+- `appKey` is **required** and has no env fallback. Multi-app teams
+  silently misroute uploads when env-only fallback is allowed; we
+  force the value to live in build config.
+- `release` falls back to `BROWSONIC_RELEASE` → git short-sha →
+  `package.json` `version` → throw (`deriveRelease`).
+- `token` falls back to `BROWSONIC_SOURCEMAP_TOKEN`. **Missing token
+  is a warning, not a failure** — sourcemap upload must never break
+  the consumer's build.
+- `baseUrl` falls back to `BROWSONIC_API_ENDPOINT` →
+  `https://api.browsonic.io`.
+- `bailOnError` defaults to `false`. Per-file errors are logged and
+  the build continues.
+- `silent`, `dryRun`, `dist`, `distPath` round out the surface.
 
 #### CLI failure modes
 
@@ -122,6 +155,7 @@ plugin automatically.
 | 401 / 403           | 3         | Token doesn't have sourcemap-upload scope                                      |
 | 413                 | 4         | Sourcemap exceeded ingest size limit (default 50 MB; configurable per project) |
 | 5xx                 | 5         | Service unavailable; CI should retry                                           |
+| Per-file failure    | 1         | At least one upload failed; aggregate count printed                            |
 
 ### 2. Service ingest endpoint
 
@@ -131,6 +165,7 @@ plugin automatically.
 | ----------- | ------ | -------- | ------------------------------------------------------------ |
 | `release`   | string | yes      | Free-form tag matching the SDK's `BrowsonicConfig.release`   |
 | `filename`  | string | yes      | URL or path the runtime will report                          |
+| `appKey`    | string | yes      | Project identifier from the dashboard                        |
 | `sourcemap` | file   | yes      | The `.map` content; up to 50 MB default                      |
 | `dist`      | string | no       | Distribution discriminator (e.g. `esm`/`cjs`); rarely needed |
 
@@ -147,23 +182,22 @@ Response:
 
 Auth: `Authorization: Bearer <SOURCEMAP_UPLOAD_TOKEN>` — separate
 from the public app key. Issued per-app from the dashboard's
-"Tokens" page (new feature alongside this work).
+SourceMaps page.
 
 Storage: object store (S3 / R2 / MinIO depending on deploy). Keyed
-by `(tenant_id, app_id, release, filename)`. ClickHouse table
-`sourcemap_index` carries the metadata + storage URI.
+by `(tenant_id, app_id, release, filename)`. Postgres table
+`sourcemap_uploads` (Flyway V18) carries the metadata + storage URI.
 
 ### 3. Symbolication query path
 
-The dashboard's event-detail page already renders a stack frame
-list. With the sourcemap pipeline:
+The dashboard's event-detail page renders a stack frame list. With
+the sourcemap pipeline:
 
 1. Frontend issues `POST /v1/symbolicate` with the event's `release`
    tag + the array of `{ filename, line, column }` frames.
 2. Backend looks up the sourcemap by `(release, filename)`, fetches
-   from object store (cached for 1 h via Redis / Cloudflare KV).
-3. Runs `source-map` library's `originalPositionFor` for each
-   frame.
+   from object store (cached for 1 h via Redis).
+3. Runs the custom Java VLQ decoder for each frame.
 4. Returns `{ source, line, column, name, sourceContent? }` per
    frame.
 
@@ -175,161 +209,123 @@ events nobody ever looks at.
 
 ---
 
-## Open design questions
+## Design decisions (rationale)
 
-### Q1: Token scope — single sourcemap-upload token, or per-environment?
+The decisions below were live questions during design; each is
+captured for reference because the trade-offs still apply when we
+pick up future work in this area.
 
-Options:
+### Token scope
 
-- **A**: One token per app, used across all environments. Simpler
-  for consumers; matches Sentry's default.
-- **B**: One token per environment (`production`, `staging`,
-  `dev`). More restrictive blast radius on token leak.
-- **C**: One token per release. Highest security; impractical for
-  CI.
+Single sourcemap-upload token per app, used across all environments.
+Simplest for consumers and matches Sentry's default. Per-environment
+or per-release scoping was considered (and rejected) for v0.1 — the
+blast-radius win is small relative to the CI ergonomics cost. Will
+revisit if customer demand surfaces.
 
-**Recommendation:** Start with A. Add per-environment scoping in
-a follow-up if customer demand surfaces.
+### Release-name format
 
-### Q2: Release-name format — opaque string, or structured?
+Free-form opaque string. The convention (`v<semver>` or
+`<commit-hash>`) is documented but not enforced. SDK-side `debugId`
+injection (queued for 1.x) is the long-term answer to fragile
+release-tag matching.
 
-The SDK already supports `release: 'v1.2.3'` as an opaque string.
-Sourcemap upload accepts the same shape. Options:
+### Symbolication strategy
 
-- **Opaque string** — no validation, customer chooses.
-- **Semver-required** — reject non-semver releases.
-- **Branch-aware** — accept `branch:main:abc123` etc.
+Dashboard read time only (lazy). Ingest stays free of sourcemap
+dependencies. Hot events hit the Redis cache; cold events pay ~30 ms
+on first open. Alternative — ingest-side symbolication — would have
+inflated insert cost across all events, including those nobody ever
+opens.
 
-**Recommendation:** Opaque string. Document the convention
-(`v<semver>` or `<commit-hash>`) but don't enforce.
+### Sourcemap retention
 
-### Q3: Where to symbolicate — ingest, dashboard read, or both?
+N-releases policy, configurable per app, default 50. Old sourcemaps
+get an "archived" flag rather than immediate object-store deletion,
+so a reopened incident can still symbolicate older releases for ~30
+more days. TTL-based pruning was rejected because release cadence
+varies by customer.
 
-Already decided: **dashboard read time only** (lazy). Ingest stays
-free of sourcemap dependencies. Documented here so the design
-review doesn't re-litigate.
+### Inline vs external sourcemaps
 
-### Q4: Sourcemap retention — how long do we keep them?
+v0.1 supports **external `.map` files only** — the bundler default
+across vite, webpack, rollup, and esbuild. Inline sourcemap
+extraction (parsing `//# sourceMappingURL=data:...` from the bundle)
+is on the backlog if hand-rolled webpack configs surface as a real
+demand signal.
 
-Options:
+### Symbolication algorithm
 
-- Keep forever. Simple. Storage grows unbounded (~50 MB × app ×
-  release × month).
-- Auto-prune after N releases (default 50, configurable).
-- TTL based — auto-prune after 90 days.
+Custom Java VLQ decoder server-side. Mozilla's `source-map` was
+considered; we chose the in-house decoder because the service
+runtime is Java and the JVM port of `source-map` adds a Node bridge
+we'd otherwise not need. The decoder follows the Mozilla
+specification and is covered by parity tests against known fixtures.
 
-**Recommendation:** N-releases policy, configurable per app. 50 is
-the default. Old sourcemaps aren't deleted from object store
-immediately — they get an "archived" flag so a reopened incident
-can still symbolicate older releases for ~30 more days.
+### Privacy / source-content embedding
 
-### Q5: Inline vs external sourcemaps?
-
-Modern bundlers default to external `.map` files. We support both:
-
-- External: standard upload path.
-- Inline (`//# sourceMappingURL=data:application/json;base64,…` at
-  the end of the bundle): the CLI extracts the inline source map
-  before uploading. Adds a parser dependency but is the better DX
-  for hand-rolled webpack configs.
-
-**Recommendation:** Both, with inline extraction in the CLI.
-
-### Q6: Should we publish the symbolication algorithm publicly?
-
-The `source-map` library (Mozilla's reference implementation) is
-the industry standard. We use it server-side. No need to re-invent.
-
-### Q7: Privacy / source-content embedding?
-
-`source-map` files often embed `sourcesContent` arrays (the original
-source code). Options:
-
-- Strip on upload (smaller storage, can't show original source in
-  dashboard).
-- Keep on upload (richer dashboard experience, larger storage).
-- Make it a per-app setting.
-
-**Recommendation:** Per-app setting, default "keep". Operators who
-want stricter privacy strip on the build-tool side before upload.
+Per-app setting; default "keep". Operators wanting stricter privacy
+strip `sourcesContent` on the build-tool side before upload. We
+considered stripping by default but the dashboard "view original
+source" affordance is the headline UX win — defaulting it off would
+hide the feature from operators who would benefit from it.
 
 ---
 
-## Cross-repo coordination (CROSS_REPO_IMPACTS.md preview)
+## Cross-repo touch points (recap)
 
-When this work schedules, expected entries:
+The v0.1 ship landed across:
 
-- **browsonic-service**: New `sourcemap_index` ClickHouse table +
-  `POST /v1/sourcemaps` ingest endpoint + `POST /v1/symbolicate`
-  read endpoint + scoped-token auth path + S3 / R2 storage adapter.
-- **browsonic-dashboard**: Sourcemap upload "Tokens" page in app
-  settings; event-detail panel that shows symbolicated frames + a
-  "view original source" affordance when `sourcesContent` is
-  available.
-- **browsonic-ops**: Object store provisioning (S3 bucket + IAM
-  role / R2 bucket + API token) per deploy.
-- **browsonic-compose**: MinIO container + bucket bootstrap for
-  self-hosted stacks.
-- **browsonic-sdk**: New `@browsonic/cli` and `@browsonic/build-tools`
-  packages; `withBrowsonicConfig` (Next.js) auto-registration of
-  the webpack plugin.
+- **browsonic-service**: `sourcemap_uploads` Postgres table (Flyway
+  V18), `POST /v1/sourcemaps` ingest endpoint, `POST /v1/symbolicate`
+  read endpoint, scoped-token auth path, S3/R2/MinIO storage adapter,
+  custom Java VLQ decoder.
+- **browsonic-dashboard**: SourceMapsPage rebuild (upload-token
+  display + uploads list); EventDetail symbolicate flow with "view
+  original source" affordance when `sourcesContent` is available.
+- **browsonic-compose**: MinIO container + bucket auto-init for
+  self-hosted stacks; S3 env contract documented.
+- **browsonic-sdk**: `@browsonic/cli` and `@browsonic/build-tools`
+  packages published to npm with four bundler subpaths
+  (vite/webpack/rollup/esbuild).
 
-This impact list will land as a real cross-repo log entry when the
-work schedules — not before, per the protocol in
-[`docs/sprint-tracking/CROSS_REPO_IMPACTS.md`](../sprint-tracking/CROSS_REPO_IMPACTS.md).
-
----
-
-## Effort estimate (rough)
-
-| Component                                              | Effort                              |
-| ------------------------------------------------------ | ----------------------------------- |
-| `@browsonic/cli` package + tests                       | 2–3 days                            |
-| `@browsonic/build-tools` package (3 plugins)           | 2 days                              |
-| Service ingest endpoint + ClickHouse migration         | 3 days                              |
-| Service symbolication endpoint + caching               | 2 days                              |
-| Dashboard upload-token UI + event-detail symbolication | 3 days                              |
-| Self-hosted compose updates (MinIO)                    | 1 day                               |
-| Documentation (per-package + migration guide)          | 1 day                               |
-| Buffer (design review iteration, security pass)        | 2 days                              |
-| **Total**                                              | **~16 days (≈ 3–4 weeks calendar)** |
-
-This is large enough to justify a dedicated sprint pair (S3 + S4 in
-the original plan, or a re-numbered S11 + S12 when scheduled).
-Smaller than the 19-week initial SDK build but bigger than every
-0.3 adapter feature combined.
+`@browsonic/nextjs`'s `withBrowsonicConfig` auto-registration of the
+webpack plugin is **not** part of v0.1 — consumers explicitly
+register `BrowsonicSourceMapsPlugin` in their next.config.js for now.
+Auto-wire is queued for an `@browsonic/nextjs` minor.
 
 ---
 
-## Acceptance criteria
+## Acceptance criteria (v0.1)
 
-A future sprint closure marks this design "implemented" when:
+The v0.1 closure was gated on:
 
-1. `@browsonic/cli` is published to npm + integrates in CI for at
-   least one demo app.
-2. A representative bundle (Next.js + Vite + Astro) all upload
-   their sourcemaps successfully via the bundler plugin path.
-3. The dashboard's event detail shows symbolicated frames for
-   events tagged with a release that has uploaded sourcemaps.
+1. `@browsonic/cli` published to npm + integrated in CI for at least
+   one demo app. **DONE.**
+2. A representative bundle (Next.js + Vite + Astro) all upload their
+   sourcemaps successfully via the bundler plugin path. **DONE.**
+3. The dashboard's event detail shows symbolicated frames for events
+   tagged with a release that has uploaded sourcemaps. **DONE.**
 4. Symbolication latency p95 ≤ 100 ms (cold), ≤ 5 ms (warm cache).
-5. Token rotation playbook for sourcemap-upload tokens lives in
-   the npm publish reference doc.
-6. End-to-end smoke test in CI uploads a sample sourcemap, sends
-   an event with a matching release, and asserts the dashboard
-   API returns symbolicated frames.
+   **DONE.**
+5. Token rotation playbook for sourcemap-upload tokens lives in the
+   npm publish reference doc. **DONE.**
+6. End-to-end smoke test in CI uploads a sample sourcemap, sends an
+   event with a matching release, and asserts the dashboard API
+   returns symbolicated frames. **DONE.**
 
----
+## v0.2 backlog
 
-## Status
+- Token CRUD endpoints (`POST/PATCH/DELETE /v1/sourcemap-tokens`)
+  with id-keyed list/delete.
+- Dashboard SourceMapsPage refactor to operate on token ids rather
+  than name lookup.
+- `@browsonic/nextjs` `withBrowsonicConfig` auto-registration of the
+  webpack plugin.
 
-**Open for design review.** Primary uncertainty is Q1 (token
-scoping) and Q4 (retention policy). Either can be answered with a
-brief written discussion + one round of feedback; nothing here is
-blocked on customer interviews or external research.
+## SDK 1.x backlog
 
-When this work schedules, the SDK side ships first (CLI + bundler
-plugins land before the service endpoint goes live, gated behind a
-"sourcemap pipeline disabled" 404 from the service that the CLI
-treats as "feature not enabled for this deploy"). That sequencing
-lets us validate the upload contract end-to-end on a feature flag
-without holding either side back.
+- In-bundle `debugId` injection at build time so events match a
+  sourcemap without depending on operator-supplied release tags.
+- Inline sourcemap extraction (`data:` URI in the bundle) in
+  `@browsonic/build-tools`, gated on real customer demand.

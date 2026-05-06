@@ -16,7 +16,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react && npm run build -w @browsonic/vue -w @browsonic/svelte -w @browsonic/angular -w @browsonic/astro && npm run build -w @browsonic/nextjs -w @browsonic/remix",
+    "build": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react && npm run build -w @browsonic/vue -w @browsonic/svelte -w @browsonic/angular -w @browsonic/astro && npm run build -w @browsonic/nextjs -w @browsonic/remix && npm run build -w @browsonic/cli && npm run build -w @browsonic/build-tools",
     "_build:prereq": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react",
     "test": "npm run test --workspaces --if-present",
     "test:run": "npm run test:run --workspaces --if-present",

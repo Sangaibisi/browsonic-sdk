@@ -1,0 +1,129 @@
+{
+  "name": "@browsonic/build-tools",
+  "version": "0.0.0-development",
+  "description": "Bundler plugins (Vite / Webpack / Rollup / esbuild) for uploading source maps to Browsonic. Apache-2.0.",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./vite": {
+      "types": "./dist/types/vite.d.ts",
+      "import": "./dist/esm/vite.js",
+      "require": "./dist/cjs/vite.js"
+    },
+    "./webpack": {
+      "types": "./dist/types/webpack.d.ts",
+      "import": "./dist/esm/webpack.js",
+      "require": "./dist/cjs/webpack.js"
+    },
+    "./rollup": {
+      "types": "./dist/types/rollup.d.ts",
+      "import": "./dist/esm/rollup.js",
+      "require": "./dist/cjs/rollup.js"
+    },
+    "./esbuild": {
+      "types": "./dist/types/esbuild.d.ts",
+      "import": "./dist/esm/esbuild.js",
+      "require": "./dist/cjs/esbuild.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "dev": "tsc -p tsconfig.esm.json --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "clean": "rimraf dist coverage",
+    "semantic-release": "semantic-release"
+  },
+  "keywords": [
+    "browsonic",
+    "browsonic-build-tools",
+    "sourcemap",
+    "sourcemap-upload",
+    "vite-plugin",
+    "webpack-plugin",
+    "rollup-plugin",
+    "esbuild-plugin",
+    "javascript-error-monitoring",
+    "browser-error-tracking"
+  ],
+  "author": "Emrullah Yıldırım <emrullahyildirim@windowslive.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Sangaibisi/browsonic-sdk/tree/main/packages/build-tools#readme",
+  "bugs": {
+    "url": "https://github.com/Sangaibisi/browsonic-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sangaibisi/browsonic-sdk.git",
+    "directory": "packages/build-tools"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public",
+    "provenance": true
+  },
+  "dependencies": {
+    "@browsonic/cli": "*"
+  },
+  "peerDependencies": {
+    "vite": ">=4",
+    "webpack": ">=5",
+    "rollup": ">=3",
+    "esbuild": ">=0.20"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    },
+    "webpack": {
+      "optional": true
+    },
+    "rollup": {
+      "optional": true
+    },
+    "esbuild": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@types/node": "^20.10.0",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.1",
+    "@semantic-release/npm": "^13.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.1",
+    "@vitest/coverage-v8": "^3.0.0",
+    "conventional-changelog-conventionalcommits": "^9.3.1",
+    "eslint": "^10.2.1",
+    "rimraf": "^6.1.3",
+    "semantic-release": "^24.2.7",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.59.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

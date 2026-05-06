@@ -41,12 +41,17 @@ function App() {
 
 ## What this adapter ships
 
-- **`<BrowsonicErrorBoundary>`** — render-time error capture with reset support.
+Shipped in 0.1:
+
+- **`<BrowsonicErrorBoundary>`** — render-time error capture with reset support and Suspense-safe fallbacks.
 - **`useBrowsonic()`** — singleton instance hook (lazy at mount, stable for the lifetime of the component).
 - **`useUser(user | null)`** — sets / clears user context as the component mounts and updates when the user fields change.
 - **`useCaptureError()`** — stable callback for try/catch sites and event handlers.
 - **`withBrowsonic(Component)`** — HOC that injects `sdk` as a prop, for class components that cannot consume hooks.
-- **React Router instrumentation** _(coming in 0.3)_ — automatic page-view events.
+
+Deferred to 0.2 / 0.3 (see [`ROADMAP.md`](./ROADMAP.md)):
+
+- React Router v6 / v7 instrumentation — automatic page-view events on route change.
 
 ```tsx
 import { BrowsonicErrorBoundary, useBrowsonic, useUser, useCaptureError } from '@browsonic/react';
@@ -79,7 +84,7 @@ function Checkout() {
 }
 ```
 
-The roadmap above mirrors [`ROADMAP.md`](./ROADMAP.md). The package follows the [@browsonic/sdk](https://github.com/Sangaibisi/browsonic-sdk) release cadence; SemVer strict.
+The package follows the [@browsonic/sdk](https://github.com/Sangaibisi/browsonic-sdk) release cadence; SemVer strict.
 
 ## Compatibility
 

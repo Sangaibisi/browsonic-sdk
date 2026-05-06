@@ -2,7 +2,7 @@
 
 Next.js adapter for [`@browsonic/sdk`](https://www.npmjs.com/package/@browsonic/sdk) — App Router error-page components (with optional `pathname` / `params` context), route-handler capture wrapper, Pages Router companions (`browsonicPagesAppInit` / `browsonicPagesErrorInitialProps`), config wrapper, plus all the React-side primitives re-exported from [`@browsonic/react`](https://www.npmjs.com/package/@browsonic/react).
 
-> **Status:** 0.2 surface — App Router `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` accept optional `pathname` + `params` props that consumers thread from `usePathname()` / `useParams()` and land as `nextjs.pathname` tag + `nextjs.params` context. Pages Router companions ship for `pages/_app.tsx` (`browsonicPagesAppInit`) and `pages/_error.tsx` (`browsonicPagesErrorInitialProps`). 0.3 features (build-time sourcemap upload via `withBrowsonicConfig`, `instrumentation.ts` auto-registration) are deferred until the Sprint 3 / Sprint 4 source-map pipeline lands.
+> **Status:** 0.3 partial — App Router `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` accept optional `pathname` + `params` props that consumers thread from `usePathname()` / `useParams()` and land as `nextjs.pathname` tag + `nextjs.params` context. Pages Router companions ship for `pages/_app.tsx` (`browsonicPagesAppInit`) and `pages/_error.tsx` (`browsonicPagesErrorInitialProps`). The `instrumentation.ts` helper (`@browsonic/nextjs/instrumentation`) shipped in 0.3. Build-time sourcemap upload via `withBrowsonicConfig` remains the open 0.3 item — pending the source-map pipeline backend polish.
 
 ## Why this adapter
 
@@ -137,7 +137,7 @@ What ships today:
 
 What ships later (without a code change in your `instrumentation.ts`):
 
-- Real server-runtime capture once the Sprint 3 / Sprint 4 source-map pipeline lands the ingest contract.
+- Real server-runtime capture once the source-map pipeline lands the server-side ingest contract.
 - `BROWSONIC_INSTRUMENTATION_VERSION` already tags emitted events so future dashboards can distinguish wire-up generations.
 
 Server-only sub-entry — the main `@browsonic/nextjs` bundle has no server code.
@@ -154,7 +154,7 @@ export default withBrowsonicConfig({
 });
 ```
 
-In 0.2 this is a passthrough. Adopt it now and pick up future build-time integrations (sourcemap upload, `instrumentation.ts` auto-registration) without touching your config file again. Both planned for 0.3 once the Sprint 3 / Sprint 4 source-map pipeline lands.
+Today this is a passthrough. Adopt it now and pick up build-time sourcemap upload without touching your config file again — that integration is the remaining 0.3 item, pending the source-map pipeline backend polish. (`instrumentation.ts` auto-registration is already shipped as the consumer-opt-in `@browsonic/nextjs/instrumentation` sub-entry above; nothing to wire through `withBrowsonicConfig` for it.)
 
 ## Quickstart — Boundary inside Client Components
 
@@ -190,8 +190,8 @@ Same as every other adapter:
 
 ## What this package does NOT do (yet)
 
-- **Sourcemap upload at build time.** The deferred Sprint 3 / Sprint 4 source-map pipeline will wire this through `withBrowsonicConfig`. Tracked for 0.3.
-- **Auto-detected `instrumentation.ts` injection.** The 0.3 helper is opt-in (consumer paste a 5-line wire-up). A build-time injector that creates the file automatically would need a transform on every project's root, which is more invasive than the consumer-opt-in convention. Tracked alongside any future Sprint 3 / Sprint 4 sourcemap-pipeline auto-registration.
+- **Sourcemap upload at build time.** Will wire through `withBrowsonicConfig` once the source-map pipeline backend polish lands. Tracked as the open 0.3 item.
+- **Auto-detected `instrumentation.ts` injection.** The shipped helper is opt-in (consumer pastes a 5-line wire-up). A build-time injector that creates the file automatically would need a transform on every project's root, which is more invasive than the consumer-opt-in convention.
 - **Server-runtime capture.** The SDK is a browser library; route-handler errors that occur in pure Node have no `window` to write to. The wrapper still re-throws so your handler returns its expected status.
 - **Edge runtime instrumentation.** Edge runtimes lack a stable global Browsonic singleton — adopt the SDK in the client layer and use the route-handler wrapper for opportunistic capture.
 - **Pages Router data layer instrumentation** (`getServerSideProps` / `getStaticProps`). Will be revisited only if Pages Router consumer demand surfaces.

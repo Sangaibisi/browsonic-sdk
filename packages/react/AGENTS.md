@@ -12,8 +12,9 @@
 exists because React's reconciler catches render-time exceptions
 before they bubble to `window`, so the SDK alone never hears about
 them. The adapter wires React Error Boundary into the SDK's
-`captureError` API and ships React-shaped helpers (hooks, HOC,
-router instrumentation).
+`captureError` API and ships React-shaped helpers (hooks, HOC).
+Router instrumentation is on the roadmap (0.2 / 0.3) and not yet
+in `src/`.
 
 The adapter is **the second piece of code** that runs inside
 customer applications — alongside the SDK. It must not introduce
@@ -91,8 +92,10 @@ src/
 ├── error-boundary.tsx       # <BrowsonicErrorBoundary>
 ├── hooks.ts                 # useBrowsonic, useUser, useCaptureError
 ├── hoc.tsx                  # withBrowsonic
-├── resolve-sdk.ts           # shared SDK lookup helper
-└── router/                  # (0.3+) React Router instrumentation
+└── resolve-sdk.ts           # shared SDK lookup helper
+
+# Planned (0.2 / 0.3, not yet present):
+# src/router/                # React Router v6 / v7 instrumentation
 
 docs/
 └── ADAPTER_TEMPLATE.md      # checklist for the next framework adapter
@@ -152,17 +155,16 @@ adds import noise without diagnostic value.
   surface (`Browsonic` class, `captureError`, `setUser`, `addMetadata`,
   `clearUser`). Any change in those signatures is an SDK breaking
   change and forces this adapter's major bump in lockstep.
-- **Sprint planning** — work on this repo is tracked in the SDK's
-  [`SPRINT_PLAN.md`](https://github.com/Sangaibisi/browsonic-sdk/blob/main/docs/sprint-tracking/SPRINT_PLAN.md)
-  under Sprint 5. Cross-repo impacts go in
-  [`CROSS_REPO_IMPACTS.md`](https://github.com/Sangaibisi/browsonic-sdk/blob/main/docs/sprint-tracking/CROSS_REPO_IMPACTS.md).
+- **Roadmap** — milestones for this package live in
+  [`ROADMAP.md`](./ROADMAP.md). Router instrumentation (0.2 / 0.3)
+  is the next major surface area; it has not landed yet.
 
 ## Common pitfalls
 
 1. **"Boundary did not catch my error."** Error Boundaries do **not**
    catch errors thrown in event handlers, async code, or during
    server rendering. For event-handler errors use
-   `useCaptureError()` (0.2+) or `try/catch` and forward to
+   `useCaptureError()` or wrap in `try/catch` and forward to
    `sdk.captureError()`.
 2. **"Tests fail in CI but pass locally."** Usually a happy-dom
    version mismatch or a missing `await` for a state-setter that

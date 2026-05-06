@@ -93,10 +93,3 @@ with `captureError` themselves.
   pure-TS — tests exercise the wrappers and the factory directly,
   no component mounting needed. If a future feature ships a
   `.svelte` file, add the testing library at that point.
-
-## Sprint discipline
-
-This adapter's work is tracked in
-[`docs/sprint-tracking/SPRINT_PLAN.md`](../../docs/sprint-tracking/SPRINT_PLAN.md)
-under Sprint 6. Cross-package impacts → single PR. Cross-repo
-impacts → `docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.

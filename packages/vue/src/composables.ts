@@ -7,8 +7,7 @@
  *
  * Resolution order: `inject(browsonicInjectionKey)` first (set by the
  * plugin) → `resolveSdk()` global window fallback → `null`. The fallback
- * lets composables work even when the host has not installed the plugin,
- * matching the SDK's "no-config" UMD path.
+ * lets composables work even when the host has not installed the plugin.
  *
  * All composables are no-ops when no SDK is reachable. They MUST NEVER
  * throw — a thrown composable would propagate through the Vue render

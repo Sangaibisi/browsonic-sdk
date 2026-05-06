@@ -93,20 +93,23 @@ compiler then. Until then, don't add `.vue` files.
 - Each public primitive has a test for: happy path, SDK-unreachable
   fallthrough, SDK-throws-inside-method defensive isolation, reset
   / clear path where applicable.
+- Boundary-specific suites pin contracts that are easy to regress:
+  `error-boundary.parity.test.ts` (Composition + Options API parity)
+  and `error-boundary.suspense.test.ts` (async `setup()` throwing
+  inside a `<Suspense>` chain still routes through the boundary, not
+  the Suspense fallback).
 
-## Sprint discipline
+## Cross-package / cross-repo changes
 
-This adapter's work is tracked in
-[`docs/sprint-tracking/SPRINT_PLAN.md`](../../docs/sprint-tracking/SPRINT_PLAN.md)
-under Sprint 6. Cross-package impacts (SDK API change forces
-adapter rev) become a single PR touching both packages. Cross-repo
-impacts (service tolerance, dashboard fields) go in
-[`docs/sprint-tracking/CROSS_REPO_IMPACTS.md`](../../docs/sprint-tracking/CROSS_REPO_IMPACTS.md).
+Cross-package impacts (SDK API change forces adapter rev) become a
+single PR touching both packages. Cross-repo impacts (service
+tolerance, dashboard fields) get coordinated PRs across the affected
+repos — note them in the PR body so reviewers can track the chain.
 
 ## Divergences from ADAPTER_TEMPLATE
 
 None through 0.3 — the Vue adapter follows the template exactly.
-Router instrumentation (0.2), Pinia integration (0.3), and the
-parity test suite all use the structural-types-only contract the
-template prescribes. If a future divergence is needed (SFC default
-fallback, Suspense integration), record it here with a reason.
+Router instrumentation, Pinia integration, the parity test suite,
+and the Suspense integration test all use the structural-types-only
+contract the template prescribes. If a future divergence is needed
+(e.g. SFC default fallback), record it here with a reason.

@@ -1,15 +1,14 @@
 name: E2E
 
-# Playwright chromium against the built UMD bundle. Heavy job (~5 min
-# with browser bring-up), so it runs on main pushes + nightly + manual
-# dispatch — NOT on every PR. The PR-blocking gates are unit, bench,
-# size, lint, typecheck in ci.yml; e2e is the safety net that runs
-# before a release would be cut.
+# Playwright chromium against a built E2E IIFE bundle. Heavy job (~5
+# min with browser bring-up), so it runs on main pushes + nightly +
+# manual dispatch — NOT on every PR. The PR-blocking gates are unit,
+# bench, size, lint, typecheck in ci.yml; e2e is the safety net that
+# runs before a release would be cut.
 #
 # Monorepo note: e2e fixtures + Playwright config live in the SDK
-# package only; UMD bundle is the SDK's deliverable. Other packages
-# (e.g. @browsonic/react) get their own demo apps under
-# `packages/<name>/examples/`, those are NOT run in CI.
+# package only. Other packages (e.g. @browsonic/react) get their own
+# demo apps under `packages/<name>/examples/`, those are NOT run in CI.
 
 on:
   push:

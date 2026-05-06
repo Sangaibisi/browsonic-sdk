@@ -93,9 +93,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: typecheck
     # Bench + size-limit only target the SDK package (the only thing
-    # that ships a UMD bundle and a perf SLO). Adapter packages don't
-    # participate. After the monorepo migration, scripts/ + .size-limit.json
-    # live under packages/sdk/, so all per-bench/size steps run from there.
+    # with a perf SLO). Adapter packages don't participate. After the
+    # monorepo migration, scripts/ + .size-limit.json live under
+    # packages/sdk/, so all per-bench/size steps run from there.
     defaults:
       run:
         working-directory: packages/sdk

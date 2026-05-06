@@ -92,14 +92,6 @@ jobs:
         run: npx --yes @cyclonedx/cyclonedx-npm --output-format json --output-file packages/sdk/browsonic-sdk.cdx.json
         continue-on-error: true
 
-      - name: Compute SDK UMD checksums
-        working-directory: packages/sdk
-        run: |
-          set -e
-          if [ -f dist/umd/browsonic.min.js ]; then
-            sha256sum dist/umd/browsonic.min.js dist/umd/browsonic.js > browsonic-sdk.sha256sums || true
-          fi
-
       - name: Run semantic-release (per workspace)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

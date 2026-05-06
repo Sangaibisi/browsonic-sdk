@@ -22,7 +22,7 @@ bump it forces.
 - [ ] `npm run typecheck` clean
 - [ ] `npm run test:run` green (test count: \_\_\_, delta vs `main`: \_\_\_)
 - [ ] `npm run test:coverage` — gates still met (statements ≥80%, branches ≥70%, functions ≥80%)
-- [ ] `npm run build` succeeds for all 4 targets (esm + cjs + types + umd)
+- [ ] `npm run build` succeeds for all 3 targets (esm + cjs + types)
 - [ ] `npm run size` within `.size-limit.json` budget
 - [ ] `npm run bench:check` no regression (or baseline updated in this PR)
 - [ ] `npm run test:e2e` green if the change touches collectors / transport / widget

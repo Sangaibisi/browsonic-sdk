@@ -33,58 +33,6 @@ yarn add @browsonic/sdk
 pnpm add @browsonic/sdk
 ```
 
-### Script tag (UMD)
-
-The `dist/umd/` bundle is a single-file UMD build intended for
-environments that cannot consume ES modules — legacy CMS themes,
-server-rendered marketing pages, A/B test containers (Optimizely,
-Google Optimize), Shopify / Squarespace / WordPress theme editors.
-
-`@browsonic/sdk` is published to the public npm registry, so you can
-load the UMD bundle directly from any npm-aware CDN, or self-host it.
-Supported UMD distribution paths:
-
-1. **npm CDN (jsDelivr / unpkg)** — the simplest path. Pin a version
-   so a new release does not silently change behaviour:
-   `https://cdn.jsdelivr.net/npm/@browsonic/sdk@2.2.0/dist/umd/browsonic.min.js`.
-2. **GitHub Release asset** — every tagged release attaches
-   `browsonic.min.js` + source map. Download and host on your own CDN.
-3. **Self-hosted CDN** — unpack the npm tarball and copy
-   `dist/umd/browsonic.min.js` to your own origin (CloudFront,
-   Cloudflare, Fastly). Recommended for production: it removes the SDK
-   from your page's third-party script budget and gives you full
-   versioning control.
-4. **Inline `<script>`** — for extremely size-sensitive pages, inline
-   the bundle directly in the HTML response.
-
-```html
-<!-- Load before any code that might throw -->
-<script src="https://your-cdn.example.com/browsonic.min.js"></script>
-<script>
-  const sdk = window.Browsonic.getBrowsonic();
-  sdk.init({
-    apiEndpoint: 'https://api.browsonic.example.com',
-    appKey: 'your-app-key',
-    apiKey: 'your-api-key',
-  });
-</script>
-```
-
-The UMD bundle exposes the same named exports as the npm package's
-main entry on `window.Browsonic`:
-
-- `Browsonic` — the SDK class
-- `getBrowsonic()` — singleton getter
-- `resetBrowsonic()` — testing-only
-- `createTelemetryStore()` — for custom plugin authors
-
-> **Removed in 2.0:** The `Sentinel` / `getSentinel` / `resetSentinel`
-> aliases shipped in 0.x–1.x were removed in 2.0. Host apps still on
-> those names rename imports to `Browsonic` / `getBrowsonic` /
-> `resetBrowsonic` before upgrading.
-
-UMD bundle size: **18.6 KB gzipped / 56.8 KB minified** (Sprint 9).
-
 ### Build Outputs
 
 The package includes multiple build formats:
@@ -93,8 +41,12 @@ The package includes multiple build formats:
 | ---------- | ------------- | --------------------------------------- |
 | ES Modules | `dist/esm/`   | Modern bundlers (Webpack, Vite, Rollup) |
 | CommonJS   | `dist/cjs/`   | Node.js, older bundlers                 |
-| UMD        | `dist/umd/`   | Script tag / CDN / legacy pages         |
 | TypeScript | `dist/types/` | Type definitions                        |
+
+> **Removed in 2.0:** The `Sentinel` / `getSentinel` / `resetSentinel`
+> aliases shipped in 0.x–1.x were removed in 2.0. Host apps still on
+> those names rename imports to `Browsonic` / `getBrowsonic` /
+> `resetBrowsonic` before upgrading.
 
 ---
 
@@ -632,6 +584,24 @@ console.log(`${pending} events in queue`);
 
 ## Framework Integration
 
+For most apps, prefer the framework-specific adapter packages over the
+vanilla wiring shown below — they bundle router instrumentation,
+breadcrumbs, and framework-aware error handlers out of the box:
+
+| Framework | Adapter package      |
+| --------- | -------------------- |
+| React     | `@browsonic/react`   |
+| Vue       | `@browsonic/vue`     |
+| Svelte    | `@browsonic/svelte`  |
+| Angular   | `@browsonic/angular` |
+| Next.js   | `@browsonic/nextjs`  |
+| Astro     | `@browsonic/astro`   |
+| Remix     | `@browsonic/remix`   |
+
+The examples in this section show direct `@browsonic/sdk` usage for
+hosts that prefer to wire the core SDK by hand. Each adapter package
+exposes its own README with setup details on top of these primitives.
+
 ### React
 
 ```tsx
@@ -801,28 +771,22 @@ export function BrowsonicProvider({ children }: { children: React.ReactNode }) {
 
 ### Vanilla JavaScript
 
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>My App</title>
-  </head>
-  <body>
-    <div id="app"></div>
+`@browsonic/sdk` ships ESM and CJS only — install via npm and bundle
+with Vite, Webpack, Rollup, esbuild, or any other modern bundler:
 
-    <script type="module">
-      import { getBrowsonic } from './node_modules/@browsonic/sdk/dist/esm/index.js';
+```bash
+npm install @browsonic/sdk
+```
 
-      const browsonic = getBrowsonic();
-      browsonic.init({
-        apiEndpoint: 'https://api.example.com',
-        appKey: 'my-app',
-      });
+```typescript
+// src/browsonic.ts (entry imported by your app bundle)
+import { getBrowsonic } from '@browsonic/sdk';
 
-      // Your app code here
-    </script>
-  </body>
-</html>
+const browsonic = getBrowsonic();
+browsonic.init({
+  apiEndpoint: 'https://api.example.com',
+  appKey: 'my-app',
+});
 ```
 
 ---
@@ -1113,11 +1077,11 @@ X-API-KEY: your-app-key
 
 For issues or questions:
 
-- Issues: Contact your BrowSonic administrator
-- Documentation: [leguide.dev](https://leguide.dev/)
-- Email: support@leguide.dev
+- Issues: File a bug at the BrowSonic SDK GitHub repository
+  ([Sangaibisi/browsonic-sdk](https://github.com/Sangaibisi/browsonic-sdk))
+- Self-hosted deployments: contact your BrowSonic administrator
 
 ---
 
-**Version:** 0.2.0  
-**Last Updated:** February 2026
+**Version:** 2.2.1  
+**Last Updated:** 2026-05-06

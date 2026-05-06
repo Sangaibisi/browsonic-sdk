@@ -49,9 +49,9 @@ export interface BrowsonicErrorBoundaryProps {
   /**
    * Browsonic SDK instance to report errors to. When omitted, the
    * boundary tries `window.Browsonic.getBrowsonic()` — the singleton
-   * registered by the UMD / main entry of `@browsonic/sdk`. If
-   * neither is available the boundary still renders fallback but no
-   * report is sent.
+   * registered by the main entry of `@browsonic/sdk`. If neither is
+   * available the boundary still renders fallback but no report is
+   * sent.
    */
   sdk?: Browsonic;
 

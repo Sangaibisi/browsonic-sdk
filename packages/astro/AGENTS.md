@@ -39,10 +39,17 @@
   so per-framework boundaries inside the island automatically
   inherit the tag on their captured events.
 
-**0.3 (deferred):**
+**0.3 Content Collections:**
 
-- Astro Content Collections breadcrumbs — needs upstream API
-  alignment for the page-build → page-load identity bridge.
+- `renderContentCollectionMeta({ collection, entry })` — emits a
+  build-time `<meta>` tag from a `[slug].astro` page. The runtime
+  navigation listener reads it on every after-swap and stamps
+  `data.contentCollection: '<collection>/<entry>'` onto the
+  breadcrumb. Pages that don't render the meta tag simply omit
+  the field.
+- `readContentCollectionFromDocument(doc?)` — exported helper that
+  the listener uses internally; available for consumers wiring
+  custom navigation telemetry.
 
 ## Divergences from ADAPTER_TEMPLATE
 
@@ -68,19 +75,27 @@
 ## Test discipline
 
 - Vitest + happy-dom.
-- 17+ tests (view-transitions × 7, capture × 9 + extras).
-- We don't boot Astro — we exercise the listener factory + capture
-  wrappers as plain TS against a `document` shim.
+- We don't boot Astro — we exercise the listener factory, integration
+  factory, action wrapper, island tagger, and content-collections
+  helpers as plain TS against a `document` shim.
+- Suite covers view-transitions (incl. intent phase), capture wrappers,
+  the integration's `astro:config:setup` hook, action wrapper
+  re-throw + tag contract, island scope tagging, and content-
+  collection meta read/render.
 
-## Sprint discipline
+## Cross-package coordination
 
-Sprint 7. Cross-package impacts → single PR. Cross-repo impacts →
-top-level `docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.
+Cross-package impacts → single PR across `packages/*`. Cross-repo
+impacts (dashboard, landing, build-tools) → coordinate in the
+shipping PR description; no separate tracker file.
 
 ## Roadmap pointers
 
-- 0.2: Astro Integration that auto-injects the `<script>` block
-  for `registerNavigationBreadcrumbs` — `astro add @browsonic/astro`
-  ergonomics.
-- 0.3: SSR-side error capture if the SDK gains a Node build target
-  (currently out of scope per project's intentional non-goals).
+- SSR-side error capture is out of scope until `@browsonic/sdk` gains
+  a Node runtime target. `withBrowsonicAstroAction` is the current
+  bridge — it reports through any reachable browser SDK and
+  re-throws cleanly when none is present.
+- A build-time auto-injector for `renderContentCollectionMeta` would
+  remove the per-page opt-in but requires a transform on every
+  `astro:content`-using page; left as a consumer-opt-in convention
+  for now.

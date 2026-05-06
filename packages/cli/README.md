@@ -2,7 +2,7 @@
 
 Command-line companion for the [Browsonic SDK](https://www.npmjs.com/package/@browsonic/sdk). Today's surface is sourcemap upload — walks a dist tree and POSTs every `.map` file to the ingest service. Future commands (release management, build-time event tagging) live behind the same `browsonic <command>` entry point.
 
-> **Status:** 0.1 surface — `upload-sourcemaps` is feature-complete and ships a `--dry-run` mode for use before the ingest endpoint is live. Pure-TypeScript, zero npm runtime deps (uses Node 20+'s built-in `fetch` + `node:util.parseArgs`). The full pipeline architecture lives in [`docs/design/SOURCEMAP_PIPELINE.md`](https://github.com/Sangaibisi/browsonic-sdk/blob/main/docs/design/SOURCEMAP_PIPELINE.md).
+> **Status:** 0.1 surface — `upload-sourcemaps` is feature-complete and the `/v1/sourcemaps` ingest endpoint shipped 2026-05-06 (build-tools, service, dashboard, compose all in production). `--dry-run` remains for CI smoke-testing the discovery / payload-size / release-tag flow without making real HTTP calls. Pure-TypeScript, zero npm runtime deps (uses Node 20+'s built-in `fetch` + `node:util.parseArgs`). The full pipeline architecture lives in [`docs/design/SOURCEMAP_PIPELINE.md`](https://github.com/Sangaibisi/browsonic-sdk/blob/main/docs/design/SOURCEMAP_PIPELINE.md).
 
 ## Install
 
@@ -39,15 +39,18 @@ Per-file progress lines stream as the upload runs:
 [browsonic] upload-sourcemaps: 12/12 succeeded
 ```
 
-## Dry-run mode (use before the ingest endpoint is live)
+## Dry-run mode
 
-The service-side `/v1/sourcemaps` ingest endpoint is part of the deferred Sprint 3 / Sprint 4 source-map pipeline (see the design doc). Until it ships, `--dry-run` lets you wire the CLI into your CI today and validate the discovery / payload-size / release-tag flow:
+`--dry-run` skips the HTTP call, prints a `would-have-uploaded` list with the same per-file format, and exits 0. Useful for:
+
+- **CI smoke tests** — validate that your build emits `.map` files in the expected dist tree and that the release-tag / app-key wiring is correct, without touching the ingest service.
+- **Local debugging** — confirm the file-discovery walk and payload sizes before you spend tokens on a real upload.
 
 ```bash
 npx browsonic upload-sourcemaps --dist-path ./dist --release v1.2.3 --dry-run
 ```
 
-Dry-run skips the actual HTTP call, prints a `would-have-uploaded` list with the same per-file format, and exits 0. Drop the `--dry-run` flag once the service endpoint goes live — the command shape doesn't change.
+The command shape is identical with and without `--dry-run` — drop the flag for the real upload.
 
 ## Flags
 
@@ -80,7 +83,7 @@ CI scripts can branch on these codes to decide whether to retry, page the on-cal
 
 ## Programmatic API
 
-The CLI's commands are exposed as library functions for consumers building bundler plugins (the future `@browsonic/build-tools` package wraps this surface):
+The CLI's commands are exposed as library functions for consumers building bundler plugins (the `@browsonic/build-tools` package's webpack / vite / rollup plugins wrap this surface):
 
 ```ts
 import { runUploadSourcemaps } from "@browsonic/cli";
@@ -111,12 +114,13 @@ Lower-level building blocks (`uploadOne`, `discoverSourceMaps`, `relativeFilenam
 - Network errors include the HTTP status + filename in the error message so CI logs are actionable.
 - The injectable `fetch` override (programmatic API only) makes integration testing painless — pass a stub instead of standing up a real ingest.
 
-## What this package does NOT do (yet)
+## What this package does NOT do
 
-- **Bundler plugins.** The companion `@browsonic/build-tools` package will ship webpack / vite / rollup plugins that wrap this CLI — tracked alongside the rest of the source-map pipeline implementation.
-- **Inline-sourcemap extraction.** Modern bundlers default to external `.map` files. If your config emits inline sourcemaps (`//# sourceMappingURL=data:...` at the end of the bundle), extract them to `.map` siblings before invoking the CLI. Native inline support is on the design doc's Q5 list.
+- **Bundler plugins.** Use the companion [`@browsonic/build-tools`](../build-tools) package for webpack / vite / rollup plugins that wrap this CLI.
+- **Inline-sourcemap extraction.** Modern bundlers default to external `.map` files. If your config emits inline sourcemaps (`//# sourceMappingURL=data:...` at the end of the bundle), extract them to `.map` siblings before invoking the CLI. Native inline support is on the design doc's open-questions list.
 - **Symbolication.** That happens server-side at dashboard query time; this CLI only uploads.
 - **Self-hosted retention policies.** Sourcemap pruning lives on the service side (per-app `maxReleases` setting, per the design doc).
+- **Token CRUD / id-keyed sourcemap list and delete.** Deferred to v0.2 backend polish — for now, manage sourcemap-upload tokens through the dashboard and use the existing `(release, filename)` idempotency to overwrite stale uploads.
 
 ## License
 

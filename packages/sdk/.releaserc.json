@@ -55,12 +55,7 @@
     [
       "@semantic-release/github",
       {
-        "assets": [
-          { "path": "dist/umd/browsonic.min.js", "label": "UMD bundle (minified)" },
-          { "path": "dist/umd/browsonic.min.js.map", "label": "UMD source map" },
-          { "path": "browsonic-sdk.cdx.json", "label": "CycloneDX SBOM" },
-          { "path": "browsonic-sdk.sha256sums", "label": "SHA-256 checksums" }
-        ]
+        "assets": [{ "path": "browsonic-sdk.cdx.json", "label": "CycloneDX SBOM" }]
       }
     ]
   ]

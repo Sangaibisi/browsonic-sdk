@@ -20,12 +20,6 @@
       "types": "./dist/types/widget-entry.d.ts",
       "import": "./dist/esm/widget-entry.js",
       "require": "./dist/cjs/widget-entry.js"
-    },
-    "./umd": {
-      "browser": "./dist/umd/browsonic.min.js"
-    },
-    "./umd/unminified": {
-      "browser": "./dist/umd/browsonic.js"
     }
   },
   "sideEffects": false,
@@ -33,11 +27,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run build:types && npm run build:umd",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.types.json",
-    "build:umd": "node scripts/build-umd.mjs",
     "dev": "tsc -p tsconfig.esm.json --watch",
     "test": "vitest",
     "test:run": "vitest run",

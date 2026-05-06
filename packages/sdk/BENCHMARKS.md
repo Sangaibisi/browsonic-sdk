@@ -1,6 +1,6 @@
 # Benchmarks
 
-Measured performance of `@browsonic/sdk`. Numbers are from the v2.2.0 release. The methodology and reproduction steps below let you re-run them on your own hardware.
+Measured performance of `@browsonic/sdk`. Numbers are from the v2.2.0 release (measured 2026-04-27). The current package version is 2.2.1, a patch with no benchmark-affecting changes; figures have not been re-measured. The methodology and reproduction steps below let you re-run them on your own hardware.
 
 ## How to reproduce
 
@@ -28,13 +28,12 @@ The CPU throttle is applied via Chrome DevTools Protocol from inside the Playwri
 
 Hard budgets enforced by [`size-limit`](https://github.com/ai/size-limit) in CI.
 
-| Artefact                                           | Budget | v2.2.0   |
-| -------------------------------------------------- | ------ | -------- |
-| `dist/esm/index.js` (main entry, default plugins)  | 22 KB  | 20.96 KB |
-| `dist/esm/core.js` (no widget, no default plugins) | 15 KB  | 13.95 KB |
-| `dist/esm/widget-entry.js` (widget plugin)         | 6 KB   | 5.67 KB  |
-| `dist/cjs/index.js`                                | 26 KB  | 24.18 KB |
-| `dist/umd/browsonic.min.js` (UMD, single-file)     | —      | ~22 KB   |
+| Artefact                                           | Budget | v2.2.0 (measured 2026-04-27) |
+| -------------------------------------------------- | ------ | ---------------------------- |
+| `dist/esm/index.js` (main entry, default plugins)  | 22 KB  | 20.96 KB                     |
+| `dist/esm/core.js` (no widget, no default plugins) | 15 KB  | 13.95 KB                     |
+| `dist/esm/widget-entry.js` (widget plugin)         | 6 KB   | 5.67 KB                      |
+| `dist/cjs/index.js`                                | 26 KB  | 24.18 KB                     |
 
 Consumers that do not need the in-app widget should import from `@browsonic/sdk/core` to drop the widget code from their bundle.
 

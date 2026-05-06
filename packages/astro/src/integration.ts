@@ -24,9 +24,8 @@
  *     navigation lands as breadcrumbs without per-layout wiring.
  *
  * The injected snippet is the bootstrap shape, NOT the full SDK.
- * Consumers still need to load `@browsonic/sdk` separately (UMD
- * `<script async>` or ESM import) — the integration just makes the
- * navigation hookup zero-touch.
+ * Consumers still need to import `@browsonic/sdk` separately — the
+ * integration just makes the navigation hookup zero-touch.
  *
  * Why a structural `AstroIntegrationLike` instead of importing
  * `AstroIntegration` from `astro`: the adapter does not bundle Astro

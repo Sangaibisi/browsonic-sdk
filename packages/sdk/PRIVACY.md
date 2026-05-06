@@ -1,8 +1,8 @@
 # Privacy & Data Collection Policy
 
 > **Browsonic SDK** (`@browsonic/sdk`)  
-> Version: 2.2.0  
-> Last Updated: April 2026
+> Version: 2.2.1  
+> Last Updated: May 2026
 
 ---
 
@@ -415,6 +415,7 @@ If you have privacy concerns or questions about data collection:
 
 | Version | Date     | Changes                                                                                                                                                   |
 | ------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.2.1   | May 2026 | Current release                                                                                                                                           |
 | 2.0.0   | Apr 2026 | Plugin architecture; `internalDiagnostics`, `onUnsupportedVersion`, `cspNonce`, `visitorIdStrategy`, `respectGPC`, `hasConsented`, Set-based `redactKeys` |
 | 0.3.0   | Mar 2026 | BREAKING — `captureStorage` + `captureCookieValues` default **false**; names-only cookie capture; `redactCookieNames` added                               |
 | 0.2.0   | Feb 2026 | Added visitor tracking with privacy-safe defaults                                                                                                         |

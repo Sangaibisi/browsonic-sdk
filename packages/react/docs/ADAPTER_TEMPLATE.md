@@ -9,18 +9,16 @@
 
 ## Why a template
 
-`@browsonic/react` was built as the **pilot adapter** in Sprint 5
-(see [SPRINT_PLAN.md](../../../docs/sprint-tracking/SPRINT_PLAN.md)).
-After the **S5.5 monorepo migration** (2026-05-04), every framework
-adapter ships as a new workspace inside the `browsonic-sdk` monorepo
-under `packages/<framework>/`. Sprints 6 (Vue + Svelte), 7 (Next +
-Astro), and 10 (Angular + Remix) replicate the same shape.
+`@browsonic/react` was the pilot adapter; the seven adapters that
+followed (Vue, Svelte, Angular, Astro, Next.js, Remix, plus React
+itself) all ship as workspaces inside the `browsonic-sdk` monorepo
+under `packages/<framework>/` and follow the shape captured here.
 
 Without a template, every adapter becomes a reinvention. With the
 template — and the workspace flow below — adding an adapter takes
 30 minutes instead of 2 hours.
 
-## 0. Monorepo workflow (post-S5.5)
+## 0. Monorepo workflow
 
 **No new GitHub repository is created.** The adapter is a new
 workspace inside `browsonic-sdk`'s `packages/` directory. Skeleton:
@@ -116,16 +114,14 @@ Every adapter MUST:
   - SDK-throws-inside-method defensive isolation
   - reset / clear / unmount paths
 
-## 5. Sprint discipline
+## 5. Change discipline
 
-This adapter's work is tracked in the monorepo's
-[`docs/sprint-tracking/SPRINT_PLAN.md`](../../../docs/sprint-tracking/SPRINT_PLAN.md)
-under the matching sprint number — do NOT open a parallel sprint
-plan inside the package. Cross-package impacts (e.g. SDK API
-change forces adapter rev) become a **single PR** touching both
-packages — that is the whole point of the monorepo. Cross-repo
-impacts (service tolerance, dashboard fields) go in
-[`docs/sprint-tracking/CROSS_REPO_IMPACTS.md`](../../../docs/sprint-tracking/CROSS_REPO_IMPACTS.md).
+The adapter's roadmap (deferred items, parking lot) lives in its
+own [`packages/<framework>/ROADMAP.md`](../../ROADMAP.md). The
+public-facing repo-wide roadmap is at [`ROADMAP.md`](../../../../ROADMAP.md).
+Cross-package impacts (e.g. SDK API change forces adapter rev)
+become a **single PR** touching both packages — that is the whole
+point of the monorepo.
 
 ## 6. Release flow
 
@@ -169,7 +165,7 @@ Before the first `feat:` push to `main` triggers semantic-release
 for a new adapter:
 
 - [ ] `NPM_TOKEN` repository secret already exists at the monorepo
-      root (it does — set during S5 / S5.5).
+      root (it does — set when the monorepo first published).
 - [ ] `npm view @browsonic/<framework>` returns 404 (package name
       not taken).
 - [ ] Package's `package.json` `publishConfig.access: "public"` and
@@ -242,12 +238,11 @@ discipline, release flow, file:../.. demo linking) carry across
 without edits — workspaces resolve `@browsonic/sdk` and the
 sibling adapters via symlinks at install time.
 
-## 9. Closing the old standalone repo (S5.5 + transitional)
+## 9. Closing an old standalone repo (transitional only)
 
-If the adapter previously lived in its own GitHub repo (the React
-adapter did, before S5.5), archive that repo **after** the content
-has been imported into the monorepo and the first monorepo-side
-release has shipped. Use:
+If the adapter previously lived in its own GitHub repo before being
+imported into the monorepo, archive that repo **after** the content
+has been imported and the first monorepo-side release has shipped:
 
 ```bash
 gh repo archive Sangaibisi/browsonic-<framework>
@@ -258,5 +253,5 @@ gh repo archive Sangaibisi/browsonic-<framework>
 GitHub Releases, npm provenance, and external blogs must keep
 resolving — deletion breaks all of those silently.
 
-For adapters opened directly in the monorepo (S6 onwards), this
-section does not apply.
+For adapters opened directly in the monorepo, this section does
+not apply.

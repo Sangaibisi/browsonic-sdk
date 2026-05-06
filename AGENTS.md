@@ -9,22 +9,28 @@
 ## Repository shape
 
 `browsonic-sdk` is an **npm workspaces monorepo** holding the core
-SDK and the framework adapters that consume it. Workspaces:
+SDK, seven framework adapters, and two build-time tools. Workspaces
+under [`packages/`](./packages):
 
-- `packages/sdk` — `@browsonic/sdk`, the framework-agnostic core SDK
-  (privacy-first browser RUM + error tracking).
-- `packages/react` — `@browsonic/react`, React adapter (Error
-  Boundary, hooks, HOC).
-- `packages/<framework>` — future adapters (Vue, Svelte, Next, Astro,
-  Angular, Remix). Each new adapter is `mkdir packages/<framework>`
-  - the bootstrap checklist in
-    [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
+| Workspace                                        | npm name                 | Surface                                                                                           |
+| ------------------------------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| [`packages/sdk`](./packages/sdk)                 | `@browsonic/sdk`         | Framework-agnostic core SDK — privacy-first browser RUM + error tracking.                         |
+| [`packages/react`](./packages/react)             | `@browsonic/react`       | React adapter — `BrowsonicErrorBoundary`, hooks, HOC.                                             |
+| [`packages/vue`](./packages/vue)                 | `@browsonic/vue`         | Vue 3 boundary, composables, plugin, Vue Router 4 + Pinia integration.                            |
+| [`packages/svelte`](./packages/svelte)           | `@browsonic/svelte`      | SvelteKit `handleError` factory, navigation breadcrumbs, form-action wrappers, error-page helper. |
+| [`packages/angular`](./packages/angular)         | `@browsonic/angular`     | `ErrorHandler` drop-in, `BrowsonicService`, `provideBrowsonic()`, Router + HttpClient companions. |
+| [`packages/astro`](./packages/astro)             | `@browsonic/astro`       | Auto-injecting Astro Integration, View Transitions breadcrumbs, Actions wrapper, island tagging.  |
+| [`packages/nextjs`](./packages/nextjs)           | `@browsonic/nextjs`      | App Router error pages, Pages Router companions, route-handler wrapper, `instrumentation.ts`.     |
+| [`packages/remix`](./packages/remix)             | `@browsonic/remix`       | Route ErrorBoundary, action + loader wrappers, navigation breadcrumb hook, entry helper.          |
+| [`packages/build-tools`](./packages/build-tools) | `@browsonic/build-tools` | Bundler plugins for source-map upload (Vite, Webpack, Rollup, esbuild). Zero runtime deps.        |
+| [`packages/cli`](./packages/cli)                 | `@browsonic/cli`         | `browsonic upload-sourcemaps` build-time CLI; pure-TypeScript, Node 20+, zero runtime deps.       |
 
 Per-package details (privacy, defensive contracts, framework-specific
 pitfalls) live in `packages/<name>/AGENTS.md`. **Read the relevant
 package's AGENTS.md before editing inside a package.** This root
 file covers cross-package rules; it does NOT replace package-level
-agents files.
+agents files. Adding a new adapter starts from
+[`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 
 ## Purpose
 
@@ -33,15 +39,55 @@ to ship telemetry (errors, navigation, XHR, console, pageview, visitor
 context) to an HTTP ingest endpoint. It is the **one piece of code
 that runs inside customer applications**, so the bar is
 bundle-obsessive, fail-safe, privacy-first, and backwards-compatible.
-Adapter packages (`@browsonic/react`, etc.) are thin wrappers that
-inherit the same defensive contracts.
+The seven adapter packages (`@browsonic/react` … `@browsonic/remix`)
+are thin wrappers that inherit the same defensive contracts.
+`@browsonic/cli` and `@browsonic/build-tools` are build-time only —
+they upload source maps to the ingest backend and never run in the
+customer browser.
 
 The ingest endpoint is operator-supplied — there is no hard-coded
-backend. The SDK is paired in production with the closed-source
-Browsonic SaaS backend, but anything that speaks the documented
-`/v1/events` payload works equally well.
+backend. The wire contract `POST /v1/events` is documented in
+[`packages/sdk/INTEGRATION.md`](./packages/sdk/INTEGRATION.md).
+The source-map pipeline contract `POST /v1/sourcemaps` +
+`POST /v1/symbolicate` is documented in
+[`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md).
 
 Breaking any package breaks customer apps. Act accordingly.
+
+## Documentation map
+
+Use this index when you need to know **where a rule lives**. If you
+add a rule that belongs in one of these files, put it there and
+reference it from this one — don't duplicate.
+
+**Repo-wide governance**
+
+- [`README.md`](./README.md) — public entry point, package matrix.
+- [`ROADMAP.md`](./ROADMAP.md) — public-facing milestones, deferred work, parking lot.
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contributor onboarding, PR workflow, coding style.
+- [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) — Contributor Covenant 2.1.
+- [`SECURITY.md`](./SECURITY.md) — vulnerability disclosure path + scope.
+- [`.github/pull_request_template.md`](./.github/pull_request_template.md) — PR checklist (lint, typecheck, test, size, public-API, privacy).
+- `LICENSE` (Apache-2.0), `NOTICE` — root-level, covers every workspace.
+
+**Architecture & design**
+
+- [`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md) — source-map upload + symbolication design (v0.1 shipped 2026-05-06).
+
+**SDK package docs (`packages/sdk/`)**
+
+- [`README.md`](./packages/sdk/README.md) — npm-facing quickstart.
+- [`INTEGRATION.md`](./packages/sdk/INTEGRATION.md) — config reference, framework integration recipes, wire format.
+- [`PRIVACY.md`](./packages/sdk/PRIVACY.md) — redaction defaults, GDPR/CCPA/HIPAA posture, privacy contract.
+- [`BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md) — bundle budgets, perf SLOs, microbench numbers.
+- [`CHANGELOG.md`](./packages/sdk/CHANGELOG.md) — release history (semantic-release-managed; do not hand-edit).
+
+**Per-adapter docs**
+
+Each `packages/<adapter>/` ships its own `README.md`, `AGENTS.md`,
+`ROADMAP.md`, and (after first release) `CHANGELOG.md`. The bootstrap
+checklist for new adapters lives in
+[`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 
 ## Monorepo discipline
 
@@ -51,8 +97,11 @@ Breaking any package breaks customer apps. Act accordingly.
   inside the package.
 - **Root scripts are aggregators.** `npm run lint`, `npm run typecheck`,
   `npm run test:run`, `npm run build`, `npm run size`, `npm run bench`
-  all walk every workspace via `--workspaces --if-present`. Running a
-  script from a single package: `npm run <script> --workspace=packages/<name>`.
+  walk every workspace via `--workspaces --if-present`. The build
+  script enforces topological order: sdk → react → other adapters →
+  build-tools / cli (so adapters can resolve `@browsonic/sdk` types
+  from `dist/` during their own build). Running a script from a
+  single package: `npm run <script> --workspace=packages/<name>`.
 - **One root lockfile.** `package-lock.json` lives at the repo root.
   Per-package `package-lock.json` files break npm workspaces — never
   commit one inside `packages/`.
@@ -68,23 +117,27 @@ Breaking any package breaks customer apps. Act accordingly.
 - **Per-package release.** Each package owns its own `.releaserc.json`
   - CHANGELOG + version. semantic-release runs per workspace via the
     release.yml `--workspaces --if-present` invocation.
+- **Root npm `overrides`** pin transitive vulnerabilities the bundled
+  npm CLI inside `semantic-release@24` can't fix on its own. Don't
+  override `brace-expansion` — it cascades into `minimatch` and
+  breaks ESLint flat config.
 
 ## Tech stack (authoritative)
 
-| Layer             | Technology                                                              | Pinned in                                                |
-| ----------------- | ----------------------------------------------------------------------- | -------------------------------------------------------- |
-| Language          | TypeScript (strict)                                                     | `tsconfig.json`                                          |
-| Runtime           | Evergreen browsers + Node ≥18 for tests                                 | `package.json` engines                                   |
-| Build (4 targets) | tsc → ESM + CJS + types; esbuild → UMD                                  | `tsconfig.{esm,cjs,types}.json`, `scripts/build-umd.mjs` |
-| Test              | Vitest 3.x + happy-dom 20.x                                             | `vitest.config.ts`                                       |
-| E2E               | Playwright chromium                                                     | `playwright.config.ts`, `e2e/`                           |
-| Bench             | Vitest bench + regression check                                         | `scripts/check-bench-regression.mjs`                     |
-| Bundle budget     | size-limit                                                              | `.size-limit.json`                                       |
-| Lint              | ESLint 9 flat + typescript-eslint (type-checked src)                    | `eslint.config.mjs`                                      |
-| Format            | Prettier + Husky + lint-staged                                          | `.prettierrc.json`, `.husky/pre-commit`                  |
-| Publish           | Public npm registry as `@browsonic/sdk` (access: public, provenance on) | `publishConfig` in `package.json`                        |
-| Release           | semantic-release on Conventional Commits                                | `.releaserc.json`, `.github/workflows/release.yml`       |
-| Supply-chain      | npm provenance + CycloneDX SBOM + SHA-256 checksums on every Release    | `.github/workflows/release.yml`                          |
+| Layer             | Technology                                                     | Pinned in                                                          |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Language          | TypeScript (strict)                                            | `tsconfig.json`                                                    |
+| Runtime           | Evergreen browsers + Node 20+ for tests / build                | `package.json` engines, `.github/workflows/ci.yml`                 |
+| Build (3 targets) | tsc → ESM + CJS + types                                        | `tsconfig.{esm,cjs,types}.json`                                    |
+| Test              | Vitest 3.x + happy-dom 20.x                                    | `vitest.config.ts`                                                 |
+| E2E               | Playwright chromium                                            | `playwright.config.ts`, `e2e/`                                     |
+| Bench             | Vitest bench + regression check                                | `scripts/check-bench-regression.mjs`                               |
+| Bundle budget     | size-limit                                                     | `.size-limit.json` (per-package)                                   |
+| Lint              | ESLint 10 flat + typescript-eslint (type-checked src)          | `eslint.config.mjs`                                                |
+| Format            | Prettier + Husky + lint-staged                                 | `.prettierrc.json`, `.husky/pre-commit`                            |
+| Publish           | Public npm registry as `@browsonic/<package>` (access: public) | `publishConfig` in each `package.json`                             |
+| Release           | semantic-release on Conventional Commits                       | `.releaserc.json` (per workspace), `.github/workflows/release.yml` |
+| Supply-chain      | npm provenance + CycloneDX SBOM on every Release               | `.github/workflows/release.yml`                                    |
 
 ## Non-negotiables
 
@@ -92,9 +145,10 @@ Break any of these and the PR does not merge.
 
 1. **SDK errors never crash the host application.** Every public API
    path is wrapped; internal failures emit a diagnostic and move on.
-   The [circuit breaker](src/sentinel/) pauses collection after
-   repeated internal failures. This is the single most load-bearing
-   promise in the README. Regressions are critical severity.
+   The [circuit breaker](./packages/sdk/src/sentinel/) pauses
+   collection after repeated internal failures. This is the single
+   most load-bearing promise in the README. Regressions are critical
+   severity.
 2. **`npm run lint` = 0 errors, 0 warnings.** `no-non-null-assertion`,
    `no-explicit-any`, `no-unused-vars`, `no-floating-promises`
    (warn→error in src) are all **error** level. Non-null `!` was a
@@ -103,19 +157,24 @@ Break any of these and the PR does not merge.
    configs — must agree. Broken types in `dist/types/*.d.ts` break
    every downstream consumer silently (their editors lie).
 4. **Bundle size budget holds.** `npm run size` must stay within the
-   table in `.size-limit.json`. A 200-byte regression is fine; a
+   per-package `.size-limit.json`. A 200-byte regression is fine; a
    2-KB regression needs a paragraph in the PR explaining why.
-   Current ceilings (gzip): main 22 KB, core 15 KB, widget 6 KB,
-   CJS 26 KB, raw 60 KB.
+   Current SDK ceilings (gzip): main 22 KB, core 15 KB, widget 6 KB,
+   CJS 26 KB. Always cite the real numbers from
+   [`packages/sdk/BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md).
 5. **Test count does not silently shrink.** A PR that drops the test
    count without naming which tests were removed and why is a smell.
-   See `BENCHMARKS.md` for the current floor.
+   See [`packages/sdk/BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md)
+   for the SDK floor; per-adapter tests are tracked in their own
+   AGENTS.md files.
 6. **Privacy defaults are masked defaults.** Passwords, tokens, API
    keys, input values are redacted by the collector layer; changing
-   that default is a policy call, not a refactor. See `PRIVACY.md`.
+   that default is a policy call, not a refactor. See
+   [`packages/sdk/PRIVACY.md`](./packages/sdk/PRIVACY.md).
 7. **No `require()` or Node-only imports in src.** Browser runtime.
    If you need fs/path/node-fetch, you're probably in `scripts/` or
-   `bench/`, not `src/`.
+   `bench/`, not `src/`. The two exceptions are `@browsonic/cli` and
+   `@browsonic/build-tools`, which are build-time only.
 8. **Every public symbol carries a TSDoc comment.** Consumers read
    the generated types; unannotated exports leak our internal
    vocabulary into their IDE autocomplete.
@@ -126,11 +185,11 @@ Break any of these and the PR does not merge.
 
 ```bash
 npm ci                              # clean install from lockfile
-npm run lint                        # eslint flat, 0 errors/warnings expected
+npm run lint                        # eslint flat, 0 errors/warnings expected (across all workspaces)
 npm run lint:fix                    # auto-fix where safe
-npm run format                      # prettier write
-npm run typecheck                   # tsc --noEmit on base config
-npm run test                        # vitest watch
+npm run format                      # prettier write across packages + docs
+npm run typecheck                   # tsc --noEmit per workspace
+npm run test                        # vitest watch (per workspace)
 npm run test:run                    # vitest one-shot (CI equivalent)
 npm run test:coverage               # + coverage gate (v8)
 ```
@@ -141,67 +200,89 @@ npm run test:coverage               # + coverage gate (v8)
 npx lint-staged                     # what husky runs; mirror exactly
 ```
 
-### Build (four artefacts)
+### Build (three artefacts per package)
 
 ```bash
-npm run build                       # esm + cjs + types + umd in order
+npm run build                       # esm + cjs + types per workspace, in topological order
+```
+
+Inside `packages/sdk`:
+
+```bash
 npm run build:esm                   # tsc -p tsconfig.esm.json
 npm run build:cjs                   # tsc -p tsconfig.cjs.json
 npm run build:types                 # tsc -p tsconfig.types.json
-npm run build:umd                   # scripts/build-umd.mjs (esbuild)
 ```
 
 ### Size + perf gates
 
 ```bash
-npm run size                        # size-limit check against .size-limit.json
-npm run size:why                    # explain the bundle — where bytes went
-npm run bench                       # vitest bench → bench-results.json
+npm run size                        # size-limit check against per-package .size-limit.json
+npm run size:why                    # explain the bundle — where bytes went (sdk only)
+npm run bench                       # vitest bench → bench-results.json (sdk only)
 npm run bench:check                 # regression gate vs bench-baseline.json (10% tolerance)
 ```
 
-### E2E (requires chromium)
+### E2E (requires chromium, sdk only)
 
 ```bash
-npm run build:e2e                   # build IIFE bundle that e2e/ loads
-npm run test:e2e                    # playwright test
-npm run test:e2e:ui                 # playwright with UI for local debug
+npm run build:e2e --workspace=packages/sdk    # build IIFE bundle that e2e/ loads
+npm run test:e2e --workspace=packages/sdk     # playwright test
+npm run test:e2e:ui --workspace=packages/sdk  # playwright with UI for local debug
 ```
 
 ### Everything (release dress rehearsal)
 
 ```bash
-npm run perf:all                    # build + bench + size + e2e
+npm run perf:all --workspace=packages/sdk     # build + bench + size + e2e (sdk)
 ```
 
 ## Project layout
 
 ```
-browsonic-sdk/                ← repo root (workspaces)
-├── package.json              # workspaces declaration + monorepo aggregator scripts
+browsonic-sdk/                ← repo root (npm workspaces)
+├── package.json              # workspaces declaration + monorepo aggregator scripts + transitive overrides
 ├── package-lock.json         # unified lockfile
 ├── .npmrc                    # legacy-peer-deps=true (root-level)
-├── .github/workflows/        # CI + release + security + e2e (workspace-aware)
+├── .github/
+│   ├── workflows/            # ci.yml, release.yml, e2e.yml, security.yml — workspace-aware
+│   └── pull_request_template.md
 ├── .husky/                   # pre-commit (lint-staged at root)
-├── docs/sprint-tracking/     # SPRINT_PLAN.md + CROSS_REPO_IMPACTS.md
+├── docs/
+│   └── design/
+│       └── SOURCEMAP_PIPELINE.md     # source-map upload + symbolication design (v0.1 shipped)
 ├── AGENTS.md                 # this file — monorepo discipline + cross-package rules
-├── README.md, ROADMAP.md, LICENSE, NOTICE, SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md
+├── README.md, ROADMAP.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, SECURITY.md
+├── LICENSE (Apache-2.0), NOTICE
 └── packages/
     ├── sdk/                                  → @browsonic/sdk (core)
     │   ├── src/                              # see SDK package layout below
     │   ├── bench/, e2e/, scripts/, dist/, coverage/
     │   ├── package.json, tsconfig.*.json, eslint.config.mjs, vitest.config.ts
     │   ├── playwright.config.ts, .size-limit.json, .releaserc.json
-    │   ├── BENCHMARKS.md, CHANGELOG.md, INTEGRATION.md, PRIVACY.md
+    │   ├── README.md, BENCHMARKS.md, CHANGELOG.md, INTEGRATION.md, PRIVACY.md
     │   └── (no AGENTS.md yet; this root file is canonical for sdk discipline)
-    └── react/                                → @browsonic/react (React adapter)
-        ├── src/                              # error-boundary.tsx, hooks.ts, hoc.tsx, ...
-        ├── docs/ADAPTER_TEMPLATE.md          # checklist for the next framework adapter
-        ├── examples/react-vite/              # demo app (file:../.. consumes parent adapter)
-        ├── package.json, tsconfig.*.json, eslint.config.mjs, vitest.config.ts
-        ├── .releaserc.json, .npmrc (legacy-peer-deps)
-        └── AGENTS.md                         # React-specific discipline + pitfalls
+    ├── react/                                → @browsonic/react
+    │   ├── src/, examples/react-vite/
+    │   ├── docs/ADAPTER_TEMPLATE.md          # checklist for the next framework adapter
+    │   └── README.md, AGENTS.md, ROADMAP.md, CHANGELOG.md
+    ├── vue/                                  → @browsonic/vue
+    ├── svelte/                               → @browsonic/svelte
+    ├── angular/                              → @browsonic/angular
+    ├── astro/                                → @browsonic/astro
+    ├── nextjs/                               → @browsonic/nextjs
+    ├── remix/                                → @browsonic/remix
+    ├── build-tools/                          → @browsonic/build-tools (Vite / Webpack / Rollup / esbuild plugins)
+    │   └── README.md
+    └── cli/                                  → @browsonic/cli (browsonic upload-sourcemaps)
+        └── README.md
 ```
+
+Every adapter under `packages/<framework>/` ships
+`README.md`, `AGENTS.md`, `ROADMAP.md`, `CHANGELOG.md` (after first
+release), `package.json`, `tsconfig.*.json`, `eslint.config.mjs`,
+`vitest.config.ts`, and `.releaserc.json`. The shape mirrors
+`packages/react/`.
 
 ### `packages/sdk/src/` layout
 
@@ -212,7 +293,7 @@ src/
 ├── widget-entry.ts          # widget plugin entry (opt-in)
 ├── plugin.ts                # plugin contract; widgets/collectors implement this
 ├── sentinel.ts              # legacy class + facade — DO NOT extend
-├── sentinel/                # post-split module set (plugin manager, queue, lifecycle)
+├── sentinel/                # post-split module set (plugin manager, queue, lifecycle, scope)
 ├── collectors/              # 8 pluggable collectors: error, xhr, network, console,
 │                            #   pageview, callback, visitor, navigation
 │                            # + helpers: dependencies, history-instrumentation, wrap, index
@@ -221,7 +302,7 @@ src/
 │                            #   sanitize, safe-regex, styles)
 ├── config/                  # config validation + defaults
 ├── context/                 # session/user/tenant propagation
-├── transport/               # outbound HTTP to browsonic-service
+├── transport/               # outbound HTTP to the operator-supplied ingest endpoint
 ├── queue/                   # offline-capable event queue
 ├── telemetry/               # internal SDK metrics (self-monitoring)
 ├── diagnostics/             # failure surface for host app integration
@@ -259,42 +340,70 @@ access to it.
   happy-dom 14 → 20 closed a critical RCE advisory; needed a
   matching `@vitest/coverage-v8` line update because Vitest pins
   which happy-dom majors it supports via the adapter.
-- **`npm audit --audit-level=high --production=false`** is the gate
-  in CI. HIGH+CRITICAL break the build; moderate/low go unblocked
-  but show up in reports.
+- **`npm audit --audit-level=critical --production=false`** is the
+  gate in CI (`.github/workflows/ci.yml`). The bundled npm CLI inside
+  `semantic-release@24` ships transitive moderate/high advisories we
+  can't fix without forking it; rooted at `critical` so the gate
+  catches what actually matters for shipped code. Dependabot covers
+  the moderate/high band asynchronously.
+- **`semantic-release` is pinned to v24** across all workspaces.
+  v25 exits non-zero on no-release, which breaks per-workspace
+  iteration in the release pipeline — do not bump.
 - No new runtime deps without a PR-body justification. This SDK
   ships in customer apps; every byte counts.
 
 ## Build-target discipline
 
-Four artefact families are shipped:
+Three artefact families are shipped per package:
 
-| Target                            | Consumer                                | Budget                        | Pitfall                                                                                                              |
-| --------------------------------- | --------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| ESM (`dist/esm/`)                 | bundler consumers (Webpack/Vite/Rollup) | main 22 KB, core 15 KB (gzip) | Tree-shaking depends on `sideEffects: false` — don't add top-level code with effects                                 |
-| CJS (`dist/cjs/`)                 | Node / legacy bundlers                  | main 26 KB (gzip)             | Dual-package hazard: make sure exports map keeps ESM/CJS separate                                                    |
-| Types (`dist/types/`)             | TypeScript consumers                    | no budget                     | Broken `.d.ts` is a silent editor-only regression; `npm run typecheck` does NOT catch downstream `.d.ts` drift       |
-| UMD (`dist/umd/browsonic.min.js`) | script-tag / CDN / legacy               | ~22 KB gzip target            | esbuild config lives in `scripts/build-umd.mjs` — don't import from `src/index.ts` directly; import the compiled ESM |
+| Target                | Consumer                                | Budget                        | Pitfall                                                                                                        |
+| --------------------- | --------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| ESM (`dist/esm/`)     | bundler consumers (Webpack/Vite/Rollup) | main 22 KB, core 15 KB (gzip) | Tree-shaking depends on `sideEffects: false` — don't add top-level code with effects                           |
+| CJS (`dist/cjs/`)     | Node / legacy bundlers                  | main 26 KB (gzip)             | Dual-package hazard: make sure exports map keeps ESM/CJS separate                                              |
+| Types (`dist/types/`) | TypeScript consumers                    | no budget                     | Broken `.d.ts` is a silent editor-only regression; `npm run typecheck` does NOT catch downstream `.d.ts` drift |
+
+The SDK is npm-only — there is no UMD bundle, no CDN distribution,
+no script-tag entry point. Customers install via `npm install
+@browsonic/sdk` and let their bundler emit the right format.
 
 ### `sideEffects: false`
 
-`package.json` declares `sideEffects: false`. Adding a top-level
-`console.log`, `window.addEventListener` at import time, or a
-self-registering singleton will break tree-shaking for **every
+`packages/sdk/package.json` declares `sideEffects: false`. Adding a
+top-level `console.log`, `window.addEventListener` at import time, or
+a self-registering singleton will break tree-shaking for **every
 bundler consumer**. If you need setup, the consumer calls
 `Browsonic.init()`. There is no init-on-import path.
 
 ### Package `exports` map
 
-Public entry points are `.`, `./core`, `./widget`, `./umd`,
-`./umd/unminified`. Add a subpath only when a consumer actually
-needs it; each new entry is a forever-API.
+Public SDK entry points are `.`, `./core`, `./widget`. Adapter
+packages each expose their own subpaths (e.g. `./integration` for
+Astro, `./instrumentation` for Next.js). Add a subpath only when a
+consumer actually needs it; each new entry is a forever-API.
+
+## Source-map pipeline
+
+Source-map upload + ingest-side symbolication shipped end-to-end on
+2026-05-06 (v0.1). Architecture, decisions, and the v0.2 backlog are
+captured in
+[`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md).
+Two surfaces deliver the build-time half:
+
+- [`packages/cli`](./packages/cli) (`@browsonic/cli`) — `browsonic
+upload-sourcemaps` for any build pipeline; reads `BROWSONIC_*` env
+  vars and Node 20 built-ins only.
+- [`packages/build-tools`](./packages/build-tools) (`@browsonic/build-tools`)
+  — Vite / Webpack / Rollup / esbuild plugins, one subpath each.
+
+The runtime SDK does **not** participate in source-map upload. SDK-side
+`debugId` injection is queued for 1.x.
 
 ## Testing discipline
 
-- Coverage gates: statements ≥80%, branches ≥70%, functions ≥80%.
-  Current numbers are well above these; don't regress toward them.
-  Latest measurements are in `BENCHMARKS.md`.
+- Coverage gates: statements ≥80%, branches ≥70%, functions ≥80%,
+  lines ≥80%. Current numbers in
+  [`packages/sdk/BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md) — well
+  above the floor. Don't regress toward the floor.
 - **Test runtime is happy-dom 20.x**, not jsdom. Some jsdom-isms
   (IntersectionObserver polyfills, specific MutationObserver
   timing) behave differently — match what's in existing tests.
@@ -304,38 +413,41 @@ needs it; each new entry is a forever-API.
   on >10% regression against `bench-baseline.json`. If you have a
   legitimate perf win, update the baseline **in the same PR**, with
   a diff comment explaining what improved.
+- Adapter packages set their own per-framework testing-library
+  conventions documented in their AGENTS.md.
 
-## CI gates (`.github/workflows/ci.yml`)
+## CI gates ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml))
 
-| Job         | Blocking?         | Notes                            |
-| ----------- | ----------------- | -------------------------------- |
-| `lint`      | yes               | ESLint flat, 0/0 + npm audit     |
-| `typecheck` | yes               | matrix node 20, 22               |
-| `unit`      | yes               | Vitest one-shot + coverage gate  |
-| `bench`     | yes on regression | `bench:check` with 10% tolerance |
-| `size`      | yes               | size-limit against JSON budget   |
+| Job         | Blocking? | Notes                                                               |
+| ----------- | --------- | ------------------------------------------------------------------- |
+| `lint`      | yes       | ESLint flat, 0/0 + npm audit (critical)                             |
+| `typecheck` | yes       | Single node 20 run; engine-agnostic                                 |
+| `unit`      | yes       | Vitest one-shot + coverage gate (matrix node 20, 22)                |
+| `bench`     | advisory  | `bench:check` — runner noise makes hard gating false-positive-prone |
+| `size`      | yes       | size-limit against per-package `.size-limit.json`                   |
 
-**E2E** lives in `.github/workflows/e2e.yml` and runs on `main` push +
-nightly cron + manual dispatch — **not on every PR**. It's a heavy
-~5-minute Playwright bring-up; PR feedback stays fast on the gates
-above, e2e is the safety net before release-cut.
+**E2E** lives in [`.github/workflows/e2e.yml`](./.github/workflows/e2e.yml)
+and runs on `main` push + nightly cron + manual dispatch — **not on
+every PR**. It's a heavy ~5-minute Playwright bring-up; PR feedback
+stays fast on the gates above, e2e is the safety net before
+release-cut.
 
-**Release** (`.github/workflows/release.yml`) runs on every push to
-`main`, `next`, or `release/*.x`:
+**Release** ([`.github/workflows/release.yml`](./.github/workflows/release.yml))
+runs on every push to `main`, `next`, or `release/*.x`:
 
 - Driven by [semantic-release](https://semantic-release.gitbook.io)
-  reading `.releaserc.json`. Version is computed from Conventional
-  Commits since the last tag — no manual `package.json` bump, no
-  manual GitHub Release. `feat:` → minor, `fix:`/`perf:`/`refactor:`/
-  `deps:` → patch, `BREAKING CHANGE:` footer → major. `docs:`,
-  `chore:`, `ci:`, `test:` → no release.
+  reading per-workspace `.releaserc.json`. Version is computed from
+  Conventional Commits since the last tag — no manual `package.json`
+  bump, no manual GitHub Release. `feat:` → minor,
+  `fix:`/`perf:`/`refactor:`/`deps:` → patch, `BREAKING CHANGE:`
+  footer → major. `docs:`, `chore:`, `ci:`, `test:` → no release.
 - Branch policy: `main` → `latest`; `next` → `next` prerelease;
   `release/X.x` → LTS patch line.
-- Attaches CycloneDX SBOM + SHA-256 checksums + UMD bundle as
-  Release assets, and publishes with `npm --provenance` so the
-  registry has cryptographic proof of which workflow built each
-  version. **Don't remove the SBOM, checksum, or provenance steps.**
-  They are the chain of evidence for everyone who imports the SDK.
+- Attaches CycloneDX SBOM as a Release asset, and publishes with
+  `npm --provenance` so the registry has cryptographic proof of
+  which workflow built each version. **Don't remove the SBOM or
+  provenance steps.** They are the chain of evidence for everyone
+  who imports the SDK.
 
 ## Versioning & releases
 
@@ -348,31 +460,36 @@ above, e2e is the safety net before release-cut.
   `latest`. LTS lines on `release/X.x` patch the previous major.
 - Release flow (fully automated):
   1. Land Conventional Commits on the target branch.
-  2. Update `BENCHMARKS.md` if measurements moved.
-  3. `release.yml` runs semantic-release → version bump, tag,
-     CHANGELOG, GitHub Release with SBOM + checksums + UMD assets,
-     `npm publish --provenance` to the public npm registry.
-- **Do not** hand-edit `package.json` `version`, hand-create tags,
+  2. Update [`packages/sdk/BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md) if measurements moved.
+  3. `release.yml` runs semantic-release per workspace → version bump,
+     tag, CHANGELOG, GitHub Release with SBOM, `npm publish
+--provenance` to the public npm registry.
+- **Do not** hand-edit a `package.json` `version`, hand-create tags,
   or hand-create Releases — semantic-release owns that surface.
 
 ## Commits & PRs
 
 - Convention: `<type>(<scope>): <short>`. Types: `feat`, `fix`,
-  `sec`, `chore`, `ci`, `docs`, `refactor`, `test`, `perf`.
+  `sec`, `chore`, `ci`, `docs`, `refactor`, `test`, `perf`. Scope is
+  the package name (`feat(react): …`, `fix(sdk): …`).
 - Dependabot commits pass through untouched; don't rewrite them.
-- PR bodies for non-trivial changes mention:
-  - test count delta (expected: 0 unless you're adding/removing)
-  - bundle size delta (from `npm run size`)
-  - coverage delta (from `npm run test:coverage`)
-  - bench delta (only if it moved)
+- PR bodies follow [`.github/pull_request_template.md`](./.github/pull_request_template.md):
+  test count delta, bundle size delta, coverage delta, bench delta
+  (when relevant), public-API impact, ingest-contract impact.
+- Full contributor flow lives in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
 
 ## Cross-repo contracts
 
 - **Ingest backend** — the SDK posts batches to `POST /v1/events` on
   the operator-supplied `apiEndpoint`. The wire format is documented
-  in `INTEGRATION.md` and lives in `src/types/`. Any change to the
-  emitted shape is a breaking change to every backend that consumes
-  it; bump the SDK major and announce in the GitHub Release notes.
+  in [`packages/sdk/INTEGRATION.md`](./packages/sdk/INTEGRATION.md)
+  and lives in `packages/sdk/src/types/`. Any change to the emitted
+  shape is a breaking change to every backend that consumes it; bump
+  the SDK major and announce in the GitHub Release notes.
+- **Source-map ingest** — `@browsonic/cli` and `@browsonic/build-tools`
+  speak `POST /v1/sourcemaps` (multipart) and the dashboard speaks
+  `POST /v1/symbolicate`. Contract details in
+  [`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md).
 - **Customer apps (third-party consumers)** — the biggest surface,
   invisible to this repo. A breaking change in the public API is a
   major bump, full stop.
@@ -409,29 +526,40 @@ the user wrote). Agents should keep that scope in mind:
    controls emit. Adding a new public export means the base
    tsconfig includes it, the types config emits it, and the
    `exports` map references it — three places, not one.
-5. **"UMD bundle silently broke."** `scripts/build-umd.mjs` uses
-   esbuild. It does NOT use the TS compiler; it consumes
-   `dist/esm/*.js`. Running `build:umd` without a fresh
-   `build:esm` first gives you a stale UMD.
-6. **"npm publish failed with 409 already_published."** The
+5. **"npm publish failed with 409 already_published."** The
    publish workflow has an idempotent check; re-running the
    Release is safe. If you deleted a version from the registry
    manually (don't), you've created a diverged state that only
    a fresh patch version fixes.
-7. **"Coverage dropped for code I didn't touch."** Happy-dom upgrade
+6. **"Coverage dropped for code I didn't touch."** Happy-dom upgrade
    sometimes surfaces previously-shadowed branches. Audit with
    `npm run test:coverage -- --reporter=verbose`.
+7. **"Adapter typecheck fails with cannot resolve `@browsonic/sdk`."**
+   The build script's topological order matters. Run the root
+   `npm run build` (which builds sdk first) or
+   `npm run _build:prereq` before iterating on an adapter in
+   isolation.
 
 ## What agents specifically should do
 
-- Before editing, skim this file + `BENCHMARKS.md`. Those two carry
-  the current policy state.
+- Before editing any package, skim this file +
+  [`packages/sdk/BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md) +
+  the package's own `AGENTS.md`. Those carry the current policy state.
 - When changing `src/`, confirm the affected bundle budget in
-  `.size-limit.json` after building. Cite the result in the PR.
+  the package's `.size-limit.json` after building. Cite the result
+  in the PR.
 - When touching a collector, check its test file. Collectors have
   companion tests named after them (`error.test.ts`,
   `xhr.test.ts`, etc.) — a PR that changes a collector without
   updating the test is incomplete.
+- When changing privacy defaults, update
+  [`packages/sdk/PRIVACY.md`](./packages/sdk/PRIVACY.md) in the
+  same PR.
+- When changing the wire format, update
+  [`packages/sdk/INTEGRATION.md`](./packages/sdk/INTEGRATION.md)
+  and bump the SDK major.
+- When changing source-map upload behaviour, update
+  [`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md).
 - Prefer narrowing `types/` to adding `any`. This library's public
   types are its contract surface.
 - Do not touch `dist/`, `coverage/`, `e2e-results/`,

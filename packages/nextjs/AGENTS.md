@@ -4,9 +4,9 @@
 > Next.js adapter. Pair with monorepo root `AGENTS.md` and the
 > shared `packages/react/docs/ADAPTER_TEMPLATE.md` checklist.
 
-## Public API surface (0.2)
+## Public API surface (0.3 partial)
 
-**0.1 bootstrap:**
+**0.1 bootstrap (shipped):**
 
 - `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` — drop-ins for
   `app/error.tsx` and `app/global-error.tsx`. Capture on mount via
@@ -15,11 +15,11 @@
   handlers. Forwards thrown errors, tags `nextjsRouteHandler: 'true'`,
   re-throws.
 - `withBrowsonicConfig(nextConfig, options?)` — Next.js config
-  wrapper. Passthrough until 0.3 sourcemap pipeline lands.
+  wrapper. Passthrough until build-time sourcemap upload lands.
 - All `@browsonic/react` exports re-exported (`BrowsonicErrorBoundary`,
   `useBrowsonic`, `useUser`, `useCaptureError`, `withBrowsonic` HOC).
 
-**0.2 route context + Pages Router:**
+**0.2 route context + Pages Router (shipped 2026-05-04):**
 
 - `BrowsonicErrorPage` / `BrowsonicGlobalErrorPage` accept optional
   `pathname?: string` + `params?: Record<string, string | string[]>`.
@@ -32,12 +32,18 @@
   helper inside `getInitialProps`. Captures `ctx.err`, tags
   `nextjs.runtime: 'pages-error'`.
 
-**0.3 (deferred):**
+**0.3 (partial):**
 
-- Build-time sourcemap upload through `withBrowsonicConfig` — waiting
-  on the Sprint 3 / Sprint 4 source-map pipeline.
-- `instrumentation.ts` auto-registration — paired with sourcemap
-  pipeline.
+- Shipped 2026-05-05 — `@browsonic/nextjs/instrumentation` sub-entry
+  exporting `browsonicInstrumentation({...})` factory and
+  `BROWSONIC_INSTRUMENTATION_VERSION` constant. Returns the
+  `{ register, onRequestError }` shape Next.js's `instrumentation.ts`
+  expects. `register()` validates `apiEndpoint` + `appKey` and warns
+  on missing fields. `onRequestError` forwards to `console.error`
+  with structured `nextjs.*` context. Opt-in (consumer pastes a
+  5-line wire-up) — no auto-injection.
+- Open — Build-time sourcemap upload through `withBrowsonicConfig`,
+  pending the source-map pipeline backend polish.
 
 ## Naming convention — HOC vs config wrapper
 
@@ -88,15 +94,16 @@ root layout has crashed; we wrap the inner page in those tags.
 ## Test discipline
 
 - Vitest + happy-dom + @testing-library/react.
-- 17+ unit tests (error-page × 8, route-handler × 7, with-browsonic × 4).
+- Unit tests cover error-page, route-handler, with-browsonic,
+  pages-router, and the instrumentation sub-entry.
 - Tests do NOT instantiate Next.js or boot a Vercel runtime; they
   exercise our wrappers as plain TS / TSX.
 
-## Sprint discipline
+## Cross-package change discipline
 
-Sprint 7. Cross-package impacts (SDK or @browsonic/react API
-change) → single PR touching both. Cross-repo impacts → top-level
-`docs/sprint-tracking/CROSS_REPO_IMPACTS.md`.
+Cross-package impacts (SDK or @browsonic/react API change) →
+single PR touching both. Cross-repo impacts → coordinate via the
+monorepo root `AGENTS.md`.
 
 ## Divergences from ADAPTER_TEMPLATE
 
@@ -106,12 +113,12 @@ change) → single PR touching both. Cross-repo impacts → top-level
   React, Astro on... mostly nothing — Astro is multi-framework).
 - **`withBrowsonicConfig` instead of `withBrowsonic`** for the
   config wrapper — collision avoidance.
+- **Server-runtime sub-entry** (`./instrumentation`) — the only
+  framework adapter that ships a non-default export path, because
+  Next.js's `instrumentation.ts` convention is server-only and
+  must not pull React / DOM code into the server bundle.
 
 ## Roadmap pointers
 
-- 0.2: `withBrowsonicConfig` gains build-time integration once
-  the deferred S3/S4 source-map pipeline lands.
-- 0.2: Pages Router `_error.tsx` / `_app.tsx` companion components
-  for consumers still on Pages Router (Next.js supports both
-  through 14/15).
-- 0.3: `instrumentation.ts` auto-registration helper.
+See `ROADMAP.md` for the open 0.3 item (build-time sourcemap upload
+through `withBrowsonicConfig`).
