@@ -112,7 +112,7 @@ jobs:
 
       # Pull the previous run's artifact (if any) as baseline.
       - name: Download previous bench baseline
-        uses: dawidd6/action-download-artifact@v20
+        uses: dawidd6/action-download-artifact@v21
         continue-on-error: true
         with:
           workflow: ci.yml
