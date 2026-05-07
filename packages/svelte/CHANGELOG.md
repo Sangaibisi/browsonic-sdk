@@ -1,3 +1,11 @@
+## [1.1.0](https://github.com/Sangaibisi/browsonic-sdk/compare/svelte@v1.0.0...svelte@v1.1.0) (2026-05-07)
+
+### Features
+
+- **remix:** re-trigger @browsonic/remix publish (silent npm fail recovery) ([d84cd03](https://github.com/Sangaibisi/browsonic-sdk/commit/d84cd03f67ebadd86ea67f932d4d4213267c1645))
+- **svelte:** re-trigger @browsonic/svelte publish (silent npm fail recovery) ([be44532](https://github.com/Sangaibisi/browsonic-sdk/commit/be44532455096c955cabb032eb28e1e4c148494e))
+- **vue:** re-trigger @browsonic/vue publish (silent npm fail recovery) ([fa4aac5](https://github.com/Sangaibisi/browsonic-sdk/commit/fa4aac5c95bc0a6cee5d6c602780609e16bc7a73))
+
 ## 1.0.0 (2026-05-07)
 
 ### ⚠ BREAKING CHANGES
