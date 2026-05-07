@@ -49,16 +49,27 @@ export function createDiagnosticsReporter(opts: ReporterOptions): DiagnosticsRep
     if (stopped) return;
     const snap = store.drain();
     // Skip entirely empty reports — if nothing moved in an interval we
-    // don't need to waste a request. Empty == all durations null,
-    // no internal errors, no drops.
+    // don't need to waste a request. Sprint 2: a report is also "not
+    // empty" when retry attempts were recorded, plugin health changed,
+    // or queue metrics moved. Adapter alone is a steady-state value
+    // (set once at adapter init) so it doesn't trigger sends on its own.
     const empty =
       snap.init_duration_ms.count === 0 &&
       snap.event_process_duration_ms.count === 0 &&
       snap.flush_latency_ms.count === 0 &&
       snap.internal_error_count === 0 &&
-      Object.keys(snap.dropped_events).length === 0;
+      Object.keys(snap.dropped_events).length === 0 &&
+      snap.retry_attempts.count === 0 &&
+      snap.plugins.length === 0 &&
+      snap.queue_metrics === null;
     if (empty) return;
 
+    // The wire schema for /v1/diagnostics is documented in
+    // browsonic-sdk/docs/design/EVENT_PAYLOAD_SCHEMA.md. The Sprint 2
+    // additions live alongside the existing `metrics` object (no shape
+    // breakage) plus three new top-level fields the dashboard's
+    // <PluginHealthPanel> / <RetryOutcomesCard> / <QueueHealthPanel>
+    // consume directly without having to climb the metrics tree.
     const body = {
       sdk: { name: sdkName, version: sdkVersion },
       session_id: getSessionId(),
@@ -66,6 +77,14 @@ export function createDiagnosticsReporter(opts: ReporterOptions): DiagnosticsRep
       environment: config.environment,
       timestamp: Date.now(),
       metrics: snap,
+      // Sprint 2 (gap B1) — top-level for the dashboard's plugin panel.
+      plugins: snap.plugins,
+      // Sprint 2 (gap B3) — adapter identity stamped once per session.
+      adapter: snap.adapter,
+      // Sprint 2 (gap B3) — queue depth + drop counters at snapshot time.
+      queue_metrics: snap.queue_metrics,
+      // Sprint 2 (gap B2) — retry-attempt percentiles for transport flushes.
+      retry_attempts: snap.retry_attempts,
     };
 
     try {

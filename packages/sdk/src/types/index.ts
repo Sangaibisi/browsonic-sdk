@@ -38,11 +38,18 @@ export type EventLevel = 'info' | 'warn' | 'error' | 'fatal';
 
 /**
  * Event types captured by the SDK
+ *
+ * `console_debug` (added 2.3 / Sprint 1, gap A3): produced by the console
+ * collector when the host calls `console.debug(...)`. Emitted at event
+ * level `'info'` because EventLevel does not carry `'debug'`; the
+ * accompanying telemetry entry preserves the original `'debug'` level
+ * so the dashboard's `EventLevelBadge` debug variant lights up.
  */
 export type EventType =
   | 'console_info'
   | 'console_warn'
   | 'console_error'
+  | 'console_debug'
   | 'unhandledrejection'
   | 'error'
   | 'fatal'
@@ -184,6 +191,117 @@ export interface BrowsonicEvent {
    * that are masking real signal behind noise.
    */
   _stormSuppressed?: number;
+  /**
+   * Web Vitals samples (LCP / FID / INP / CLS / TTFB / FCP) attached
+   * to the most-recent pageview event. Empty when the opt-in plugin
+   * `webVitalsPlugin()` is not loaded. See
+   * `browsonic-sdk/docs/design/EVENT_PAYLOAD_SCHEMA.md` (gap A2).
+   */
+  webVitals?: WebVitalMetric[];
+  /**
+   * HTTP capture detail (allowlisted headers, request/response sizes,
+   * `traceparent`, abort flag). Populated only on `network_*` event
+   * types when the network collector's detail mode is enabled. The
+   * SDK strictly enforces a header allowlist + PII redaction at the
+   * producer; see `utils/redaction.ts` (gap B5).
+   */
+  networkDetail?: NetworkDetail;
+}
+
+/**
+ * Web Vitals metric sample (Sprint 1 / gap A2). Mirrors the
+ * `web-vitals` library's `Metric` shape so the opt-in plugin can pass
+ * the value through with minimal copying.
+ */
+export type WebVitalName = 'LCP' | 'FID' | 'INP' | 'CLS' | 'TTFB' | 'FCP';
+export type WebVitalRating = 'good' | 'needs-improvement' | 'poor';
+
+export interface WebVitalMetric {
+  name: WebVitalName;
+  /** CLS is unit-less; everything else is milliseconds. */
+  value: number;
+  /** Delta from previous report (web-vitals lib semantics). */
+  delta: number;
+  /** Stable id from the web-vitals library, lets the backend dedupe. */
+  id: string;
+  /** Pre-computed by the web-vitals library against Google thresholds. */
+  rating: WebVitalRating;
+  /** Navigation timing API entry type when relevant. */
+  navigationType?: 'navigate' | 'reload' | 'back-forward' | 'back-forward-cache' | 'prerender';
+}
+
+/**
+ * Network capture detail (Sprint 3 / gap B5). Populated on `network_*`
+ * events. Header keys are filtered through the SDK's redaction
+ * allowlist before serialisation, so backends can persist the JSON
+ * without re-running the redaction pass.
+ */
+export interface NetworkDetail {
+  requestSize?: number;
+  responseSize?: number;
+  headers?: Record<string, string>;
+  traceparent?: string;
+  aborted?: boolean;
+}
+
+/**
+ * Per-plugin health snapshot reported on every batch (Sprint 2 / gap
+ * B1). Backend-side `pluginBreakdown` aggregation rolls these up into
+ * fleet-level stats for the dashboard's `<PluginHealthPanel>`.
+ */
+export interface PluginHealthSummary {
+  /** Stable plugin id, e.g. `'sdk:error'`, `'sdk:console'`. */
+  id: string;
+  /** `plugin.health?()` returned ok (or no health() defined). */
+  ok: boolean;
+  /** Optional last-error reason when `ok` is false. */
+  detail?: string;
+  /** Monotonic counter since SDK init. */
+  errorCount: number;
+  /** Wall-clock millis when `activate()` first succeeded. */
+  activatedAtMs: number;
+}
+
+/**
+ * Drop reasons on the queue. `permanent_fail` is new in 2.3 (Sprint 2 /
+ * gap B2) — emitted when transport retry budget is exhausted.
+ */
+export type DroppedReason =
+  | 'sampled_out'
+  | 'storm'
+  | 'oversized'
+  | 'quota'
+  | 'ignored'
+  | 'state'
+  | 'permanent_fail';
+
+/**
+ * Queue health snapshot reported on every batch (Sprint 2 / gap B3).
+ * Distinct from the diagnostics endpoint: this rides along the event
+ * batch so the persist path can stamp every event with a coarse
+ * "queue was healthy when this fired" marker.
+ */
+export interface QueueMetricsSnapshot {
+  /** Queue length at batch creation time. */
+  depth: number;
+  /** Wall-clock millis of the previous successful flush. */
+  lastFlushTimeMs: number;
+  /** Drops since the previous batch, grouped by reason. */
+  drops: { reason: DroppedReason; count: number }[];
+  /** Retry attempts observed in the last reporting window. */
+  retryAttempts: { p50: number; p95: number; max: number };
+}
+
+/**
+ * Framework adapter identity (Sprint 2 / gap B3). Distinct from the
+ * `EventBatch.sdk` field which always describes the core SDK package.
+ * Absent when the SDK is used directly without a framework adapter.
+ */
+export interface AdapterIdentity {
+  /** npm package name, e.g. `'@browsonic/react'`. */
+  name: string;
+  /** Adapter package version. */
+  version: string;
 }
 
 /**
@@ -313,6 +431,14 @@ export interface EventBatch {
   clientVersion?: string | null;
   /** Session identifier */
   sessionId: string;
+  /**
+   * Stable visitor identifier (Sprint 1 / gap A1). Resolved by
+   * `getOrCreateVisitorId(config)` against the configured strategy
+   * (cookie / localStorage / session / none). `null` when consent or
+   * GPC forces the unlinkable `'none'` strategy. Promoted from the
+   * pageview-only `vid` field so cross-session journeys can link.
+   */
+  visitorId?: string | null;
   /** Session-level context (collected at batch send time) */
   sessionContext: SessionContext;
   /** User context (if set) */
@@ -334,6 +460,24 @@ export interface EventBatch {
     name: string;
     version: string;
   };
+  /**
+   * Framework adapter that bootstrapped the SDK (Sprint 2 / gap B3).
+   * Distinct from `sdk` — this names the wrapper package
+   * (`@browsonic/react` etc.). Absent when the SDK is used directly.
+   */
+  adapter?: AdapterIdentity;
+  /**
+   * Per-plugin health snapshot at batch creation time (Sprint 2 / gap
+   * B1). Capped at 50 entries by the producer.
+   */
+  plugins?: PluginHealthSummary[];
+  /**
+   * Queue depth + drop counters + retry stats at batch creation time
+   * (Sprint 2 / gap B3). Lets the persist path stamp every event with
+   * a coarse "fleet was healthy" marker so the dashboard's
+   * `<QueueHealthPanel>` can render without an extra round-trip.
+   */
+  queueMetrics?: QueueMetricsSnapshot;
 }
 
 /**

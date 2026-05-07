@@ -21,7 +21,23 @@
  * @license Apache-2.0
  */
 
-export type DroppedReason = 'sampled_out' | 'storm' | 'oversized' | 'quota' | 'ignored' | 'state';
+import type { AdapterIdentity, PluginHealthSummary, QueueMetricsSnapshot } from '../types';
+import { createRetryTracker, type RetryTracker } from './retry-tracker';
+
+/**
+ * Sprint 2 (gap B2) added `'permanent_fail'` to mark events dropped
+ * after the queue exhausted its retry budget. The same name is part
+ * of the public `DroppedReason` union in `../types` — keep them in
+ * sync; this file is the source of truth for the diagnostics store.
+ */
+export type DroppedReason =
+  | 'sampled_out'
+  | 'storm'
+  | 'oversized'
+  | 'quota'
+  | 'ignored'
+  | 'state'
+  | 'permanent_fail';
 
 export interface DiagnosticsSnapshot {
   init_duration_ms: { p50: number | null; p95: number | null; count: number };
@@ -29,6 +45,14 @@ export interface DiagnosticsSnapshot {
   flush_latency_ms: { p50: number | null; p95: number | null; count: number };
   internal_error_count: number;
   dropped_events: Partial<Record<DroppedReason, number>>;
+  /** Sprint 2 (gap B2): retry-attempt percentiles for transport flushes. */
+  retry_attempts: { p50: number; p95: number; max: number; count: number };
+  /** Sprint 2 (gap B1): per-plugin health snapshot (top 50 entries). */
+  plugins: PluginHealthSummary[];
+  /** Sprint 2 (gap B3): queue depth + drop counters at snapshot time. */
+  queue_metrics: QueueMetricsSnapshot | null;
+  /** Sprint 2 (gap B3): adapter identity (or null when SDK is vanilla). */
+  adapter: AdapterIdentity | null;
 }
 
 interface RingBuffer {
@@ -62,6 +86,14 @@ export interface DiagnosticsStore {
   recordFlush(latencyMs: number): void;
   incInternalError(): void;
   incDropped(reason: DroppedReason): void;
+  /** Sprint 2 (gap B2): record a final retry-attempt count from the queue. */
+  recordRetryAttempt(attempts: number): void;
+  /** Sprint 2 (gap B1): replace the per-plugin health snapshot. Capped at 50. */
+  setPluginHealth(plugins: PluginHealthSummary[]): void;
+  /** Sprint 2 (gap B3): replace the queue metrics snapshot. */
+  setQueueMetrics(metrics: QueueMetricsSnapshot | null): void;
+  /** Sprint 2 (gap B3): set the adapter identity once (idempotent). */
+  setAdapter(adapter: AdapterIdentity | null): void;
   snapshot(): DiagnosticsSnapshot;
   /** Reset after a successful report. Keeps cumulative drop counters since
    *  they are small and the backend aggregates over time anyway. */
@@ -80,6 +112,10 @@ export function createDiagnosticsStore(cap: number = 200): DiagnosticsStore {
   const flushRing = makeRing(cap);
   let internalErrors = 0;
   const dropped: Partial<Record<DroppedReason, number>> = {};
+  const retry: RetryTracker = createRetryTracker();
+  let plugins: PluginHealthSummary[] = [];
+  let queueMetrics: QueueMetricsSnapshot | null = null;
+  let adapter: AdapterIdentity | null = null;
 
   return {
     recordInit(durationMs) {
@@ -97,6 +133,19 @@ export function createDiagnosticsStore(cap: number = 200): DiagnosticsStore {
     incDropped(reason) {
       dropped[reason] = (dropped[reason] ?? 0) + 1;
     },
+    recordRetryAttempt(attempts) {
+      retry.record(attempts);
+    },
+    setPluginHealth(next) {
+      // Cap at 50 to bound the diagnostics payload.
+      plugins = next.slice(0, 50);
+    },
+    setQueueMetrics(metrics) {
+      queueMetrics = metrics;
+    },
+    setAdapter(next) {
+      adapter = next ? { name: next.name, version: next.version } : null;
+    },
     snapshot() {
       return {
         init_duration_ms: snapshot(initRing),
@@ -104,13 +153,28 @@ export function createDiagnosticsStore(cap: number = 200): DiagnosticsStore {
         flush_latency_ms: snapshot(flushRing),
         internal_error_count: internalErrors,
         dropped_events: { ...dropped },
+        retry_attempts: retry.snapshot(),
+        plugins: plugins.slice(),
+        queue_metrics: queueMetrics ? { ...queueMetrics } : null,
+        adapter: adapter ? { ...adapter } : null,
       };
     },
     drain() {
-      const snap = this.snapshot();
+      const snap = {
+        init_duration_ms: snapshot(initRing),
+        event_process_duration_ms: snapshot(eventRing),
+        flush_latency_ms: snapshot(flushRing),
+        internal_error_count: internalErrors,
+        dropped_events: { ...dropped },
+        retry_attempts: retry.drain(),
+        plugins: plugins.slice(),
+        queue_metrics: queueMetrics ? { ...queueMetrics } : null,
+        adapter: adapter ? { ...adapter } : null,
+      };
       // Clear rings after reporting so each interval is independent.
-      // Keep cumulative internal_error_count + dropped_events — the
-      // backend will treat these as monotonic and do the delta itself.
+      // Keep cumulative internal_error_count + dropped_events + plugins
+      // + adapter + queue_metrics — the backend will treat these as
+      // monotonic / latest-wins and do the delta itself.
       initRing.head = 0;
       initRing.full = false;
       eventRing.head = 0;

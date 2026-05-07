@@ -565,6 +565,61 @@ the user wrote). Agents should keep that scope in mind:
 - Do not touch `dist/`, `coverage/`, `e2e-results/`,
   `playwright-report/`, `bench-results.json` — all generated.
 
+## SDK ↔ dashboard alignment rules (event-payload schema v2.3, landed S5+ 2026-05-08)
+
+> The wire-format target is the **event-payload schema v2.3** documented
+> in [`docs/design/EVENT_PAYLOAD_SCHEMA.md`](./docs/design/EVENT_PAYLOAD_SCHEMA.md).
+> The SDK npm release line is independent: `@browsonic/sdk` is at `3.1.2`,
+> the alignment commits will land on the next 3.x semantic-release.
+> "Schema v2.3" below refers to the wire spec, not the npm version.
+
+These rules came out of the 15-gap SDK ↔ dashboard alignment closure
+program (Sprint 0 → Sprint 5+). Don't weaken them without explicit
+sign-off from the program.
+
+1. **Adapter identity is build-time stamped.** Each adapter's
+   `scripts/stamp-version.mjs` writes `src/__pkg.ts` with
+   `PACKAGE_NAME` / `PACKAGE_VERSION` constants from `package.json`
+   before tsc. The `prebuild` hook runs it. Never hardcode the
+   adapter name or version, and never read `package.json` at
+   runtime — semantic-release rewrites only `package.json`, not
+   bundled source.
+2. **Top-level `registerAdapter()` is mandatory.** Each adapter's
+   `src/index.ts` calls `registerAdapter({ name: PACKAGE_NAME, version: PACKAGE_VERSION })`
+   at module load. The core SDK queues every batch with the active
+   adapter snapshot via the registry (`packages/sdk/src/sentinel/adapter-registry.ts`).
+   Don't skip this — `EventBatch.adapter` becomes empty and the
+   dashboard's `AdapterBreakdownTable` flatlines.
+3. **Web Vitals is opt-in.** `webVitalsPlugin()` is exported but not
+   default-included in `defaultPlugins`. Native `PerformanceObserver`
+   covers LCP/FCP/CLS/TTFB at ~1 KB; FID/INP need event-handler hooks
+   and are deferred. Don't promote to default — Main ESM bundle
+   budget is `24 KB gzipped` and we sit at `23.13 KB`
+   (`+1.13 KB` of headroom from the pre-alignment baseline).
+4. **Network detail goes through `utils/redaction.ts`.** Headers
+   pass through `filterHeaders()` (allowlist + blocklist); bodies
+   pass through `redactString()` (JWT / email / credit card / oauth
+   secret regexes). Never attach raw `Headers` or untransformed body
+   text to a `NetworkDetail`. The 11 redaction tests pin behavior;
+   add a test for any new pattern.
+5. **Diagnostics counters are per-batch deltas, not cumulative.**
+   `dropsSincePreviousBatch` resets on every successful flush via
+   `recordRetryAttempt()`; `lastFlushTimeMs` updates on success only.
+   `permanent_fail` is a `DroppedReason` distinct from `transport_fail`
+   — the former means retries exhausted, the latter is a single
+   failed attempt. `<RetryOutcomesCard>` distinguishes them.
+6. **Console verbs are preserved in telemetry.** `methodToLevel`
+   maps `console.debug` → `'info'` for the `ERROR_LEVEL` union;
+   `methodToTelemetryLevel` keeps the original verb (`'debug'`) for
+   the timeline. Never collapse `debug` into `log` — dashboard
+   breadcrumb filter buttons rely on the distinction.
+7. **Wire schema is frozen.** Any change to `EventBatch`,
+   `BrowsonicEvent`, `NetworkDetail`, `WebVitalMetric`,
+   `PluginHealthSummary`, `QueueMetricsSnapshot`, or `AdapterIdentity`
+   must update [`docs/design/EVENT_PAYLOAD_SCHEMA.md`](./docs/design/EVENT_PAYLOAD_SCHEMA.md)
+   in the same PR. Backend `BatchRequest.java` / `EventRequest.java`
+   must accept missing fields as `null` (SDK 2.2 backwards-compat).
+
 ## Updating this document
 
 This file travels with the repo because the rules evolve with the

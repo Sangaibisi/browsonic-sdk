@@ -18,7 +18,10 @@ import {
 } from '../utils';
 import { sendBatch, calculateBackoff } from '../transport';
 import { collectEventContext, collectSessionContext, truncateSessionContext } from '../context';
+import { getOrCreateVisitorId } from '../visitor';
+import { getAdapter } from '../sentinel/adapter-registry';
 import { persistToTiers, loadFromTiers, clearTiers } from './storage';
+import type { QueueMetricsSnapshot } from '../types';
 
 const STORAGE_KEY = '__browsonic_queue';
 
@@ -77,6 +80,32 @@ export function createEventQueue(options: QueueOptions) {
   let retryAttempt = 0;
   let isPaused = false;
   let isDestroyed = false;
+
+  /**
+   * Sprint 2 (gap B3): wall-clock of the last successful flush. Stamped
+   * on every batch's `queueMetrics.lastFlushTimeMs` so the dashboard's
+   * <QueueHealthPanel> can render "stale fleet" gauges. 0 means no
+   * successful flush has happened in this session yet.
+   */
+  let lastFlushTimeMs = 0;
+
+  /**
+   * Sprint 2 (gap B3): per-batch drop delta. The diagnostics store holds
+   * a cumulative dropped_events counter; this map captures the slice
+   * since the previous batch so each batch's queueMetrics.drops is a
+   * delta the dashboard can plot directly.
+   */
+  const dropsSincePreviousBatch = new Map<string, number>();
+
+  /** Internal helper — record a drop both in diagnostics (cumulative)
+   *  and in the per-batch delta map (for queueMetrics.drops). Reasons
+   *  match the public DroppedReason union. */
+  function trackDrop(
+    reason: 'sampled_out' | 'storm' | 'oversized' | 'quota' | 'ignored' | 'state' | 'permanent_fail'
+  ): void {
+    diagnostics?.incDropped(reason);
+    dropsSincePreviousBatch.set(reason, (dropsSincePreviousBatch.get(reason) ?? 0) + 1);
+  }
 
   // Fingerprint cooldown map
   const cooldowns: Map<string, number> = new Map();
@@ -310,7 +339,7 @@ export function createEventQueue(options: QueueOptions) {
 
     if (lastSeen && now - lastSeen < effectiveCooldown) {
       debugLog(`Deduped event with fingerprint ${fingerprint}${inStorm ? ' (storm mode)' : ''}`);
-      diagnostics?.incDropped(inStorm ? 'storm' : 'ignored');
+      trackDrop(inStorm ? 'storm' : 'ignored');
       // Sprint P15 (F3.2.C): only the extended-cooldown drops count
       // towards storm suppression; plain dedup drops while healthy do
       // not — those are a normal fingerprint hit and always happened.
@@ -393,7 +422,7 @@ export function createEventQueue(options: QueueOptions) {
     };
     if (queue.length >= config.maxQueueSize) {
       queue.shift();
-      diagnostics?.incDropped('oversized');
+      trackDrop('oversized');
     }
     queue.push(event);
     schedulePersist();
@@ -417,14 +446,14 @@ export function createEventQueue(options: QueueOptions) {
         // (0.3.0; see PERFORMANS-STRATEJISI §3.)
         if (event.level !== 'error' && event.level !== 'fatal') {
           if (getSessionSampled && !getSessionSampled()) {
-            diagnostics?.incDropped('sampled_out');
+            trackDrop('sampled_out');
             return;
           }
           // Secondary gate: adaptive multiplier. At multiplier=1 this is
           // identity. At <1 it probabilistically drops a fraction of
           // already-session-sampled events.
           if (adaptiveMultiplier < 1 && Math.random() >= adaptiveMultiplier) {
-            diagnostics?.incDropped('quota');
+            trackDrop('quota');
             return;
           }
         }
@@ -454,7 +483,7 @@ export function createEventQueue(options: QueueOptions) {
         if (queue.length >= config.maxQueueSize) {
           debugLog('Queue full, dropping oldest event');
           queue.shift();
-          diagnostics?.incDropped('oversized');
+          trackDrop('oversized');
         }
 
         queue.push(event);
@@ -526,6 +555,30 @@ export function createEventQueue(options: QueueOptions) {
     // Build batch with session-level data.
     // 0.3.0: include `sampled`, `sampleRate`, and `sdk` metadata so backend
     // can weight aggregates and enforce version-aware ingest.
+    // 2.3.0 (Sprint 1, gap A1): carry the visitor identifier on the
+    // batch so cross-session journeys can link. Honours the configured
+    // visitor strategy + consent gates via `getOrCreateVisitorId`.
+    // 2.3.0 (Sprint 2, gap B3): stamp the framework adapter identity
+    // (when one registered) and a queue-metrics snapshot. Reset the
+    // per-batch drop delta + sync the diagnostics store so the
+    // /v1/diagnostics reporter and /v1/events batch agree.
+    const adapter = getAdapter();
+    const queueMetrics: QueueMetricsSnapshot = {
+      depth: queue.length,
+      lastFlushTimeMs,
+      drops: Array.from(dropsSincePreviousBatch.entries()).map(([reason, count]) => ({
+        // Cast is safe because trackDrop only stores known DroppedReason
+        // strings; we keep the map's value type permissive (string) to
+        // avoid an extra import of the union here.
+        reason: reason as QueueMetricsSnapshot['drops'][number]['reason'],
+        count,
+      })),
+      retryAttempts: { p50: 0, p95: retryAttempt, max: retryAttempt },
+    };
+    dropsSincePreviousBatch.clear();
+    diagnostics?.setQueueMetrics(queueMetrics);
+    diagnostics?.setAdapter(adapter);
+
     const batch: EventBatch = {
       batchId: uuid(),
       timestamp: timestamp(),
@@ -533,12 +586,15 @@ export function createEventQueue(options: QueueOptions) {
       environment: config.environment,
       clientVersion: config.clientVersion,
       sessionId: getSessionId(),
+      visitorId: getOrCreateVisitorId(config),
       sessionContext,
       user: getUser(),
       events,
       sampled: getSessionSampled ? getSessionSampled() : true,
       sampleRate: config.sampleRate,
       ...(sdkName && sdkVersion ? { sdk: { name: sdkName, version: sdkVersion } } : {}),
+      ...(adapter ? { adapter } : {}),
+      queueMetrics,
     };
 
     if (truncated) {
@@ -552,7 +608,7 @@ export function createEventQueue(options: QueueOptions) {
       // IMP-003: Handle single oversized event
       if (events.length === 1) {
         debugLog('Single event exceeds payload limit, dropping oversized event');
-        diagnostics?.incDropped('oversized');
+        trackDrop('oversized');
         // Don't put it back - drop it to prevent infinite loop
         return null;
       }
@@ -604,6 +660,11 @@ export function createEventQueue(options: QueueOptions) {
     applyMinSdkVersionSignal(result.minSdkVersion ?? null);
 
     if (result.success) {
+      // Sprint 2 (gap B2 + B3): stamp the wall-clock for the next batch's
+      // queueMetrics.lastFlushTimeMs and feed the final retry-attempt
+      // count into the diagnostics retry tracker (0 on first-try success).
+      lastFlushTimeMs = Date.now();
+      diagnostics?.recordRetryAttempt(retryAttempt);
       retryAttempt = 0;
       // Continue flushing if more events
       if (queue.length > 0) {
@@ -645,7 +706,17 @@ export function createEventQueue(options: QueueOptions) {
         if (retryAttempt < MAX_RETRY_ATTEMPTS) {
           setTimeout(() => void flush(), delay);
         } else {
+          // Sprint 2 (gap B2): retry budget exhausted. Mark each event in
+          // the failed batch as `permanent_fail` so the dashboard's
+          // <RetryOutcomesCard> can surface fleet-level retry pressure.
+          // We still keep the events in the queue (a future timer cycle
+          // will retry them) — `permanent_fail` is an *observability*
+          // signal, not a runtime drop.
           debugLog('Max retries reached, pausing');
+          for (let i = 0; i < batch.events.length; i++) {
+            trackDrop('permanent_fail');
+          }
+          diagnostics?.recordRetryAttempt(retryAttempt);
           retryAttempt = 0;
           startFlushTimer();
         }

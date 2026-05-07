@@ -17,7 +17,8 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run build:types",
+    "build": "npm run stamp-version && npm run build:esm && npm run build:cjs && npm run build:types",
+    "stamp-version": "node scripts/stamp-version.mjs",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.types.json",

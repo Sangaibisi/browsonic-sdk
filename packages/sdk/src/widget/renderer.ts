@@ -24,9 +24,22 @@ const CLOSE_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
 
 const EXTERNAL_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>`;
 
+/**
+ * Sprint 4 (gap B4): widget interaction event types fired by the
+ * renderer. Consumed by the widget-manager's reporter wire so the
+ * dashboard's `<WidgetInteractionStats>` can roll up 24h impressions
+ * / clicks / dismissals per rule.
+ */
+export type WidgetInteractionType = 'impression' | 'click' | 'dismiss';
+
+export interface ShowOptions {
+  /** Rule identifier when the show was triggered by a rule match. */
+  ruleId?: string;
+}
+
 export interface WidgetRenderer {
-  /** Show a notification */
-  show(notification: WidgetNotification): void;
+  /** Show a notification, optionally tagged with the rule id. */
+  show(notification: WidgetNotification, options?: ShowOptions): void;
   /** Dismiss the current notification */
   dismiss(): void;
   /** Remove the widget from DOM entirely */
@@ -35,10 +48,27 @@ export interface WidgetRenderer {
   isVisible(): boolean;
 }
 
+export interface CreateWidgetRendererOptions {
+  /** Sprint 4 (gap B4): notified for impression / click / dismiss. */
+  onInteraction?: (type: WidgetInteractionType, ruleId: string | null) => void;
+}
+
 export function createWidgetRenderer(
   position: WidgetPosition,
-  cspNonce: string | null = null
+  cspNonce: string | null = null,
+  options: CreateWidgetRendererOptions = {}
 ): WidgetRenderer {
+  const { onInteraction } = options;
+  let activeRuleId: string | null = null;
+  function fire(type: WidgetInteractionType): void {
+    if (!onInteraction) return;
+    try {
+      onInteraction(type, activeRuleId);
+    } catch {
+      // Interaction-reporter errors must never propagate into the
+      // host app — the renderer is fail-safe by design.
+    }
+  }
   let hostEl: HTMLElement | null = null;
   let shadowRoot: ShadowRoot | null = null;
   let visible = false;
@@ -71,12 +101,13 @@ export function createWidgetRenderer(
     return shadowRoot;
   }
 
-  function show(notification: WidgetNotification): void {
+  function show(notification: WidgetNotification, showOptions: ShowOptions = {}): void {
     // SECURITY: sanitize caps title/message length and filters the actionUrl
     // to only http(s)/mailto/tel — prevents `javascript:` XSS from a compromised
     // widget-rules endpoint. See TEKNIK-IYILESTIRME-PLANI.md §1.1.
     const safe = sanitizeNotification(notification);
     if (!safe) return; // notification had no renderable content
+    activeRuleId = showOptions.ruleId ?? null;
 
     const root = ensureHost();
     const severity: WidgetSeverity = safe.severity ?? 'error';
@@ -123,8 +154,18 @@ export function createWidgetRenderer(
       closeBtn.addEventListener('click', () => dismiss());
     }
 
+    // Sprint 4 (gap B4): wire action-link click telemetry. The
+    // anchor's default behaviour (open new tab) is preserved — we
+    // just observe the click on the way through.
+    const actionLink = widget.querySelector('.notification-action');
+    if (actionLink) {
+      actionLink.addEventListener('click', () => fire('click'));
+    }
+
     root.appendChild(widget);
     visible = true;
+    // Sprint 4 (gap B4): impression fires once per show() call.
+    fire('impression');
 
     // Auto dismiss
     if (safe.autoDismissMs && safe.autoDismissMs > 0) {
@@ -143,6 +184,12 @@ export function createWidgetRenderer(
     const widget = shadowRoot.querySelector('.browsonic-widget');
     if (!widget) return;
 
+    // Sprint 4 (gap B4): fire dismiss telemetry before tearing down so
+    // the active rule id is still in scope. We don't distinguish
+    // "user closed" vs "auto-dismiss" — both are dismissals from the
+    // operator's perspective.
+    fire('dismiss');
+
     // Add exit animation
     const notification = widget.querySelector('.notification');
     if (notification) {
@@ -150,10 +197,12 @@ export function createWidgetRenderer(
       setTimeout(() => {
         widget.remove();
         visible = false;
+        activeRuleId = null;
       }, 200);
     } else {
       widget.remove();
       visible = false;
+      activeRuleId = null;
     }
   }
 

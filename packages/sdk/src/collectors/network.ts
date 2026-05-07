@@ -5,9 +5,78 @@
  * @license Apache-2.0
  */
 
-import type { BrowsonicEvent } from '../types';
+import type { BrowsonicEvent, NetworkDetail } from '../types';
 import type { NetworkTelemetryData } from '../telemetry';
 import { uuid, timestamp, safeExecute } from '../utils';
+import { filterHeaders } from '../utils/redaction';
+
+/**
+ * Sprint 3 (gap B5): build a {@link NetworkDetail} for an outbound
+ * fetch. Header allowlisting + PII redaction live in `utils/redaction`
+ * so the same logic covers fetch + XHR collectors.
+ *
+ * Best-effort — every getter is wrapped in try/catch because Headers
+ * iteration can throw on locked-down iframe responses.
+ */
+function buildNetworkDetail(args: {
+  init: RequestInit | undefined;
+  response?: Response;
+  aborted?: boolean;
+}): NetworkDetail {
+  const detail: NetworkDetail = {};
+  // Request size — Content-Length header beats body inspection.
+  try {
+    const headers = args.init?.headers;
+    if (headers) {
+      const len = headerValue(headers, 'content-length');
+      if (len) {
+        const parsed = Number(len);
+        if (Number.isFinite(parsed)) detail.requestSize = parsed;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  // Response size + headers + traceparent.
+  try {
+    if (args.response) {
+      const lenHeader = args.response.headers.get('content-length');
+      if (lenHeader) {
+        const parsed = Number(lenHeader);
+        if (Number.isFinite(parsed)) detail.responseSize = parsed;
+      }
+      const headerObj: Record<string, string> = {};
+      args.response.headers.forEach((value, key) => {
+        headerObj[key] = value;
+      });
+      const filtered = filterHeaders(headerObj);
+      if (Object.keys(filtered).length > 0) detail.headers = filtered;
+      const trace = filtered['traceparent'];
+      if (trace) detail.traceparent = trace;
+    }
+  } catch {
+    /* ignore */
+  }
+  if (args.aborted) detail.aborted = true;
+  return detail;
+}
+
+function headerValue(headers: HeadersInit, name: string): string | undefined {
+  const lc = name.toLowerCase();
+  if (headers instanceof Headers) {
+    return headers.get(name) ?? undefined;
+  }
+  if (Array.isArray(headers)) {
+    const found = headers.find(([k]) => k.toLowerCase() === lc);
+    return found?.[1];
+  }
+  if (typeof headers === 'object') {
+    for (const [k, v] of Object.entries(headers)) {
+      if (k.toLowerCase() === lc) return String(v);
+    }
+  }
+  return undefined;
+}
 
 interface NetworkCollectorOptions {
   onEvent: (event: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'>) => void;
@@ -99,6 +168,10 @@ export function createNetworkCollector(options: NetworkCollectorOptions) {
         if (response.status >= 400) {
           safeExecute(
             () => {
+              // Sprint 3 (gap B5): attach allowlisted headers + sizes +
+              // traceparent so the dashboard can render a "Request
+              // detail" panel without an extra round trip.
+              const networkDetail = buildNetworkDetail({ init, response });
               const event: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'> = {
                 eventId: uuid(),
                 timestamp: timestamp(),
@@ -106,6 +179,7 @@ export function createNetworkCollector(options: NetworkCollectorOptions) {
                 level: response.status >= 500 ? 'error' : 'warn',
                 message: `${method} ${url} - ${response.status} ${response.statusText}`,
                 stack: null,
+                networkDetail,
               };
 
               onEvent(event);
@@ -145,6 +219,11 @@ export function createNetworkCollector(options: NetworkCollectorOptions) {
         // Report as error event
         safeExecute(
           () => {
+            // Sprint 3 (gap B5): mark abort + capture request-side
+            // detail. Response is unavailable on the failure path so
+            // headers / response size stay empty.
+            const aborted = error instanceof Error && error.name === 'AbortError';
+            const networkDetail = buildNetworkDetail({ init, aborted });
             const event: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'> = {
               eventId: uuid(),
               timestamp: timestamp(),
@@ -152,6 +231,7 @@ export function createNetworkCollector(options: NetworkCollectorOptions) {
               level: 'error',
               message: `${method} ${url} - ${errorMessage}`,
               stack: error instanceof Error ? error.stack || null : null,
+              networkDetail,
             };
 
             onEvent(event);
