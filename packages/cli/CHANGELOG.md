@@ -1,3 +1,9 @@
+## [1.1.1](https://github.com/Sangaibisi/browsonic-sdk/compare/cli@v1.1.0...cli@v1.1.1) (2026-05-07)
+
+### Bug Fixes
+
+- **release:** explicit cross-package scope filters in 7 adapter releasercs ([530d2e1](https://github.com/Sangaibisi/browsonic-sdk/commit/530d2e128c3fc28fa9925a6dba8aefd0abfdf5f8))
+
 ## [1.1.0](https://github.com/Sangaibisi/browsonic-sdk/compare/cli@v1.0.0...cli@v1.1.0) (2026-05-07)
 
 ### Features
