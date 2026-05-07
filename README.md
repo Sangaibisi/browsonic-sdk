@@ -47,7 +47,6 @@ browsonic-sdk/                       ← this repo (npm workspaces root)
 ├── examples/                        → demo apps (per-adapter)
 ├── .github/workflows/               → CI + release.yml (per-workspace semantic-release)
 ├── AGENTS.md                        → operating manual for AI agents + contributors
-├── ROADMAP.md                       → public-facing milestones
 ├── SECURITY.md, CODE_OF_CONDUCT.md, CONTRIBUTING.md
 ├── LICENSE (Apache-2.0), NOTICE
 └── package.json                     → workspaces + npm overrides for transitive vuln pins
@@ -74,8 +73,7 @@ For adapter-specific demos see `packages/<framework>/README.md` and the `example
 
 ## Documentation
 
-- Public roadmap: [`ROADMAP.md`](./ROADMAP.md)
-- Per-package docs: each package's `README.md`; SDK additionally ships [`INTEGRATION.md`](./packages/sdk/INTEGRATION.md), [`PRIVACY.md`](./packages/sdk/PRIVACY.md), [`BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md)
+- Per-package docs: each package's `README.md` and `ROADMAP.md`; SDK additionally ships [`INTEGRATION.md`](./packages/sdk/INTEGRATION.md), [`PRIVACY.md`](./packages/sdk/PRIVACY.md), [`BENCHMARKS.md`](./packages/sdk/BENCHMARKS.md)
 - Operating manual for agents + humans: [`AGENTS.md`](./AGENTS.md) (root rules) and `packages/<name>/AGENTS.md` (package-specific rules where they exist)
 - Source-map pipeline architecture: [`docs/design/SOURCEMAP_PIPELINE.md`](./docs/design/SOURCEMAP_PIPELINE.md)
 - Contributing: [`CONTRIBUTING.md`](./CONTRIBUTING.md), [`SECURITY.md`](./SECURITY.md), [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md)

@@ -63,7 +63,6 @@ reference it from this one — don't duplicate.
 **Repo-wide governance**
 
 - [`README.md`](./README.md) — public entry point, package matrix.
-- [`ROADMAP.md`](./ROADMAP.md) — public-facing milestones, deferred work, parking lot.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contributor onboarding, PR workflow, coding style.
 - [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) — Contributor Covenant 2.1.
 - [`SECURITY.md`](./SECURITY.md) — vulnerability disclosure path + scope.
@@ -85,8 +84,9 @@ reference it from this one — don't duplicate.
 **Per-adapter docs**
 
 Each `packages/<adapter>/` ships its own `README.md`, `AGENTS.md`,
-`ROADMAP.md`, and (after first release) `CHANGELOG.md`. The bootstrap
-checklist for new adapters lives in
+`ROADMAP.md` (deferred work + parking lot for that adapter), and
+(after first release) `CHANGELOG.md`. The bootstrap checklist for
+new adapters lives in
 [`packages/react/docs/ADAPTER_TEMPLATE.md`](./packages/react/docs/ADAPTER_TEMPLATE.md).
 
 ## Monorepo discipline
