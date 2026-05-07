@@ -24,7 +24,10 @@
           { "scope": "angular", "release": false },
           { "scope": "nextjs", "release": false },
           { "scope": "astro", "release": false },
-          { "scope": "remix", "release": false }
+          { "scope": "remix", "release": false },
+          { "scope": "cli", "release": false },
+          { "scope": "build-tools", "release": false },
+          { "scope": "workspace", "release": false }
         ]
       }
     ],

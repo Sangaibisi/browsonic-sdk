@@ -12,34 +12,21 @@
       {
         "preset": "conventionalcommits",
         "releaseRules": [
-          {
-            "type": "feat",
-            "scope": "build-tools",
-            "release": "minor"
-          },
-          {
-            "type": "fix",
-            "scope": "build-tools",
-            "release": "patch"
-          },
-          {
-            "type": "perf",
-            "scope": "build-tools",
-            "release": "patch"
-          },
-          {
-            "type": "refactor",
-            "scope": "build-tools",
-            "release": "patch"
-          },
-          {
-            "type": "deps",
-            "scope": "build-tools",
-            "release": "patch"
-          },
-          {
-            "release": false
-          }
+          { "type": "feat", "scope": "build-tools", "release": "minor" },
+          { "type": "fix", "scope": "build-tools", "release": "patch" },
+          { "type": "perf", "scope": "build-tools", "release": "patch" },
+          { "type": "refactor", "scope": "build-tools", "release": "patch" },
+          { "type": "deps", "scope": "build-tools", "release": "patch" },
+          { "scope": "sdk", "release": false },
+          { "scope": "react", "release": false },
+          { "scope": "vue", "release": false },
+          { "scope": "svelte", "release": false },
+          { "scope": "angular", "release": false },
+          { "scope": "nextjs", "release": false },
+          { "scope": "astro", "release": false },
+          { "scope": "remix", "release": false },
+          { "scope": "cli", "release": false },
+          { "scope": "workspace", "release": false }
         ]
       }
     ],
