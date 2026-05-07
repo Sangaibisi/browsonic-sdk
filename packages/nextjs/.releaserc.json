@@ -38,6 +38,43 @@
             "release": "patch"
           },
           {
+            "scope": "sdk",
+            "release": false
+          },
+          {
+            "scope": "react",
+            "release": false
+          },
+          {
+            "scope": "vue",
+            "release": false
+          },
+          {
+            "scope": "svelte",
+            "release": false
+          },
+          {
+            "scope": "angular",
+            "release": false
+          },
+          {
+            "scope": "astro",
+            "release": false
+          },
+          {
+            "scope": "remix",
+            "release": false
+          },
+          {
+            "scope": "cli",
+            "release": false
+          },
+          {
+            "scope": "build-tools",
+            "release": false
+          },
+          {
+            "scope": "workspace",
             "release": false
           }
         ]
