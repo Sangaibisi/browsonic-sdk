@@ -9,7 +9,11 @@ import type { EventLevel, EventType, BrowsonicEvent } from '../types';
 import type { ConsoleTelemetryData } from '../telemetry';
 import { uuid, timestamp, safeExecute } from '../utils';
 
-type ConsoleMethod = 'log' | 'info' | 'warn' | 'error';
+// Sprint 1 (gap A3): `'debug'` added so console.debug calls are
+// captured. They emit at event level `'info'` (EventLevel does not
+// carry `'debug'`) but the telemetry entry preserves the original
+// `'debug'` level so the dashboard's badge matches.
+type ConsoleMethod = 'log' | 'debug' | 'info' | 'warn' | 'error';
 
 interface ConsoleCollectorOptions {
   captureLevels: EventLevel[];
@@ -27,6 +31,7 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
   // Store original methods
   const originalConsole: Record<ConsoleMethod, typeof console.log> = {
     log: console.log,
+    debug: console.debug,
     info: console.info,
     warn: console.warn,
     error: console.error,
@@ -34,12 +39,25 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
 
   let isInstalled = false;
 
-  // Console methods are naturally a subset of EventLevel (no 'fatal' is
-  // reachable via console.*). We narrow the type so telemetry's
-  // `ConsoleTelemetryData.level` enum (`'log' | 'debug' | ...`) keeps
-  // accepting this mapping after 0.3.0 added 'fatal' to EventLevel.
+  // Console methods map to two slightly different ladders:
+  //
+  //   - methodToLevel: the EventLevel for the emitted Browsonic event.
+  //     EventLevel has no `'debug'`, so console.debug emits at
+  //     `'info'` (alongside console.log / console.info).
+  //   - methodToTelemetryLevel: ConsoleTelemetryEntry.level, which
+  //     accepts `'log'` and `'debug'` so the dashboard renders the
+  //     original verb in the breadcrumb timeline.
   const methodToLevel: Record<ConsoleMethod, 'info' | 'warn' | 'error'> = {
     log: 'info',
+    debug: 'info',
+    info: 'info',
+    warn: 'warn',
+    error: 'error',
+  };
+
+  const methodToTelemetryLevel: Record<ConsoleMethod, ConsoleTelemetryData['level']> = {
+    log: 'log',
+    debug: 'debug',
     info: 'info',
     warn: 'warn',
     error: 'error',
@@ -47,6 +65,7 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
 
   const methodToType: Record<ConsoleMethod, EventType> = {
     log: 'console_info',
+    debug: 'console_debug',
     info: 'console_info',
     warn: 'console_warn',
     error: 'console_error',
@@ -93,10 +112,13 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
             }
           }
 
-          // Always record to telemetry (regardless of captureLevels)
+          // Always record to telemetry (regardless of captureLevels).
+          // Use the telemetry-specific level ladder so console.debug
+          // / console.log preserve their verbs in the breadcrumb
+          // timeline rather than being flattened to 'info'.
           if (onTelemetry) {
             onTelemetry({
-              level: methodToLevel[method],
+              level: methodToTelemetryLevel[method],
               message,
               stack,
             });
@@ -131,6 +153,7 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
       () => {
         // Intercept console.log for telemetry only (not emitted as error event)
         console.log = createInterceptor('log');
+        console.debug = createInterceptor('debug');
         console.info = createInterceptor('info');
         console.warn = createInterceptor('warn');
         console.error = createInterceptor('error');
@@ -155,6 +178,7 @@ export function createConsoleCollector(options: ConsoleCollectorOptions) {
         // locked down. typeof guard tolerates the edge case where the
         // original was itself replaced mid-session.
         restoreMethod('log', originalConsole.log);
+        restoreMethod('debug', originalConsole.debug);
         restoreMethod('info', originalConsole.info);
         restoreMethod('warn', originalConsole.warn);
         restoreMethod('error', originalConsole.error);

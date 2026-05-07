@@ -40,6 +40,15 @@
  * @license Apache-2.0
  */
 
+import { registerAdapter } from '@browsonic/sdk';
+import { PACKAGE_NAME, PACKAGE_VERSION } from './__pkg';
+
+// Sprint 2 (gap B3): announce this adapter to the SDK so every batch
+// + diagnostics report carries the framework identity. The
+// PACKAGE_NAME / PACKAGE_VERSION constants are stamped from
+// package.json at build time by `scripts/stamp-version.mjs`.
+registerAdapter({ name: PACKAGE_NAME, version: PACKAGE_VERSION });
+
 export {
   handleErrorWithBrowsonic,
   type HandleErrorOptions,

@@ -10,11 +10,70 @@
  * @license Apache-2.0
  */
 
-import type { BrowsonicEvent } from '../types';
-import type { SdkPlugin, PluginContext } from '../plugin';
+import type { BrowsonicEvent, PluginHealthSummary } from '../types';
+import type { SdkPlugin, PluginContext, Collector } from '../plugin';
 import { safeExecute } from '../utils';
 import type { Browsonic } from './browsonic';
 import { handleEvent } from './event-pipeline';
+
+/**
+ * Sprint 2 (gap B1): per-plugin activation timestamps so the health
+ * summary can carry a meaningful `activatedAtMs` without forcing
+ * plugins to track their own clock. Module-level Map keyed by plugin
+ * id; the entry is created during `activatePlugins` and cleared on
+ * `deactivatePlugins`.
+ */
+const pluginActivatedAt = new Map<string, number>();
+
+/** Sprint 2 (gap B1): monotonic error counter per plugin. Incremented
+ *  every time an activate / deactivate / event handler call throws.
+ *  Read by `collectPluginHealth` and reported on the diagnostics
+ *  payload as `PluginHealthSummary.errorCount`. */
+const pluginErrorCounts = new Map<string, number>();
+
+function bumpPluginErrors(pluginId: string): void {
+  pluginErrorCounts.set(pluginId, (pluginErrorCounts.get(pluginId) ?? 0) + 1);
+}
+
+/**
+ * Build a per-plugin health snapshot for the diagnostics payload.
+ * Plugins that implement the {@link Collector} contract get their
+ * `health()` probe called; pure {@link SdkPlugin} entries fall back
+ * to `{ ok: true }`. Capped at 50 entries by the diagnostics store.
+ *
+ * Sprint 2 (gap B1).
+ */
+export function collectPluginHealth(sdk: Browsonic): PluginHealthSummary[] {
+  const out: PluginHealthSummary[] = [];
+  for (const plugin of sdk.plugins) {
+    let ok = true;
+    let detail: string | undefined;
+    if (isCollector(plugin) && typeof plugin.health === 'function') {
+      try {
+        const probe = plugin.health();
+        ok = probe.ok;
+        detail = probe.detail;
+      } catch (err) {
+        // A throwing health probe is itself a failure signal.
+        ok = false;
+        detail = err instanceof Error ? err.message : String(err);
+        bumpPluginErrors(plugin.id);
+      }
+    }
+    out.push({
+      id: plugin.id,
+      ok,
+      detail,
+      errorCount: pluginErrorCounts.get(plugin.id) ?? 0,
+      activatedAtMs: pluginActivatedAt.get(plugin.id) ?? 0,
+    });
+  }
+  return out;
+}
+
+function isCollector(plugin: SdkPlugin): plugin is Collector {
+  return (plugin as Partial<Collector>).category === 'collector';
+}
 
 /**
  * Attach a plugin to the SDK. Must be called before `init()`.
@@ -72,11 +131,25 @@ export function activatePlugins(sdk: Browsonic): void {
     safeExecute(
       () => {
         plugin.activate(ctx);
+        // Sprint 2 (gap B1): stamp activation wall-clock for the
+        // health summary surfaced on /v1/diagnostics.
+        pluginActivatedAt.set(plugin.id, Date.now());
         sdk.debugLog(`Plugin activated: ${plugin.id}`);
       },
       undefined,
-      (err) => sdk.debugLog(`Plugin activate error (${plugin.id}):`, err)
+      (err) => {
+        bumpPluginErrors(plugin.id);
+        sdk.debugLog(`Plugin activate error (${plugin.id}):`, err);
+      }
     );
+  }
+
+  // Sprint 2 (gap B1): publish the initial plugin-health snapshot to
+  // the diagnostics store. Subsequent updates happen on the next
+  // diagnostics flush — the reporter pulls a fresh snapshot via
+  // `collectPluginHealth` whenever one is requested.
+  if (sdk.diagnostics) {
+    sdk.diagnostics.setPluginHealth(collectPluginHealth(sdk));
   }
 }
 
@@ -90,8 +163,18 @@ export function deactivatePlugins(sdk: Browsonic): void {
         sdk.debugLog(`Plugin deactivated: ${plugin.id}`);
       },
       undefined,
-      (err) => sdk.debugLog(`Plugin deactivate error (${plugin.id}):`, err)
+      (err) => {
+        bumpPluginErrors(plugin.id);
+        sdk.debugLog(`Plugin deactivate error (${plugin.id}):`, err);
+      }
     );
   }
   sdk.pluginEventHandlers = [];
+  // Sprint 2 (gap B1): clear cached activation timestamps so the
+  // next init() starts from a clean slate. Error counters persist —
+  // they're per-id cumulative and a re-init typically re-uses ids.
+  pluginActivatedAt.clear();
+  if (sdk.diagnostics) {
+    sdk.diagnostics.setPluginHealth([]);
+  }
 }

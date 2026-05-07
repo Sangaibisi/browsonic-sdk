@@ -5,9 +5,47 @@
  * @license Apache-2.0
  */
 
-import type { BrowsonicEvent } from '../types';
+import type { BrowsonicEvent, NetworkDetail } from '../types';
 import type { NetworkTelemetryData } from '../telemetry';
 import { uuid, timestamp, safeExecute } from '../utils';
+import { filterHeaders } from '../utils/redaction';
+
+/**
+ * Sprint 3 (gap B5): build a {@link NetworkDetail} for a finished XHR.
+ * Mirrors the fetch-side helper in `network.ts` — same allowlist + PII
+ * redaction so backend persistence stays uniform across transports.
+ */
+function buildXhrNetworkDetail(args: { xhr: XMLHttpRequest; aborted?: boolean }): NetworkDetail {
+  const detail: NetworkDetail = {};
+  try {
+    // XHR exposes response headers via getAllResponseHeaders() — a CRLF-
+    // joined string. Parse into a plain object before filtering.
+    const raw = args.xhr.getAllResponseHeaders?.() ?? '';
+    if (raw) {
+      const headerObj: Record<string, string> = {};
+      for (const line of raw.split(/\r?\n/)) {
+        const idx = line.indexOf(':');
+        if (idx <= 0) continue;
+        const key = line.slice(0, idx).trim();
+        const value = line.slice(idx + 1).trim();
+        if (key) headerObj[key] = value;
+      }
+      const filtered = filterHeaders(headerObj);
+      if (Object.keys(filtered).length > 0) detail.headers = filtered;
+      const trace = filtered['traceparent'];
+      if (trace) detail.traceparent = trace;
+      const lenHeader = filtered['content-length'];
+      if (lenHeader) {
+        const parsed = Number(lenHeader);
+        if (Number.isFinite(parsed)) detail.responseSize = parsed;
+      }
+    }
+  } catch {
+    /* ignore — XHR can be in an unexpected state during teardown */
+  }
+  if (args.aborted) detail.aborted = true;
+  return detail;
+}
 
 interface XHRCollectorOptions {
   onEvent: (event: Omit<BrowsonicEvent, 'context' | 'telemetry' | 'metadata'>) => void;
@@ -128,6 +166,9 @@ export function createXHRCollector(options: XHRCollectorOptions) {
                       );
 
                       if (xhr.status >= 400) {
+                        // Sprint 3 (gap B5): attach allowlisted response
+                        // headers + size + traceparent for the dashboard's
+                        // network-detail panel.
                         onEvent({
                           eventId: uuid(),
                           timestamp: timestamp(),
@@ -135,6 +176,7 @@ export function createXHRCollector(options: XHRCollectorOptions) {
                           level: xhr.status >= 500 ? 'error' : 'warn',
                           message: `${metadata.method} ${metadata.url} - ${xhr.status} ${xhr.statusText}`,
                           stack: null,
+                          networkDetail: buildXhrNetworkDetail({ xhr }),
                         });
                       }
                     },
@@ -166,6 +208,10 @@ export function createXHRCollector(options: XHRCollectorOptions) {
                         level: 'error',
                         message: `${metadata.method} ${metadata.url} - Network Error`,
                         stack: null,
+                        // Sprint 3 (gap B5): mark abort flag so the dashboard
+                        // can distinguish CORS / network failure from a
+                        // user-cancelled navigation.
+                        networkDetail: buildXhrNetworkDetail({ xhr, aborted: true }),
                       });
                     },
                     undefined,
@@ -196,6 +242,7 @@ export function createXHRCollector(options: XHRCollectorOptions) {
                         level: 'error',
                         message: `${metadata.method} ${metadata.url} - Timeout`,
                         stack: null,
+                        networkDetail: buildXhrNetworkDetail({ xhr }),
                       });
                     },
                     undefined,

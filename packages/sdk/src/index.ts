@@ -97,7 +97,22 @@ export type {
 export { createTelemetryStore, type TelemetryStore } from './telemetry';
 
 // Plugin API (1.0)
-export type { SdkPlugin, PluginContext } from './plugin';
+export type { SdkPlugin, PluginContext, Collector } from './plugin';
+
+// Sprint 2 (gap B3) — adapter registry. Framework adapter packages
+// (@browsonic/react, /vue, /svelte, /angular, /nextjs, /astro, /remix)
+// call `registerAdapter` at module load so the active adapter
+// identity rides on every batch + diagnostics report. Vanilla SDK
+// consumers don't call this — `EventBatch.adapter` stays absent.
+export { registerAdapter, getAdapter } from './sentinel/adapter-registry';
+export type { AdapterIdentity } from './types';
+
+// Sprint 1 — opt-in Web Vitals collector plugin (gap A2). Not in the
+// default plugin set; consumers register explicitly:
+//   browsonic.register(webVitalsPlugin())
+export { webVitalsPlugin } from './plugins/web-vitals';
+export type { WebVitalsPluginOptions } from './plugins/web-vitals';
+export type { WebVitalMetric, WebVitalName, WebVitalRating } from './types';
 
 // Sprint 8 M3 — transient scope (Sentry-compatible)
 export type { Scope } from './sentinel/scope';

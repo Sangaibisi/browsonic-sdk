@@ -11,6 +11,7 @@ import type { BrowsonicEvent, ResolvedConfig, WidgetRule } from '../types';
 import { resolveEndpoint } from '../utils';
 import { createRuleMatcher, type RuleMatcher } from './rule-matcher';
 import { createWidgetRenderer, type WidgetRenderer } from './renderer';
+import { reportInteraction } from './interaction-reporter';
 
 export interface WidgetManager {
   /** Evaluate an event against all rules and show widget if matched */
@@ -30,7 +31,16 @@ export function createWidgetManager(
   debugLog: (message: string, ...args: unknown[]) => void
 ): WidgetManager {
   const matcher: RuleMatcher = createRuleMatcher(config.widgetRules);
-  const renderer: WidgetRenderer = createWidgetRenderer(config.widgetPosition, config.cspNonce);
+  // Sprint 4 (gap B4): wire the interaction reporter into the renderer
+  // so impression / click / dismiss fire a thin beacon to
+  // /v1/widget-rules/{ruleId}/interactions. Consent + GPC gating
+  // lives inside `reportInteraction`.
+  const renderer: WidgetRenderer = createWidgetRenderer(config.widgetPosition, config.cspNonce, {
+    onInteraction: (type, ruleId) => {
+      if (!ruleId) return;
+      void reportInteraction({ config, ruleId, type, debugLog });
+    },
+  });
 
   debugLog('Widget manager created with', matcher.ruleCount(), 'local rules');
 
@@ -41,7 +51,10 @@ export function createWidgetManager(
     const result = matcher.check(event, currentUrl);
     if (result) {
       debugLog('Widget rule matched:', result.rule.id);
-      renderer.show(result.notification);
+      // Sprint 4 (gap B4): tag the show with the rule id so the
+      // renderer's interaction telemetry can attribute every
+      // beacon to its source rule.
+      renderer.show(result.notification, { ruleId: result.rule.id });
     }
   }
 
