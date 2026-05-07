@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/react",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "React adapter for @browsonic/sdk — error boundary, hooks, HOC, React Router instrumentation. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
