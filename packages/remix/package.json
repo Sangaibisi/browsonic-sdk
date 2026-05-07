@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/remix",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Remix adapter for @browsonic/sdk — route ErrorBoundary, action wrapper, client-entry capture. Re-exports @browsonic/react. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
