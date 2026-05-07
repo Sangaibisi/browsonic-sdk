@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/nextjs",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Next.js adapter for @browsonic/sdk — App Router error pages, route-handler capture, instrumentation entry. Re-exports @browsonic/react. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
