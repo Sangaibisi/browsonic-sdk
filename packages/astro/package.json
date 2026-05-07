@@ -62,11 +62,11 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@browsonic/sdk": "^2.2.1",
+    "@browsonic/sdk": ">=2.2.1",
     "astro": ">=4.0.0"
   },
   "devDependencies": {
-    "@browsonic/sdk": "^2.2.1",
+    "@browsonic/sdk": "*",
     "@eslint/js": "^10.0.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.0",

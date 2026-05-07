@@ -67,11 +67,11 @@
   },
   "peerDependencies": {
     "@angular/core": ">=17.0.0",
-    "@browsonic/sdk": "^2.2.1"
+    "@browsonic/sdk": ">=2.2.1"
   },
   "devDependencies": {
     "@angular/core": "^19.0.0",
-    "@browsonic/sdk": "^2.2.1",
+    "@browsonic/sdk": "*",
     "@eslint/js": "^10.0.1",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.0",
