@@ -1,0 +1,74 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "next",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          {
+            "type": "feat",
+            "scope": "cli",
+            "release": "minor"
+          },
+          {
+            "type": "fix",
+            "scope": "cli",
+            "release": "patch"
+          },
+          {
+            "type": "perf",
+            "scope": "cli",
+            "release": "patch"
+          },
+          {
+            "type": "refactor",
+            "scope": "cli",
+            "release": "patch"
+          },
+          {
+            "type": "deps",
+            "scope": "cli",
+            "release": "patch"
+          },
+          {
+            "release": false
+          }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": true
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json", "CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ],
+  "tagFormat": "cli@v${version}"
+}

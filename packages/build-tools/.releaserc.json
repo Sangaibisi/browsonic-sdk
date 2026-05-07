@@ -1,0 +1,74 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "next",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    [
+      "@semantic-release/commit-analyzer",
+      {
+        "preset": "conventionalcommits",
+        "releaseRules": [
+          {
+            "type": "feat",
+            "scope": "build-tools",
+            "release": "minor"
+          },
+          {
+            "type": "fix",
+            "scope": "build-tools",
+            "release": "patch"
+          },
+          {
+            "type": "perf",
+            "scope": "build-tools",
+            "release": "patch"
+          },
+          {
+            "type": "refactor",
+            "scope": "build-tools",
+            "release": "patch"
+          },
+          {
+            "type": "deps",
+            "scope": "build-tools",
+            "release": "patch"
+          },
+          {
+            "release": false
+          }
+        ]
+      }
+    ],
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits"
+      }
+    ],
+    [
+      "@semantic-release/changelog",
+      {
+        "changelogFile": "CHANGELOG.md"
+      }
+    ],
+    [
+      "@semantic-release/npm",
+      {
+        "npmPublish": true
+      }
+    ],
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["package.json", "CHANGELOG.md"],
+        "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
+    ],
+    "@semantic-release/github"
+  ],
+  "tagFormat": "build-tools@v${version}"
+}
