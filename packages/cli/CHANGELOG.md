@@ -1,3 +1,15 @@
+## [1.1.0](https://github.com/Sangaibisi/browsonic-sdk/compare/cli@v1.0.0...cli@v1.1.0) (2026-05-07)
+
+### Features
+
+- **astro:** trigger initial @browsonic/astro publish ([e3c8896](https://github.com/Sangaibisi/browsonic-sdk/commit/e3c88964e8d5e7f5f3f24a7f985f50e11c71fc25))
+- **cli:** trigger initial @browsonic/cli publish ([4d4f1c6](https://github.com/Sangaibisi/browsonic-sdk/commit/4d4f1c63a09c9b22ad91a91a337cd11ae3244675))
+- **nextjs:** trigger initial @browsonic/nextjs publish ([6e440cb](https://github.com/Sangaibisi/browsonic-sdk/commit/6e440cb6cf0705e0f1f0b201d788a41e3cb3597a))
+- **react:** trigger initial @browsonic/react publish ([4a6d0f1](https://github.com/Sangaibisi/browsonic-sdk/commit/4a6d0f15a2e3080cd79cd620663d4763c56359ec))
+- **remix:** trigger initial @browsonic/remix publish ([51190cb](https://github.com/Sangaibisi/browsonic-sdk/commit/51190cbecc4e0184cc63f74f078c89299aefa6ac))
+- **svelte:** trigger initial @browsonic/svelte publish ([6c90909](https://github.com/Sangaibisi/browsonic-sdk/commit/6c909095d28515daeb2debcc8e086a050b001abb))
+- **vue:** trigger initial @browsonic/vue publish ([9d304b2](https://github.com/Sangaibisi/browsonic-sdk/commit/9d304b270e0447924cfe2cb2b0ccca272d58b470))
+
 ## 1.0.0 (2026-05-07)
 
 ### ⚠ BREAKING CHANGES
