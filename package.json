@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react && npm run build -w @browsonic/vue -w @browsonic/svelte -w @browsonic/angular -w @browsonic/astro && npm run build -w @browsonic/nextjs -w @browsonic/remix && npm run build -w @browsonic/cli && npm run build -w @browsonic/build-tools",
-    "_build:prereq": "npm run build -w @browsonic/sdk && npm run build -w @browsonic/react && npm run build -w @browsonic/cli",
+    "_build:prereq": "npm run build -w @browsonic/sdk && npm run stamp-version:all && npm run build -w @browsonic/react && npm run build -w @browsonic/cli",
     "test": "npm run test --workspaces --if-present",
     "test:run": "npm run test:run --workspaces --if-present",
     "test:coverage": "npm run test:coverage --workspaces --if-present",
@@ -30,7 +30,8 @@
     "bench": "npm run bench --workspaces --if-present",
     "bench:check": "npm run bench:check --workspaces --if-present",
     "clean": "npm run clean --workspaces --if-present && rimraf node_modules",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "stamp-version:all": "npm run stamp-version -w @browsonic/react -w @browsonic/vue -w @browsonic/svelte -w @browsonic/angular -w @browsonic/astro -w @browsonic/nextjs -w @browsonic/remix"
   },
   "devDependencies": {
     "husky": "^9.1.0",
