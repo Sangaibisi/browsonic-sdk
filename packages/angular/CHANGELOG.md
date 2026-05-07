@@ -1,3 +1,43 @@
+## [2.10.0](https://github.com/Sangaibisi/browsonic-sdk/compare/angular@v2.9.0...angular@v2.10.0) (2026-05-07)
+
+### ⚠ BREAKING CHANGES
+
+- **sdk:** @browsonic/sdk/umd and @browsonic/sdk/umd/unminified subpath
+  imports are no longer published. Customers using the UMD bundle from a CDN
+  (jsDelivr, unpkg) must migrate to "npm install @browsonic/sdk" + a bundler.
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+
+### Features
+
+- **angular:** /decorated entry-point with @Injectable service + user signal ([9a16b88](https://github.com/Sangaibisi/browsonic-sdk/commit/9a16b88f0907707c30ae90a2d42e9f72120dfec1))
+- **angular:** HttpClient companion via reporter factory ([c11382a](https://github.com/Sangaibisi/browsonic-sdk/commit/c11382a8c2251ef02d53720d6bfbe3f615d02d9c))
+- **astro:** Astro Actions error wrapper ([a983e17](https://github.com/Sangaibisi/browsonic-sdk/commit/a983e17eda041021f737ce6858b979028321fad4))
+- **astro:** Content Collections breadcrumb bridge ([d9c11fb](https://github.com/Sangaibisi/browsonic-sdk/commit/d9c11fb0b193d4f74898ba67ce9d407872527d1b))
+- **astro:** tagAsAstroIsland helper for partial-hydration awareness ([525c46d](https://github.com/Sangaibisi/browsonic-sdk/commit/525c46dddd0f88d8c823ed4a6669c8ab1dbf35e5))
+- **astro:** trigger initial @browsonic/astro publish ([e3c8896](https://github.com/Sangaibisi/browsonic-sdk/commit/e3c88964e8d5e7f5f3f24a7f985f50e11c71fc25))
+- **cli:** @browsonic/cli upload-sourcemaps with --dry-run ([67f9ff2](https://github.com/Sangaibisi/browsonic-sdk/commit/67f9ff29d96cd6188cf86a2a2235742582696f80))
+- **cli:** trigger initial @browsonic/cli publish ([4d4f1c6](https://github.com/Sangaibisi/browsonic-sdk/commit/4d4f1c63a09c9b22ad91a91a337cd11ae3244675))
+- **cli:** trigger initial 0.1.0 publish ([46ba1be](https://github.com/Sangaibisi/browsonic-sdk/commit/46ba1be81f673bbefad442dd54ee1b6f0d5082b0))
+- **nextjs:** @browsonic/nextjs/instrumentation sub-entry helper ([33a9c58](https://github.com/Sangaibisi/browsonic-sdk/commit/33a9c5829e57296bb018d61b0f50c842522c26de))
+- **nextjs:** trigger initial @browsonic/nextjs publish ([6e440cb](https://github.com/Sangaibisi/browsonic-sdk/commit/6e440cb6cf0705e0f1f0b201d788a41e3cb3597a))
+- **react:** trigger initial @browsonic/react publish ([4a6d0f1](https://github.com/Sangaibisi/browsonic-sdk/commit/4a6d0f15a2e3080cd79cd620663d4763c56359ec))
+- **remix:** route hierarchy navigation breadcrumbs ([5f9f2ea](https://github.com/Sangaibisi/browsonic-sdk/commit/5f9f2eab54aa2ae658fa5fced751e790116002e2))
+- **remix:** trigger initial @browsonic/remix publish ([51190cb](https://github.com/Sangaibisi/browsonic-sdk/commit/51190cbecc4e0184cc63f74f078c89299aefa6ac))
+- **sdk:** drop UMD distribution + monorepo-wide doc cleanup ([87822af](https://github.com/Sangaibisi/browsonic-sdk/commit/87822af3781eb3b534a216314fb6573b9b05b70f))
+- **svelte:** SvelteKit form-action wrapper + +error.svelte helper ([a4b4a2a](https://github.com/Sangaibisi/browsonic-sdk/commit/a4b4a2ab051ea8bf07213a6ff0879d603db5fbb1))
+- **svelte:** trigger initial @browsonic/svelte publish ([6c90909](https://github.com/Sangaibisi/browsonic-sdk/commit/6c909095d28515daeb2debcc8e086a050b001abb))
+- **vue:** beforeEach intent breadcrumbs in router instrumentation ([88e36eb](https://github.com/Sangaibisi/browsonic-sdk/commit/88e36eb56f42412de21119dbcb38d13d0e5a4a4e))
+- **vue:** Pinia integration stamps action errors with store context ([bf814a5](https://github.com/Sangaibisi/browsonic-sdk/commit/bf814a5200e77f9193d01cca02776195ce738895))
+- **vue:** trigger initial @browsonic/vue publish ([9d304b2](https://github.com/Sangaibisi/browsonic-sdk/commit/9d304b270e0447924cfe2cb2b0ccca272d58b470))
+
+### Bug Fixes
+
+- **adapters:** widen @browsonic/sdk peer + dev range to cover 3.x ([cafe032](https://github.com/Sangaibisi/browsonic-sdk/commit/cafe0320b7a0c00ff9dc4445a4e99e9a2b91672c))
+- **release:** explicit cross-package scope filters in 7 adapter releasercs ([530d2e1](https://github.com/Sangaibisi/browsonic-sdk/commit/530d2e128c3fc28fa9925a6dba8aefd0abfdf5f8))
+- **release:** explicit cross-package scope filters in releaseRules ([155c972](https://github.com/Sangaibisi/browsonic-sdk/commit/155c972090f40a599d88d8567826f1a638ef460e))
+- **release:** scope-filter + namespaced tag formats so adapters publish independently ([ad26a5e](https://github.com/Sangaibisi/browsonic-sdk/commit/ad26a5e77ac4e34897d90418be0272dec5acbaf1))
+
 ## [2.9.0](https://github.com/Sangaibisi/browsonic-sdk/compare/v2.8.0...v2.9.0) (2026-05-04)
 
 ### Features
