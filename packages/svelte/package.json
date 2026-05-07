@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/svelte",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Svelte / SvelteKit adapter for @browsonic/sdk — handleError hook factory, user store subscriber, capture helpers. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
