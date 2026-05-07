@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/vue",
-  "version": "0.0.0-development",
+  "version": "1.0.0",
   "description": "Vue 3 adapter for @browsonic/sdk — error boundary, composables, app plugin with errorHandler chaining. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
