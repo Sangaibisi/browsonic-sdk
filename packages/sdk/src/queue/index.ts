@@ -57,6 +57,15 @@ interface QueueOptions {
    * dropped-event counters into it. Null otherwise.
    */
   diagnostics?: DiagnosticsStore | null;
+  /**
+   * Push-update sink for the operator-set sample rate (Sprint 40).
+   * Called whenever the ingest response carried a fresh
+   * `X-Browsonic-Sample-Rate` header that differs from the current
+   * `config.sampleRate`. Lifecycle wires this to {@code sdk.updateConfig}
+   * so a dashboard rate change lands on the running SDK within a
+   * flush interval (~10s) without polling.
+   */
+  onSampleRateChange?: (rate: number) => void;
 }
 
 /**
@@ -72,6 +81,7 @@ export function createEventQueue(options: QueueOptions) {
     sdkName,
     sdkVersion,
     diagnostics,
+    onSampleRateChange,
   } = options;
 
   let queue: BrowsonicEvent[] = [];
@@ -203,6 +213,22 @@ export function createEventQueue(options: QueueOptions) {
         );
       }
     }
+  }
+
+  /**
+   * Apply the operator-set sample rate from the
+   * `X-Browsonic-Sample-Rate` push header (Sprint 40). Only fires
+   * when the server actively advertises a value AND it differs from
+   * the current `config.sampleRate` by more than rounding noise.
+   * The actual `sdk.updateConfig` call is delegated to the lifecycle
+   * layer via `onSampleRateChange` so the queue stays decoupled
+   * from the SDK's mutation surface.
+   */
+  function applySampleRateSignal(rate: number | null): void {
+    if (rate == null || !onSampleRateChange) return;
+    if (Math.abs(config.sampleRate - rate) < 1e-4) return;
+    debugLog(`Sample rate push: ${config.sampleRate.toFixed(4)} → ${rate.toFixed(4)}`);
+    onSampleRateChange(rate);
   }
 
   // Load persisted queue on init
@@ -658,6 +684,7 @@ export function createEventQueue(options: QueueOptions) {
     diagnostics?.recordFlush(flushLatency);
     applyQuotaSignal(result.quotaRemaining ?? null, result.status === 429);
     applyMinSdkVersionSignal(result.minSdkVersion ?? null);
+    applySampleRateSignal(result.sampleRate ?? null);
 
     if (result.success) {
       // Sprint 2 (gap B2 + B3): stamp the wall-clock for the next batch's
@@ -792,6 +819,7 @@ export function createEventQueue(options: QueueOptions) {
     const result = await sendBatch(batch, config, debugLog);
     applyQuotaSignal(result.quotaRemaining ?? null, result.status === 429);
     applyMinSdkVersionSignal(result.minSdkVersion ?? null);
+    applySampleRateSignal(result.sampleRate ?? null);
 
     if (!result.success) {
       // On failure, re-queue the event for retry via normal batching

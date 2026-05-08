@@ -30,6 +30,15 @@ export interface TransportResult {
    * if the running build is older than the advertised floor.
    */
   minSdkVersion?: string | null;
+  /**
+   * Operator-set per-app sample rate, parsed from
+   * `X-Browsonic-Sample-Rate` (Sprint 40). Null if the backend did
+   * not include the header (legacy services or non-/v1/events
+   * responses). Queue-level consumer applies the value to
+   * {@code config.sampleRate} so dashboard changes propagate to live
+   * SDKs without polling.
+   */
+  sampleRate?: number | null;
 }
 
 /**
@@ -43,6 +52,23 @@ function parseQuotaRemaining(response: Response): number | null {
   const parsed = Number(raw);
   if (!Number.isFinite(parsed)) return null;
   if (parsed < 0) return 0;
+  if (parsed > 1) return 1;
+  return parsed;
+}
+
+/**
+ * Parse the optional `X-Browsonic-Sample-Rate` header (Sprint 40).
+ * Returns a [0.001, 1.0]-clamped float, or null when the header is
+ * absent / unparseable. Caller treats null as "no signal", not as
+ * "zero" — the operator's intent only changes when the server
+ * actively advertises a new value.
+ */
+function parseSampleRate(response: Response): number | null {
+  const raw = response.headers.get('X-Browsonic-Sample-Rate');
+  if (raw == null) return null;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return null;
+  if (parsed < 0.001) return 0.001;
   if (parsed > 1) return 1;
   return parsed;
 }
@@ -112,12 +138,19 @@ export async function sendBatch(
       const response = await fetch(resolveEndpoint(config.apiEndpoint, '/v1/events'), init);
       const quotaRemaining = parseQuotaRemaining(response);
       const minSdkVersion = parseMinSdkVersion(response);
+      const sampleRate = parseSampleRate(response);
 
       if (response.ok) {
         debugLog(
           `Batch ${batch.batchId} sent (${batch.events.length} events, quota=${quotaRemaining ?? 'n/a'})`
         );
-        return { success: true, status: response.status, quotaRemaining, minSdkVersion };
+        return {
+          success: true,
+          status: response.status,
+          quotaRemaining,
+          minSdkVersion,
+          sampleRate,
+        };
       }
 
       // Rate limiting
@@ -130,6 +163,7 @@ export async function sendBatch(
           retryAfter,
           quotaRemaining,
           minSdkVersion,
+          sampleRate,
         };
       }
 
