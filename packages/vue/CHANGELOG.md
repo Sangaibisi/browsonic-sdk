@@ -1,3 +1,10 @@
+## [1.3.0](https://github.com/Sangaibisi/browsonic-sdk/compare/vue@v1.2.0...vue@v1.3.0) (2026-05-08)
+
+### Features
+
+- **nextjs:** default reportError POSTs server-runtime errors to /v1/events ([#19](https://github.com/Sangaibisi/browsonic-sdk/issues/19)) ([b83551c](https://github.com/Sangaibisi/browsonic-sdk/commit/b83551cf84ae0efc35f9c5f9cf444bb49e1fea16))
+- **vue:** plugin error path — extract componentName from instance ([#20](https://github.com/Sangaibisi/browsonic-sdk/issues/20)) ([dbef117](https://github.com/Sangaibisi/browsonic-sdk/commit/dbef1179c379614d177480e27614e9ebcf628afb)), closes [#17](https://github.com/Sangaibisi/browsonic-sdk/issues/17)
+
 ## [1.2.0](https://github.com/Sangaibisi/browsonic-sdk/compare/vue@v1.1.0...vue@v1.2.0) (2026-05-08)
 
 ### Features
