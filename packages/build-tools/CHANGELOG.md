@@ -1,3 +1,14 @@
+## [1.1.0](https://github.com/Sangaibisi/browsonic-sdk/compare/build-tools@v1.0.1...build-tools@v1.1.0) (2026-05-08)
+
+### Features
+
+- align 6 framework adapters with dashboard FrameworkContextRenderer ([#17](https://github.com/Sangaibisi/browsonic-sdk/issues/17)) ([c42b506](https://github.com/Sangaibisi/browsonic-sdk/commit/c42b506153418b2da729b4518d4059fbcdba3ca2))
+- **remix:** re-trigger @browsonic/remix publish (silent npm fail recovery) ([d84cd03](https://github.com/Sangaibisi/browsonic-sdk/commit/d84cd03f67ebadd86ea67f932d4d4213267c1645))
+- **sdk:** event-payload schema v2.3 alignment program (S0 → S5+) ([#16](https://github.com/Sangaibisi/browsonic-sdk/issues/16)) ([e02cc3a](https://github.com/Sangaibisi/browsonic-sdk/commit/e02cc3a0687a49056a815f3ad568fad127a512c0))
+- **sdk:** web-vitals collector adds FID + INP ([#18](https://github.com/Sangaibisi/browsonic-sdk/issues/18)) ([3d2b754](https://github.com/Sangaibisi/browsonic-sdk/commit/3d2b75483653dfcf9f6b22106c19023eca2741e2))
+- **svelte:** re-trigger @browsonic/svelte publish (silent npm fail recovery) ([be44532](https://github.com/Sangaibisi/browsonic-sdk/commit/be44532455096c955cabb032eb28e1e4c148494e))
+- **vue:** re-trigger @browsonic/vue publish (silent npm fail recovery) ([fa4aac5](https://github.com/Sangaibisi/browsonic-sdk/commit/fa4aac5c95bc0a6cee5d6c602780609e16bc7a73))
+
 ## [1.0.1](https://github.com/Sangaibisi/browsonic-sdk/compare/build-tools@v1.0.0...build-tools@v1.0.1) (2026-05-07)
 
 ### Features
