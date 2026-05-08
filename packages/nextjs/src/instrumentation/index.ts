@@ -162,7 +162,13 @@ export function browsonicInstrumentation(
   options: BrowsonicInstrumentationOptions = {},
 ): BrowsonicInstrumentation {
   const warn = options.warn ?? defaultWarn;
-  const reportError = options.reportError ?? defaultReportError;
+  // 0.3.1 — when no custom reportError is supplied AND both
+  // `apiEndpoint` + `appKey` are configured, default to a fetch-POST
+  // bridge that forwards server-runtime errors to the same
+  // `/v1/events` ingest endpoint the browser SDK uses. Falls back to
+  // `console.error` when config is incomplete or `fetch` is missing
+  // (test runners without a runtime fetch polyfill).
+  const reportError = options.reportError ?? makeFetchReportError(options, warn);
 
   const register = (): void => {
     if (!options.apiEndpoint) {
@@ -210,6 +216,86 @@ function defaultWarn(message: string): void {
   console.warn(message);
 }
 
-function defaultReportError(error: unknown, context?: Record<string, unknown>): void {
-  console.error('[browsonic]', error, context);
+/**
+ * Build a `reportError` sink that POSTs server-runtime errors to the
+ * Browsonic ingest endpoint. Returns a `console.error` fallback when
+ * config is incomplete or `fetch` is unavailable, so the contract
+ * stays "errors land somewhere visible" even with no setup.
+ *
+ * The payload is a minimal `EventBatch` shape — no scope, no
+ * telemetry, no plugins — because the Node / Edge runtime that runs
+ * `instrumentation.ts` doesn't have the browser SDK's session state
+ * to draw from. The dashboard renders these as plain server events;
+ * the per-request enrichment (route, method, runtime hint) lands as
+ * `extras` so the existing event-detail viewer surfaces it without
+ * a schema change.
+ *
+ * Network failures are swallowed to a `warn()` call — Next's error
+ * pipeline must continue regardless of whether reporting succeeded,
+ * and a thrown fetch would mask the original error in the request
+ * lifecycle.
+ */
+function makeFetchReportError(
+  options: BrowsonicInstrumentationOptions,
+  warn: (message: string) => void,
+): (error: unknown, context?: Record<string, unknown>) => void {
+  return (error, context) => {
+    const apiEndpoint = options.apiEndpoint;
+    const appKey = options.appKey;
+    if (!apiEndpoint || !appKey || typeof fetch !== 'function') {
+      console.error('[browsonic]', error, context);
+      return;
+    }
+
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    const now = new Date().toISOString();
+    const cryptoLike = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    const id =
+      typeof cryptoLike?.randomUUID === 'function'
+        ? cryptoLike.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    const batch = {
+      batchId: id,
+      timestamp: now,
+      appKey,
+      environment: options.environment ?? 'production',
+      sessionId: 'server',
+      events: [
+        {
+          eventId: id,
+          timestamp: now,
+          type: 'error',
+          level: 'error',
+          message: errorObj.message,
+          stack: errorObj.stack ?? null,
+          context: { url: '' },
+          ...(context ? { extras: context } : {}),
+        },
+      ],
+      sdk: {
+        name: '@browsonic/nextjs/instrumentation',
+        version: BROWSONIC_INSTRUMENTATION_VERSION,
+      },
+    };
+
+    void fetch(`${apiEndpoint.replace(/\/$/, '')}/v1/events`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-APP-KEY': appKey,
+      },
+      body: JSON.stringify(batch),
+      // `keepalive: true` lets the request outlive a serverless
+      // function teardown — Edge runtimes commonly tear the
+      // request context down before the fetch promise settles.
+      keepalive: true,
+    }).catch((e) => {
+      warn(
+        `[browsonic] instrumentation reportError fetch failed: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      );
+    });
+  };
 }
