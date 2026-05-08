@@ -15,6 +15,7 @@ function makeFakeSdk(): Browsonic {
   return {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -31,6 +32,15 @@ describe('browsonicPlugin', () => {
     expect(typeof app.config.errorHandler).toBe('function');
     app.config.errorHandler!(new Error('failure'), null, 'render');
     expect(sdk.captureError).toHaveBeenCalled();
+    // Vue context bucket carries app.version + errorInfo on every
+    // captured error, so the dashboard's VueCard renders both.
+    expect(sdk.setContext).toHaveBeenCalledWith(
+      'vue',
+      expect.objectContaining({
+        version: expect.stringMatching(/^3\./),
+        errorInfo: 'render',
+      }),
+    );
   });
 
   it('records the Vue error info under "vueErrorInfo" metadata', () => {

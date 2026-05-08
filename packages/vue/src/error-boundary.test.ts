@@ -21,6 +21,7 @@ function makeFakeSdk(): Browsonic {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
     setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -67,6 +68,15 @@ describe('BrowsonicErrorBoundary', () => {
       },
     });
     expect(sdk.captureError).toHaveBeenCalled();
+    // Vue context bucket is what the dashboard's VueCard consumes;
+    // it should carry the runtime version + lifecycle hook hint.
+    expect(sdk.setContext).toHaveBeenCalledWith(
+      'vue',
+      expect.objectContaining({
+        version: expect.stringMatching(/^3\./),
+        lifecycleHook: expect.any(String),
+      }),
+    );
     const callArg = (sdk.captureError as ReturnType<typeof vi.fn>).mock.calls[0]![0] as Error;
     expect(callArg).toBeInstanceOf(Error);
     expect(callArg.message).toBe('child-render-failure');
