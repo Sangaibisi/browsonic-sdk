@@ -13,10 +13,10 @@
  * - `browsonicInstrumentation(options)` — factory that returns the
  *   `{ register, onRequestError }` shape Next.js expects. Consumers
  *   wire it once and re-export the two functions verbatim.
- * - `BROWSONIC_INSTRUMENTATION_VERSION` — string constant tagged
- *   on whatever the future server-side capture path emits, useful
- *   for distinguishing "this app is on the new instrumentation
- *   wire-up" from "this app is on the old client-only setup".
+ * - `BROWSONIC_INSTRUMENTATION_VERSION` — string constant exposed
+ *   so consumers building their own `reportError` sink can stamp
+ *   the wire-up version on the events they POST. Bumped when the
+ *   factory's call signature changes.
  *
  * Runtime profile:
  *
@@ -47,10 +47,9 @@
  */
 
 /**
- * Version stamp the future server-runtime capture path will tag
- * on emitted events. Bump when the wire-up contract changes
- * (consumer-visible — the version sticks to the
- * `nextjs.instrumentation.version` tag).
+ * Version stamp consumers can attach to the events their own
+ * `reportError` callback emits. Bump when the factory's call
+ * signature changes so user-supplied sinks can branch on it.
  */
 export const BROWSONIC_INSTRUMENTATION_VERSION = '0.3.0';
 
@@ -153,12 +152,10 @@ export interface BrowsonicInstrumentation {
  *   and emits one `console.warn` per missing field. Returns
  *   immediately on success (no async work).
  * - `onRequestError(error, request, context)` forwards the error
- *   to `console.error` with the request path + route metadata as
- *   a structured prefix. Tests can override the sink via the
- *   `reportError` option.
- *
- * Future versions add server-runtime capture without changing the
- * factory's call signature — the entry point is forward-compatible.
+ *   to `console.error` (or your `reportError` override) with the
+ *   request path + route metadata as a structured prefix. The SDK
+ *   does not POST to any ingest pipeline by default — Browsonic
+ *   is browser-only by design.
  */
 export function browsonicInstrumentation(
   options: BrowsonicInstrumentationOptions = {},
@@ -186,9 +183,10 @@ export function browsonicInstrumentation(
         '[browsonic] instrumentation.register: missing `appKey`. Set BROWSONIC_APP_KEY or pass `appKey` to browsonicInstrumentation().',
       );
     }
-    // Future server-runtime capture init lands here. The version
-    // stamp is exported so future events can carry it without
-    // re-inferring from the call site.
+    // Validation only. No additional bootstrap work fires here —
+    // the SDK is browser-only and `register()` runs in the server
+    // runtime, so any per-request capture has to live on
+    // `onRequestError` below.
   };
 
   const onRequestError = (
