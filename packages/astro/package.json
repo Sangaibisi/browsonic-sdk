@@ -1,6 +1,6 @@
 {
   "name": "@browsonic/astro",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Astro adapter for @browsonic/sdk — View Transitions navigation breadcrumbs, client-side capture helpers. Apache-2.0.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
