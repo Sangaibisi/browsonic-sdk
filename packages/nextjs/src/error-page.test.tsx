@@ -97,7 +97,7 @@ describe('BrowsonicErrorPage', () => {
     expect(sdk.setTag).toHaveBeenCalledWith('nextjs.pathname', '/products/[id]');
   });
 
-  it('lands params as a context when the optional prop is supplied (0.2)', () => {
+  it('lands params under the canonical `nextjs` context bucket (0.3)', () => {
     render(
       <BrowsonicErrorPage
         error={new Error('x')}
@@ -105,15 +105,28 @@ describe('BrowsonicErrorPage', () => {
         params={{ id: '42', slug: 'shoe' }}
       />,
     );
-    expect(sdk.setContext).toHaveBeenCalledWith('nextjs.params', {
-      id: '42',
-      slug: 'shoe',
-    });
+    // 0.3 — params now sit on the `nextjs` bucket alongside runtime
+    // and source so the dashboard's NextJsCard renders one tailored
+    // card. The legacy `nextjs.params` bucket fell into the generic
+    // fallback because it was not in `KNOWN_KEYS`.
+    expect(sdk.setContext).toHaveBeenCalledWith(
+      'nextjs',
+      expect.objectContaining({
+        runtime: 'browser',
+        source: 'app-router-error',
+        params: { id: '42', slug: 'shoe' },
+      }),
+    );
   });
 
-  it('skips the params context when the params object is empty', () => {
+  it('omits the params field on the `nextjs` bucket when params is empty', () => {
     render(<BrowsonicErrorPage error={new Error('x')} reset={() => {}} params={{}} />);
-    expect(sdk.setContext).not.toHaveBeenCalled();
+    // The bucket is still set (carries `runtime` + `source`) but the
+    // `params` field is suppressed when no keys are present.
+    expect(sdk.setContext).toHaveBeenCalledWith('nextjs', {
+      runtime: 'browser',
+      source: 'app-router-error',
+    });
   });
 
   it('isolates setTag failures from the captureError call', () => {

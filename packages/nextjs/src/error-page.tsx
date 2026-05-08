@@ -112,12 +112,20 @@ export function BrowsonicErrorPage({
           // Tag failures don't block the captureError below.
         }
       }
-      if (params && Object.keys(params).length > 0) {
-        try {
-          sdk.setContext('nextjs.params', params);
-        } catch {
-          // Context failures don't block the captureError below.
-        }
+      // Consolidate App Router metadata onto the canonical `nextjs`
+      // context bucket so the dashboard's NextJsCard renders a single
+      // tailored card (was previously split across `nextjs.params` —
+      // an unrecognised key that fell into the generic fallback).
+      // `runtime: 'browser'` is set explicitly here because this
+      // component is a `'use client'` boundary; server-runtime errors
+      // come through the instrumentation entry, not this code path.
+      try {
+        const ctx: Record<string, unknown> = { runtime: 'browser', source: 'app-router-error' };
+        if (typeof pathname === 'string' && pathname.length > 0) ctx.pathname = pathname;
+        if (params && Object.keys(params).length > 0) ctx.params = params;
+        sdk.setContext('nextjs', ctx);
+      } catch {
+        // Context failures don't block the captureError below.
       }
 
       sdk.captureError(error);

@@ -75,6 +75,24 @@ export const browsonicPagesErrorInitialProps = (
     if (sdk) {
       try {
         const errorObj = ctx.err instanceof Error ? ctx.err : new Error(String(ctx.err));
+        // Mirror onto the `nextjs` context bucket BEFORE capture so
+        // the snapshot rides along with the event. Feeds the
+        // dashboard's NextJsCard. `runtime` is inferred from
+        // execution context: `_error.tsx` runs both on server (SSR)
+        // and client; resolveSdk() returns non-null only on the
+        // browser, so this branch is browser-only by construction.
+        try {
+          const nextCtx: Record<string, unknown> = {
+            runtime: 'browser',
+            source: 'pages-router-error',
+          };
+          if (typeof statusCode === 'number') nextCtx.statusCode = statusCode;
+          if (typeof pagePath === 'string' && pagePath.length > 0) nextCtx.pagePath = pagePath;
+          if (typeof ctx.asPath === 'string' && ctx.asPath.length > 0) nextCtx.asPath = ctx.asPath;
+          sdk.setContext('nextjs', nextCtx);
+        } catch {
+          // Context failures must not block captureError below.
+        }
         sdk.captureError(errorObj);
         if (typeof statusCode === 'number') {
           sdk.addMetadata('nextjsStatusCode', String(statusCode));

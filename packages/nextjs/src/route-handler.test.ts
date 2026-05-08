@@ -14,6 +14,7 @@ function installFakeSdk(): Browsonic {
   const sdk = {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
   (window as typeof window & { Browsonic?: unknown }).Browsonic = {
     getBrowsonic: () => sdk,

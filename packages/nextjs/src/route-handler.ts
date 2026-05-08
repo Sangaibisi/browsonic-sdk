@@ -47,6 +47,15 @@ export function withBrowsonicRouteHandler<TArgs extends unknown[], TReturn>(
       if (sdk) {
         try {
           const errorObj = error instanceof Error ? error : new Error(String(error));
+          // Mirror onto the `nextjs` context bucket BEFORE capture so
+          // the dashboard's NextJsCard renders the route-handler
+          // origin. `resolveSdk()` returns non-null only on the
+          // browser, so the runtime is browser by construction.
+          try {
+            sdk.setContext('nextjs', { runtime: 'browser', source: 'route-handler' });
+          } catch {
+            // Context failures must not block captureError below.
+          }
           sdk.captureError(errorObj);
           sdk.addMetadata('nextjsRouteHandler', 'true');
         } catch {
