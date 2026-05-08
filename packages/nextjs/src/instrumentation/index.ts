@@ -13,42 +13,43 @@
  * - `browsonicInstrumentation(options)` — factory that returns the
  *   `{ register, onRequestError }` shape Next.js expects. Consumers
  *   wire it once and re-export the two functions verbatim.
- * - `BROWSONIC_INSTRUMENTATION_VERSION` — string constant tagged
- *   on whatever the future server-side capture path emits, useful
- *   for distinguishing "this app is on the new instrumentation
- *   wire-up" from "this app is on the old client-only setup".
+ * - `BROWSONIC_INSTRUMENTATION_VERSION` — string constant exposed
+ *   so consumers building their own `reportError` sink can stamp
+ *   the wire-up version on the events they POST. Bumped when the
+ *   factory's call signature changes.
  *
  * Runtime profile:
  *
- * The SDK is browser-only — `register()` cannot bootstrap browser
- * capture from the server. What it CAN do today:
+ * Browsonic is a **browser-only** error tracker by design — it
+ * exists to capture client-side issues that browser users actually
+ * experience. The SDK does not, and intentionally will not, ship a
+ * server-runtime ingest path. What this entry CAN do:
  *
  *   1. **Validate config** — warn to `console.warn` when
  *      `apiEndpoint` / `appKey` are missing so the misconfiguration
  *      surfaces at server boot instead of silently shipping pages
  *      with no telemetry.
- *   2. **Future-proof the entry point** — when the SDK gains
- *      server-side capture (Sprint 3 / Sprint 4 source-map pipeline
- *      lands the ingest contract), the same wire-up works without
- *      consumer code change.
- *   3. **Surface unhandled errors via `onRequestError`** —
- *      currently `console.error` so the error doesn't disappear
- *      into Next's default 500 path silently. Future versions can
- *      forward to a server-side ingest endpoint.
+ *   2. **Surface unhandled errors via `onRequestError`** —
+ *      forwards to `console.error` so server errors at least land
+ *      in the platform's stdout instead of disappearing into Next's
+ *      default 500 path silently.
  *
- * The factory is intentionally minimal — it ships the entry point
- * Next.js needs without locking us into a specific server-runtime
- * capture implementation that we'd then have to migrate later.
+ * Why no fetch-POST default: a previous revision shipped a
+ * server-to-/v1/events bridge here. It was reverted because it
+ * pulled the SDK's scope toward Sentry-weight server observability
+ * — Browsonic is TrackJS-weight by design. Consumers who want
+ * server capture supply their own `reportError` callback that POSTs
+ * to whatever pipeline they prefer; the SDK doesn't pick one for
+ * them.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0
  */
 
 /**
- * Version stamp the future server-runtime capture path will tag
- * on emitted events. Bump when the wire-up contract changes
- * (consumer-visible — the version sticks to the
- * `nextjs.instrumentation.version` tag).
+ * Version stamp consumers can attach to the events their own
+ * `reportError` callback emits. Bump when the factory's call
+ * signature changes so user-supplied sinks can branch on it.
  */
 export const BROWSONIC_INSTRUMENTATION_VERSION = '0.3.0';
 
@@ -151,24 +152,25 @@ export interface BrowsonicInstrumentation {
  *   and emits one `console.warn` per missing field. Returns
  *   immediately on success (no async work).
  * - `onRequestError(error, request, context)` forwards the error
- *   to `console.error` with the request path + route metadata as
- *   a structured prefix. Tests can override the sink via the
- *   `reportError` option.
- *
- * Future versions add server-runtime capture without changing the
- * factory's call signature — the entry point is forward-compatible.
+ *   to `console.error` (or your `reportError` override) with the
+ *   request path + route metadata as a structured prefix. The SDK
+ *   does not POST to any ingest pipeline by default — Browsonic
+ *   is browser-only by design.
  */
 export function browsonicInstrumentation(
   options: BrowsonicInstrumentationOptions = {},
 ): BrowsonicInstrumentation {
   const warn = options.warn ?? defaultWarn;
-  // 0.3.1 — when no custom reportError is supplied AND both
-  // `apiEndpoint` + `appKey` are configured, default to a fetch-POST
-  // bridge that forwards server-runtime errors to the same
-  // `/v1/events` ingest endpoint the browser SDK uses. Falls back to
-  // `console.error` when config is incomplete or `fetch` is missing
-  // (test runners without a runtime fetch polyfill).
-  const reportError = options.reportError ?? makeFetchReportError(options, warn);
+  // The default report sink prints to `console.error` so unhandled
+  // server-runtime errors at least surface in the platform's stdout.
+  // We deliberately do NOT ship a fetch-POST default — Browsonic is
+  // a browser-only error tracker by design (TrackJS-weight, not
+  // Sentry-weight). A previous revision added that bridge; it was
+  // reverted because it pulled the SDK's scope toward server-side
+  // observability. Consumers who want server capture should supply
+  // their own `reportError` callback that POSTs to whatever
+  // ingest pipeline they prefer.
+  const reportError = options.reportError ?? defaultReportError;
 
   const register = (): void => {
     if (!options.apiEndpoint) {
@@ -181,9 +183,10 @@ export function browsonicInstrumentation(
         '[browsonic] instrumentation.register: missing `appKey`. Set BROWSONIC_APP_KEY or pass `appKey` to browsonicInstrumentation().',
       );
     }
-    // Future server-runtime capture init lands here. The version
-    // stamp is exported so future events can carry it without
-    // re-inferring from the call site.
+    // Validation only. No additional bootstrap work fires here —
+    // the SDK is browser-only and `register()` runs in the server
+    // runtime, so any per-request capture has to live on
+    // `onRequestError` below.
   };
 
   const onRequestError = (
@@ -217,85 +220,12 @@ function defaultWarn(message: string): void {
 }
 
 /**
- * Build a `reportError` sink that POSTs server-runtime errors to the
- * Browsonic ingest endpoint. Returns a `console.error` fallback when
- * config is incomplete or `fetch` is unavailable, so the contract
- * stays "errors land somewhere visible" even with no setup.
- *
- * The payload is a minimal `EventBatch` shape — no scope, no
- * telemetry, no plugins — because the Node / Edge runtime that runs
- * `instrumentation.ts` doesn't have the browser SDK's session state
- * to draw from. The dashboard renders these as plain server events;
- * the per-request enrichment (route, method, runtime hint) lands as
- * `extras` so the existing event-detail viewer surfaces it without
- * a schema change.
- *
- * Network failures are swallowed to a `warn()` call — Next's error
- * pipeline must continue regardless of whether reporting succeeded,
- * and a thrown fetch would mask the original error in the request
- * lifecycle.
+ * Default `reportError` sink — prints to `console.error` so the
+ * unhandled error at least surfaces in stdout. Browsonic is a
+ * browser-only error tracker; we deliberately do not ship a
+ * server-runtime ingest path. If you want one, supply your own
+ * `reportError` callback to `browsonicInstrumentation({ reportError })`.
  */
-function makeFetchReportError(
-  options: BrowsonicInstrumentationOptions,
-  warn: (message: string) => void,
-): (error: unknown, context?: Record<string, unknown>) => void {
-  return (error, context) => {
-    const apiEndpoint = options.apiEndpoint;
-    const appKey = options.appKey;
-    if (!apiEndpoint || !appKey || typeof fetch !== 'function') {
-      console.error('[browsonic]', error, context);
-      return;
-    }
-
-    const errorObj = error instanceof Error ? error : new Error(String(error));
-    const now = new Date().toISOString();
-    const cryptoLike = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
-    const id =
-      typeof cryptoLike?.randomUUID === 'function'
-        ? cryptoLike.randomUUID()
-        : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-    const batch = {
-      batchId: id,
-      timestamp: now,
-      appKey,
-      environment: options.environment ?? 'production',
-      sessionId: 'server',
-      events: [
-        {
-          eventId: id,
-          timestamp: now,
-          type: 'error',
-          level: 'error',
-          message: errorObj.message,
-          stack: errorObj.stack ?? null,
-          context: { url: '' },
-          ...(context ? { extras: context } : {}),
-        },
-      ],
-      sdk: {
-        name: '@browsonic/nextjs/instrumentation',
-        version: BROWSONIC_INSTRUMENTATION_VERSION,
-      },
-    };
-
-    void fetch(`${apiEndpoint.replace(/\/$/, '')}/v1/events`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-APP-KEY': appKey,
-      },
-      body: JSON.stringify(batch),
-      // `keepalive: true` lets the request outlive a serverless
-      // function teardown — Edge runtimes commonly tear the
-      // request context down before the fetch promise settles.
-      keepalive: true,
-    }).catch((e) => {
-      warn(
-        `[browsonic] instrumentation reportError fetch failed: ${
-          e instanceof Error ? e.message : String(e)
-        }`,
-      );
-    });
-  };
+function defaultReportError(error: unknown, context?: Record<string, unknown>): void {
+  console.error('[browsonic]', error, context);
 }
