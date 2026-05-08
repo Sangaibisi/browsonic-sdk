@@ -15,6 +15,7 @@
 
 import type { BrowsonicConfig } from '../types';
 import { validateConfig, resolveConfig, createDebugLogger } from '../config';
+import { fetchAppConfig, loadCachedAppConfig, saveCachedAppConfig } from '../config/server-config';
 import { createEventQueue } from '../queue';
 import { createTelemetryStore } from '../telemetry';
 import { createDiagnosticsStore, createDiagnosticsReporter } from '../diagnostics';
@@ -137,8 +138,45 @@ export function runBootstrap(sdk: Browsonic): void {
       sdk.sessionId = getOrCreateSessionId();
       sdk.debugLog('Session ID:', sdk.sessionId);
 
+      // Sprint 40 — server-driven sample rate. If a cached snapshot
+      // exists from a previous session it wins over the host-supplied
+      // default *for the sampling decision below*. The fresh fetch
+      // below settles asynchronously and updates the cache for the
+      // *next* session — mid-session decision stays frozen so
+      // head-based sampling semantics are preserved (a single session
+      // is wholly sampled-in or wholly sampled-out).
+      const cached = loadCachedAppConfig(config.appKey);
+      if (cached) {
+        config.sampleRate = cached.sampleRate;
+        sdk.debugLog(`Using cached sample rate: ${cached.sampleRate}`);
+      }
+
       sdk.sessionSampled = Math.random() < config.sampleRate;
       sdk.debugLog(`Session sampled: ${sdk.sessionSampled} (rate: ${config.sampleRate})`);
+
+      // Kick off the fresh fetch asynchronously. The result lands in
+      // localStorage so the next session picks it up; if the response
+      // arrives during this session the queue's push-header path
+      // applies it to the live config (used by stamping sample-rate
+      // on every emitted batch).
+      void fetchAppConfig({
+        apiEndpoint: config.apiEndpoint,
+        appKey: config.appKey,
+        apiKey: config.apiKey ?? undefined,
+      }).then((fresh) => {
+        if (!fresh) return;
+        saveCachedAppConfig(config.appKey, fresh);
+        if (Math.abs(fresh.sampleRate - config.sampleRate) > 1e-4) {
+          try {
+            sdk.updateConfig({ sampleRate: fresh.sampleRate });
+            sdk.debugLog(
+              `Cold-start sample rate refresh: ${config.sampleRate.toFixed(4)} → ${fresh.sampleRate.toFixed(4)}`
+            );
+          } catch (err) {
+            sdk.debugLog('Failed to apply fresh sample rate', err);
+          }
+        }
+      });
 
       sdk.telemetryStore = createTelemetryStore(config.maxTelemetryEntries);
 
@@ -163,6 +201,24 @@ export function runBootstrap(sdk: Browsonic): void {
         sdkName: SDK_NAME,
         sdkVersion: SDK_VERSION,
         diagnostics: sdk.diagnostics,
+        // Sprint 40 — push-update path. The ingest response carries
+        // the operator-set sample rate; queue forwards it here so we
+        // can mutate the running config without polling. Mid-session
+        // `sessionSampled` decision stays frozen — a rate change
+        // takes effect on the next session, matching head-based
+        // sampling semantics.
+        onSampleRateChange: (rate) => {
+          try {
+            sdk.updateConfig({ sampleRate: rate });
+            saveCachedAppConfig(config.appKey, {
+              sampleRate: rate,
+              configVersion: 1,
+              fetchedAt: Date.now(),
+            });
+          } catch (err) {
+            sdk.debugLog('Failed to apply pushed sample rate', err);
+          }
+        },
       });
 
       activatePlugins(sdk);
