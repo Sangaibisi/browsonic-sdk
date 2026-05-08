@@ -1,0 +1,58 @@
+name: actionlint
+
+# Lints GitHub Actions workflow YAML for syntax, expression mistakes
+# (e.g. `secret.X` typo'd from `secrets.X`), deprecated runner labels,
+# and shellcheck issues inside `run:` blocks. Mirrors the pilot in
+# browsonic-compose; rolled out across the fleet so workflow edits in
+# any repo get the same static-check coverage.
+#
+# Why download a pinned binary instead of using a marketplace action:
+# floating refs are the same supply-chain vector that hit
+# trivy-action in 2026-03 (see security.yml). The official
+# `rhysd/actionlint` repo doesn't ship a clean SHA-pinnable action
+# entry point — only `bash <(curl ...)` install scripts and
+# composite actions. We pin the BINARY by version + SHA-256 instead.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      # Pin to a specific actionlint release + verify the tarball SHA
+      # before extracting. Bump VERSION + SHA256 together; checksums
+      # are published at:
+      #   https://github.com/rhysd/actionlint/releases/download/v<VER>/actionlint_<VER>_checksums.txt
+      - name: Install actionlint (pinned)
+        run: |
+          set -euo pipefail
+          VERSION=1.7.12
+          SHA256=8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+          curl -fsSL -o actionlint.tgz \
+            "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz"
+          echo "${SHA256}  actionlint.tgz" | sha256sum -c -
+          tar -xzf actionlint.tgz actionlint
+          sudo install actionlint /usr/local/bin/actionlint
+          actionlint --version
+
+      - name: Lint workflows
+        run: actionlint -color
