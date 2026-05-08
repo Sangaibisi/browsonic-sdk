@@ -1,3 +1,11 @@
+## [1.2.0](https://github.com/Sangaibisi/browsonic-sdk/compare/vue@v1.1.0...vue@v1.2.0) (2026-05-08)
+
+### Features
+
+- align 6 framework adapters with dashboard FrameworkContextRenderer ([#17](https://github.com/Sangaibisi/browsonic-sdk/issues/17)) ([c42b506](https://github.com/Sangaibisi/browsonic-sdk/commit/c42b506153418b2da729b4518d4059fbcdba3ca2))
+- **sdk:** event-payload schema v2.3 alignment program (S0 → S5+) ([#16](https://github.com/Sangaibisi/browsonic-sdk/issues/16)) ([e02cc3a](https://github.com/Sangaibisi/browsonic-sdk/commit/e02cc3a0687a49056a815f3ad568fad127a512c0))
+- **sdk:** web-vitals collector adds FID + INP ([#18](https://github.com/Sangaibisi/browsonic-sdk/issues/18)) ([3d2b754](https://github.com/Sangaibisi/browsonic-sdk/commit/3d2b75483653dfcf9f6b22106c19023eca2741e2))
+
 ## [1.1.0](https://github.com/Sangaibisi/browsonic-sdk/compare/vue@v1.0.0...vue@v1.1.0) (2026-05-07)
 
 ### Features
