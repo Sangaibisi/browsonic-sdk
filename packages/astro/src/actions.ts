@@ -101,6 +101,14 @@ export function withBrowsonicAstroAction<TArgs extends unknown[], TReturn>(
           // (and from Next.js / Remix server failures further down
           // the stack).
           sdk.setTag('astro.runtime', 'action');
+          // Mirror onto the `astro` context bucket so the
+          // dashboard's framework-aware AstroCard renders the
+          // action metadata. Tags are scope-only and currently
+          // dropped at ingest; the context bucket is what reaches
+          // the event payload.
+          const astroCtx: Record<string, unknown> = { runtime: 'action' };
+          if (options.actionName) astroCtx.actionName = options.actionName;
+          sdk.setContext('astro', astroCtx);
           sdk.captureError(errorObj);
         } catch {
           // Defensive isolation — the reporter cannot poison the

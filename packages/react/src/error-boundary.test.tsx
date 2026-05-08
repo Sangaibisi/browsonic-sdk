@@ -25,12 +25,15 @@ function Crash({ message }: { message: string }): null {
 /**
  * Build a minimal SDK stub with just the methods the boundary calls.
  * Cast through unknown to avoid pulling in the full Browsonic shape
- * for tests — we only need `captureError` and `addMetadata`.
+ * for tests — we need `captureError`, `addMetadata`, and `setContext`.
  */
-function fakeSdk(overrides?: Partial<Pick<Browsonic, 'captureError' | 'addMetadata'>>): Browsonic {
+function fakeSdk(
+  overrides?: Partial<Pick<Browsonic, 'captureError' | 'addMetadata' | 'setContext'>>,
+): Browsonic {
   const stub = {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
     ...overrides,
   };
   return stub as unknown as Browsonic;
@@ -101,14 +104,27 @@ describe('BrowsonicErrorBoundary', () => {
   it('reports the captured error to the supplied SDK', () => {
     const captureError = vi.fn();
     const addMetadata = vi.fn();
+    const setContext = vi.fn();
     render(
-      <BrowsonicErrorBoundary sdk={fakeSdk({ captureError, addMetadata })} fallback={<div>fb</div>}>
+      <BrowsonicErrorBoundary
+        sdk={fakeSdk({ captureError, addMetadata, setContext })}
+        fallback={<div>fb</div>}
+      >
         <Crash message="reported" />
       </BrowsonicErrorBoundary>,
     );
     expect(captureError).toHaveBeenCalledOnce();
     const reported = captureError.mock.calls[0]?.[0] as Error;
     expect(reported.message).toBe('reported');
+    // React context bucket feeds the dashboard's ReactCard with the
+    // runtime version + component stack.
+    expect(setContext).toHaveBeenCalledWith(
+      'react',
+      expect.objectContaining({
+        version: expect.stringMatching(/^\d+\./),
+        componentStack: expect.any(String),
+      }),
+    );
   });
 
   it('attaches truncated component stack as metadata', () => {

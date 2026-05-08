@@ -54,6 +54,16 @@ function makeWrapper(kind: RemixHandlerKind) {
         if (sdk) {
           try {
             const errorObj = error instanceof Error ? error : new Error(String(error));
+            // Mirror onto the `remix` context bucket BEFORE capture so
+            // the snapshot taken by captureError carries the handler
+            // kind. Feeds the dashboard's RemixCard. Tags are scope-only
+            // and dropped at ingest today; the context bucket reaches
+            // the event payload.
+            try {
+              sdk.setContext('remix', { handler: kind });
+            } catch {
+              // Context failures must not block captureError below.
+            }
             sdk.captureError(errorObj);
             // Legacy metadata key kept for back-compat with the
             // 0.1 dashboard renderer; new structured tag replaces

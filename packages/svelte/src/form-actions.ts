@@ -107,6 +107,16 @@ export function withBrowsonicAction<E extends ActionEventLike, R>(
           if (event.url.pathname) {
             sdk.addMetadata('sveltekitPath', event.url.pathname);
           }
+          // Mirror onto the `sveltekit` context bucket so the
+          // dashboard's framework-aware SvelteKitCard renders the
+          // action metadata. Tags are scope-only and dropped at
+          // ingest today; the context bucket is what reaches the
+          // event payload.
+          const ctx: Record<string, unknown> = { kind: 'action', actionName: name };
+          if (event.request?.method) ctx.method = event.request.method;
+          if (event.url?.pathname) ctx.path = event.url.pathname;
+          if (event.route?.id) ctx.routeId = event.route.id;
+          sdk.setContext('sveltekit', ctx);
           sdk.captureError(errorObj);
         } catch {
           // Defensive isolation — SDK failures must never poison the

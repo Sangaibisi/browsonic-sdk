@@ -15,6 +15,7 @@ function makeFakeSdk(): Browsonic {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
     setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -90,6 +91,15 @@ describe('withBrowsonicAction', () => {
     expect(sdk.addMetadata).toHaveBeenCalledWith('sveltekitPath', '/login');
     expect(sdk.setTag).toHaveBeenCalledWith('sveltekit.action.name', 'login.default');
     expect(sdk.setTag).toHaveBeenCalledWith('sveltekit.action.method', 'POST');
+    // Context bucket feeds the dashboard's SvelteKitCard; tags are
+    // scope-only and dropped at ingest today.
+    expect(sdk.setContext).toHaveBeenCalledWith('sveltekit', {
+      kind: 'action',
+      actionName: 'login.default',
+      method: 'POST',
+      path: '/login',
+      routeId: '/login',
+    });
   });
 
   it('falls back to route.id when actionName is omitted', async () => {

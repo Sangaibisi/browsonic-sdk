@@ -27,7 +27,15 @@
  * @license Apache-2.0
  */
 
-import { defineComponent, h, ref, onErrorCaptured, type Component, type PropType } from 'vue';
+import {
+  defineComponent,
+  getCurrentInstance,
+  h,
+  ref,
+  onErrorCaptured,
+  type Component,
+  type PropType,
+} from 'vue';
 import type { Browsonic } from '@browsonic/sdk';
 import { useBrowsonic } from './composables';
 
@@ -78,12 +86,13 @@ export const BrowsonicErrorBoundary = defineComponent({
   setup(props, { slots, emit }) {
     const error = ref<Error | null>(null);
     const provided = useBrowsonic();
+    const vueVersion = getCurrentInstance()?.appContext.app.version;
 
     const reset = (): void => {
       error.value = null;
     };
 
-    onErrorCaptured((err, _instance, info) => {
+    onErrorCaptured((err, instance, info) => {
       const sdk = props.sdk ?? provided;
       const errorObj = err instanceof Error ? err : new Error(String(err));
 
@@ -102,6 +111,26 @@ export const BrowsonicErrorBoundary = defineComponent({
               sdk.setTag('vue.errorCaptured.info', tagValue);
             } catch {
               // Tag failures don't block the captureError below.
+            }
+          }
+          // Mirror onto the `vue` context bucket so the dashboard's
+          // VueCard renders Vue version + lifecycle hook + component
+          // name. Tags are scope-only and dropped at ingest today;
+          // the context bucket is what reaches the event payload.
+          const vueCtx: Record<string, unknown> = {};
+          if (vueVersion) vueCtx.version = vueVersion;
+          if (info && typeof info === 'string' && info.length > 0) {
+            vueCtx.lifecycleHook = info.length > 64 ? info.slice(0, 64) : info;
+          }
+          const componentName =
+            (instance as { type?: { name?: string; __name?: string } } | null)?.type?.name ??
+            (instance as { type?: { name?: string; __name?: string } } | null)?.type?.__name;
+          if (componentName) vueCtx.componentName = componentName;
+          if (Object.keys(vueCtx).length > 0) {
+            try {
+              sdk.setContext('vue', vueCtx);
+            } catch {
+              // Context failures must not block captureError.
             }
           }
           sdk.captureError(errorObj);

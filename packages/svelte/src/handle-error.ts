@@ -37,7 +37,7 @@ import { resolveSdk } from './resolve-sdk';
  */
 export interface BrowsonicHandleErrorInput {
   error: unknown;
-  event?: { url?: { pathname?: string } };
+  event?: { url?: { pathname?: string }; route?: { id?: string | null } };
   status?: number;
   message?: string;
 }
@@ -87,8 +87,17 @@ export function handleErrorWithBrowsonic<
 
     if (sdk) {
       try {
-        sdk.captureError(errorObj);
+        // Populate the `sveltekit` context bucket BEFORE capture so
+        // the snapshot taken by `captureError` carries the route
+        // metadata. Feeds the dashboard's SvelteKitCard.
+        const ctx: Record<string, unknown> = { kind: 'handleError' };
         const pathname = input.event?.url?.pathname;
+        if (typeof pathname === 'string' && pathname.length > 0) {
+          ctx.path = pathname;
+        }
+        if (input.event?.route?.id) ctx.routeId = input.event.route.id;
+        sdk.setContext('sveltekit', ctx);
+        sdk.captureError(errorObj);
         if (typeof pathname === 'string' && pathname.length > 0) {
           sdk.addMetadata('sveltekitPath', pathname);
         }

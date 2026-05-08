@@ -76,6 +76,10 @@ export function tagAsAstroIsland(name: string, options: TagAsAstroIslandOptions 
 
   try {
     sdk.setTag(tagKey, name);
+    // Also expose the island name through the `astro` context
+    // bucket. Tags are scope-only and dropped at ingest; the
+    // context bucket is what feeds the dashboard's AstroCard.
+    sdk.setContext('astro', { island: name });
     return true;
   } catch {
     // Defensive isolation — a thrown SDK call must never propagate

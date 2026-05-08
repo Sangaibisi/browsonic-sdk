@@ -15,6 +15,7 @@ function installFakeSdk(): Browsonic {
   const sdk = {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
   (window as typeof window & { Browsonic?: unknown }).Browsonic = {
     getBrowsonic: () => sdk,
@@ -45,6 +46,8 @@ describe('BrowsonicRouteErrorBoundary', () => {
   it('tags the captured event with remixRouteError metadata', () => {
     render(<BrowsonicRouteErrorBoundary error={new Error('x')} />);
     expect(sdk.addMetadata).toHaveBeenCalledWith('remixRouteError', 'true');
+    // Context bucket feeds the dashboard's RemixCard.
+    expect(sdk.setContext).toHaveBeenCalledWith('remix', { handler: 'routeError' });
   });
 
   it('does NOT capture when error is undefined', () => {

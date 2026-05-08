@@ -13,6 +13,7 @@ function makeFakeSdk(): Browsonic {
   return {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -48,6 +49,24 @@ describe('handleErrorWithBrowsonic', () => {
     const handle = handleErrorWithBrowsonic({ sdk });
     handle({ error: new Error('x'), event: { url: { pathname: '/checkout' } } });
     expect(sdk.addMetadata).toHaveBeenCalledWith('sveltekitPath', '/checkout');
+    // Context bucket feeds the dashboard's SvelteKitCard.
+    expect(sdk.setContext).toHaveBeenCalledWith('sveltekit', {
+      kind: 'handleError',
+      path: '/checkout',
+    });
+  });
+
+  it('also records route.id on the sveltekit context bucket when provided', () => {
+    const handle = handleErrorWithBrowsonic({ sdk });
+    handle({
+      error: new Error('x'),
+      event: { url: { pathname: '/orders/[id]' }, route: { id: '/orders/[id]' } },
+    });
+    expect(sdk.setContext).toHaveBeenCalledWith('sveltekit', {
+      kind: 'handleError',
+      path: '/orders/[id]',
+      routeId: '/orders/[id]',
+    });
   });
 
   it('falls back to window.Browsonic.getBrowsonic() when no sdk is passed', () => {

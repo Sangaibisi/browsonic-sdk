@@ -61,6 +61,14 @@ export function BrowsonicRouteErrorBoundary({
     if (!sdk) return;
     const errorObj = error instanceof Error ? error : new Error(coerceMessage(error));
     try {
+      // Mirror onto the `remix` context bucket BEFORE capture so the
+      // snapshot taken by captureError carries the boundary kind.
+      // Feeds the dashboard's RemixCard.
+      try {
+        sdk.setContext('remix', { handler: 'routeError' });
+      } catch {
+        // Context failures must not block captureError below.
+      }
       sdk.captureError(errorObj);
       sdk.addMetadata('remixRouteError', 'true');
     } catch {

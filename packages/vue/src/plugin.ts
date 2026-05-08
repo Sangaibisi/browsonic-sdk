@@ -66,6 +66,16 @@ export const browsonicPlugin: Plugin<[BrowsonicVueOptions?]> = {
 
     if (sdk) {
       app.provide(browsonicInjectionKey, sdk);
+      // Stamp Vue runtime version onto the `vue` context bucket so
+      // every event from this app carries it. Feeds the dashboard's
+      // VueCard. App-level scope: set once at install time.
+      try {
+        sdk.setContext('vue', { version: app.version });
+      } catch {
+        // setContext may be unavailable on very old SDK builds; the
+        // adapter's defensive contract is to keep the install path
+        // resilient.
+      }
     }
 
     if (chain) {
@@ -74,6 +84,17 @@ export const browsonicPlugin: Plugin<[BrowsonicVueOptions?]> = {
         if (sdk) {
           try {
             const errorObj = err instanceof Error ? err : new Error(String(err));
+            // Refresh the `vue` context bucket with the lifecycle
+            // hook hint BEFORE capture so it lands on this event.
+            try {
+              const ctx: Record<string, unknown> = { version: app.version };
+              if (typeof info === 'string' && info.length > 0) {
+                ctx.errorInfo = info.length > 64 ? info.slice(0, 64) : info;
+              }
+              sdk.setContext('vue', ctx);
+            } catch {
+              // Context failures must not block captureError.
+            }
             sdk.captureError(errorObj);
             if (typeof info === 'string' && info.length > 0) {
               sdk.addMetadata('vueErrorInfo', info);

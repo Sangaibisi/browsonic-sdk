@@ -29,7 +29,7 @@
  * @license Apache-2.0
  */
 
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, version as reactVersion, type ErrorInfo, type ReactNode } from 'react';
 import type { Browsonic } from '@browsonic/sdk';
 import { resolveSdk } from './resolve-sdk';
 
@@ -89,8 +89,22 @@ export class BrowsonicErrorBoundary extends Component<
     const sdk = this.props.sdk ?? resolveSdk();
     if (sdk) {
       try {
-        sdk.captureError(error);
+        // Mirror onto the `react` context bucket BEFORE capture so
+        // the snapshot taken by `captureError` carries the React
+        // runtime version + component stack. Feeds the dashboard's
+        // ReactCard. Tags are scope-only and dropped at ingest today;
+        // the context bucket is what reaches the event payload.
         const componentStack = info.componentStack ?? '';
+        const reactCtx: Record<string, unknown> = { version: reactVersion };
+        if (componentStack.length > 0) {
+          reactCtx.componentStack = componentStack.slice(0, MAX_COMPONENT_STACK_LENGTH);
+        }
+        try {
+          sdk.setContext('react', reactCtx);
+        } catch {
+          // Context failures must not block captureError below.
+        }
+        sdk.captureError(error);
         if (componentStack.length > 0) {
           sdk.addMetadata('componentStack', componentStack.slice(0, MAX_COMPONENT_STACK_LENGTH));
         }
