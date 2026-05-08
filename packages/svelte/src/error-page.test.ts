@@ -16,6 +16,7 @@ function makeFakeSdk(): Browsonic {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
     setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -39,6 +40,12 @@ describe('reportErrorPage', () => {
     expect(sdk.captureError).toHaveBeenCalledTimes(1);
     expect(sdk.setTag).toHaveBeenCalledWith('sveltekit.errorPage.status', '500');
     expect(sdk.addMetadata).toHaveBeenCalledWith('sveltekitPath', '/checkout');
+    // Context bucket feeds the dashboard's SvelteKitCard.
+    expect(sdk.setContext).toHaveBeenCalledWith('sveltekit', {
+      kind: 'errorPage',
+      status: 500,
+      path: '/checkout',
+    });
   });
 
   it('preserves the SvelteKit error message in the captured Error', () => {

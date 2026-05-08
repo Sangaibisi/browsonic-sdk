@@ -83,12 +83,18 @@ export function reportErrorPage(error: unknown, options: ReportErrorPageOptions 
   const errorObj = toError(error);
 
   try {
+    const ctx: Record<string, unknown> = { kind: 'errorPage' };
     if (typeof options.status === 'number') {
       sdk.setTag(`${tagNamespace}.status`, String(options.status));
+      ctx.status = options.status;
     }
     if (options.pathname) {
       sdk.addMetadata('sveltekitPath', options.pathname);
+      ctx.path = options.pathname;
     }
+    // The context bucket feeds the dashboard's SvelteKitCard;
+    // tags are scope-only and dropped at ingest today.
+    sdk.setContext('sveltekit', ctx);
     sdk.captureError(errorObj);
   } catch {
     // Defensive isolation — SDK failures must not crash the error
