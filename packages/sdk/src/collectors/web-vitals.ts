@@ -13,19 +13,26 @@
  * "+0KB-by-default" bundle promise. The library would add ~6KB
  * gzipped; we add ~1KB.
  *
- * Coverage in 2.3.0:
- *   - LCP via PerformanceObserver('largest-contentful-paint')
- *   - FCP via PerformanceObserver('paint') filtered by name
- *   - CLS via PerformanceObserver('layout-shift')
+ * Coverage:
+ *   - LCP  via PerformanceObserver('largest-contentful-paint')
+ *   - FCP  via PerformanceObserver('paint') filtered by name
+ *   - CLS  via PerformanceObserver('layout-shift')
  *   - TTFB via PerformanceNavigationTiming (responseStart - startTime)
- *
- * Deferred to 2.3.1 (S2): FID and INP. Both need event-handler hooks
- * (`PerformanceEventTiming` is gated behind explicit observer setup
- * with `buffered: true` and event-type filters); the implementation
- * is bigger than the core four and needs its own test pass.
+ *   - FID  via PerformanceObserver('first-input') — emits once on first
+ *          input then disconnects; processing delay = processingStart -
+ *          startTime
+ *   - INP  via PerformanceObserver('event') with durationThreshold —
+ *          tracks the worst observed interaction duration across the
+ *          page lifetime, flushed on visibilitychange / pagehide
  *
  * Rating thresholds match Google's web-vitals reference table
  * (https://web.dev/vitals/) at the time of writing.
+ *
+ * Why a 16ms `durationThreshold` on the INP observer: anything below
+ * a single 60Hz frame is below the threshold of perceptible jank for
+ * the user, and including those entries dilutes the worst-case
+ * tracking with noise. The observer therefore opts out of sub-frame
+ * samples — matching the `web-vitals` lib's default.
  */
 
 import { safeExecute, timestamp } from '../utils';
@@ -195,10 +202,104 @@ export function createWebVitalsCollector(options: WebVitalsCollectorOptions): ()
     (e) => debugLog('web-vitals: TTFB read failed', e)
   );
 
-  // FID + INP deferred to 2.3.1 — see file header.
+  // ---- FID (first-input) -------------------------------------------
+  // The browser only emits one `first-input` PerformanceEntry per page
+  // load, so the observer disconnects itself the moment it sees a
+  // sample. Value is the input-processing delay (ms): how long the
+  // main thread blocked before the first user interaction's handler
+  // started running.
+  safeExecute(
+    () => {
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const e = entry as PerformanceEntry & {
+            processingStart?: number;
+            startTime: number;
+          };
+          if (typeof e.processingStart !== 'number') continue;
+          const value = e.processingStart - e.startTime;
+          if (value < 0) continue;
+          onMetric({
+            name: 'FID',
+            value,
+            delta: value,
+            id: makeId('FID'),
+            rating: rate('FID', value),
+            navigationType: getNavigationType(),
+          });
+          observer.disconnect();
+          return;
+        }
+      });
+      observer.observe({ type: 'first-input', buffered: true });
+      cleanups.push(() => observer.disconnect());
+    },
+    undefined,
+    (e) => debugLog('web-vitals: FID observer failed', e)
+  );
+
+  // ---- INP (interaction-to-next-paint) ------------------------------
+  // INP is the worst observed interaction duration across the page's
+  // lifetime — Google's recommendation for a single-number summary
+  // when reporting at session boundaries. Pure max() is conservative
+  // (a robust P98 needs a sliding window the lib doesn't carry); a
+  // future revision can swap in percentile tracking without changing
+  // the wire shape. Reported once on tab-hide / pagehide so we don't
+  // lose the sample to abandonment.
+  safeExecute(
+    () => {
+      let maxDuration = 0;
+      let reported = false;
+      const observer = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const e = entry as PerformanceEntry & { duration: number };
+          if (e.duration > maxDuration) {
+            maxDuration = e.duration;
+          }
+        }
+      });
+      // `durationThreshold` is part of `PerformanceObserverInit` for
+      // the 'event' entry type; lib.dom doesn't model it on the base
+      // type so we cast at the call site to keep the rest of the
+      // observer plumbing strictly typed.
+      observer.observe({
+        type: 'event',
+        buffered: true,
+        durationThreshold: 16,
+      } as PerformanceObserverInit & { durationThreshold: number });
+
+      const flush = () => {
+        if (reported || maxDuration === 0) return;
+        reported = true;
+        const value = +maxDuration.toFixed(2);
+        onMetric({
+          name: 'INP',
+          value,
+          delta: value,
+          id: makeId('INP'),
+          rating: rate('INP', value),
+          navigationType: getNavigationType(),
+        });
+      };
+
+      const onVis = () => {
+        if (document.visibilityState === 'hidden') flush();
+      };
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('pagehide', flush, { once: true });
+
+      cleanups.push(() => {
+        observer.disconnect();
+        document.removeEventListener('visibilitychange', onVis);
+        flush();
+      });
+    },
+    undefined,
+    (e) => debugLog('web-vitals: INP observer failed', e)
+  );
 
   // Avoid an unused identifier when only the timestamp helper grows
-  // useful in S2's INP implementation.
+  // useful in future revisions.
   void timestamp;
 
   return () => {
