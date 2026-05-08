@@ -136,4 +136,104 @@ describe('browsonicInstrumentation', () => {
     void onRequestError(new Error('x'), {}, {});
     expect(reportError).toHaveBeenCalledTimes(1);
   });
+
+  // ---- 0.3.1 — default reportError fetch-POST bridge -----------------
+
+  describe('default reportError fetch bridge (0.3.1)', () => {
+    it('POSTs an EventBatch to /v1/events when apiEndpoint + appKey are set', async () => {
+      const fetchSpy = vi
+        .fn<(...args: Parameters<typeof fetch>) => Promise<Response>>()
+        .mockResolvedValue({ ok: true } as Response);
+      vi.stubGlobal('fetch', fetchSpy);
+
+      try {
+        const { onRequestError } = browsonicInstrumentation({
+          apiEndpoint: 'https://api.test.example/',
+          appKey: 'app-123',
+          warn: () => {},
+        });
+        void onRequestError(
+          new Error('server-route-failed'),
+          { path: '/api/checkout', method: 'POST' },
+          { routerKind: 'App Router', routePath: '/api/checkout', routeType: 'route' },
+        );
+
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
+        const [url, init] = fetchSpy.mock.calls[0]!;
+        // Trailing slash on apiEndpoint is normalised away.
+        expect(url).toBe('https://api.test.example/v1/events');
+        expect(init).toMatchObject({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'X-APP-KEY': 'app-123',
+          }),
+          keepalive: true,
+        });
+        const body = JSON.parse((init as RequestInit).body as string);
+        expect(body).toMatchObject({
+          appKey: 'app-123',
+          environment: 'production',
+          sessionId: 'server',
+          events: [
+            expect.objectContaining({
+              type: 'error',
+              level: 'error',
+              message: 'server-route-failed',
+              extras: expect.objectContaining({
+                'nextjs.path': '/api/checkout',
+                'nextjs.routerKind': 'App Router',
+              }),
+            }),
+          ],
+        });
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('falls back to console.error when apiEndpoint is missing', () => {
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const fetchSpy = vi.fn();
+      vi.stubGlobal('fetch', fetchSpy);
+
+      try {
+        const { onRequestError } = browsonicInstrumentation({
+          appKey: 'only-app-key',
+          warn: () => {},
+        });
+        void onRequestError(new Error('x'), {}, {});
+
+        expect(fetchSpy).not.toHaveBeenCalled();
+        expect(consoleSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        consoleSpy.mockRestore();
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it('routes a fetch rejection to warn() instead of throwing', async () => {
+      const warn = vi.fn();
+      const fetchSpy = vi
+        .fn<(...args: Parameters<typeof fetch>) => Promise<Response>>()
+        .mockRejectedValue(new Error('network-down'));
+      vi.stubGlobal('fetch', fetchSpy);
+
+      try {
+        const { onRequestError } = browsonicInstrumentation({
+          apiEndpoint: 'https://api.test.example',
+          appKey: 'app-123',
+          warn,
+        });
+        void onRequestError(new Error('orig'), {}, {});
+        // Allow the fetch promise + .catch handler to settle.
+        await new Promise((r) => setTimeout(r, 0));
+
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn.mock.calls[0]![0]).toContain('network-down');
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
 });
