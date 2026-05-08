@@ -16,6 +16,7 @@ function makeFakeSdk(): Browsonic {
     captureError: vi.fn(),
     setTag: vi.fn(),
     addMetadata: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -53,6 +54,12 @@ describe('withBrowsonicAstroAction', () => {
     expect(sdk.captureError).toHaveBeenCalledWith(err);
     expect(sdk.setTag).toHaveBeenCalledWith('astro.action.name', 'signup');
     expect(sdk.setTag).toHaveBeenCalledWith('astro.runtime', 'action');
+    // The context bucket is what the dashboard's AstroCard consumes;
+    // tags are scope-only and dropped at ingest today.
+    expect(sdk.setContext).toHaveBeenCalledWith('astro', {
+      runtime: 'action',
+      actionName: 'signup',
+    });
   });
 
   it('coerces a non-Error throw to Error before reporting', async () => {
@@ -84,6 +91,8 @@ describe('withBrowsonicAstroAction', () => {
     // The runtime tag still fires so the dashboard can route the
     // event to the Astro Actions bucket even without a name.
     expect(setTagCalls.find((c) => c[0] === 'astro.runtime')).toBeDefined();
+    // Context bucket carries runtime but no actionName when omitted.
+    expect(sdk.setContext).toHaveBeenCalledWith('astro', { runtime: 'action' });
   });
 
   it('respects a custom tagNamespace', async () => {

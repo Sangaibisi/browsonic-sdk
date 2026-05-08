@@ -12,6 +12,7 @@ import { tagAsAstroIsland } from './island';
 function makeFakeSdk(): Browsonic {
   return {
     setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
 }
 
@@ -32,6 +33,9 @@ describe('tagAsAstroIsland', () => {
     const result = tagAsAstroIsland('ContactForm', { sdk });
     expect(result).toBe(true);
     expect(sdk.setTag).toHaveBeenCalledWith('astro.island', 'ContactForm');
+    // The context bucket is what the dashboard's AstroCard consumes;
+    // tags are scope-only and dropped at ingest today.
+    expect(sdk.setContext).toHaveBeenCalledWith('astro', { island: 'ContactForm' });
   });
 
   it('respects a custom tagKey', () => {
