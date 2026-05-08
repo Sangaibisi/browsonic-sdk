@@ -17,6 +17,7 @@ function installFakeSdk(): Browsonic {
     captureError: vi.fn(),
     addMetadata: vi.fn(),
     setTag: vi.fn(),
+    setContext: vi.fn(),
   } as unknown as Browsonic;
   (window as typeof window & { Browsonic?: unknown }).Browsonic = {
     getBrowsonic: () => sdk,
@@ -77,6 +78,8 @@ describe('withBrowsonicRemixAction', () => {
     });
     await expect(wrapped()).rejects.toThrow('x');
     expect(sdk.setTag).toHaveBeenCalledWith('remix.handler', 'action');
+    // Context bucket feeds the dashboard's RemixCard.
+    expect(sdk.setContext).toHaveBeenCalledWith('remix', { handler: 'action' });
   });
 
   it('still re-throws when the SDK is unreachable', async () => {
@@ -134,6 +137,8 @@ describe('withBrowsonicRemixLoader (0.2)', () => {
     await expect(wrapped()).rejects.toThrow('x');
     expect(sdk.addMetadata).toHaveBeenCalledWith('remixLoader', 'true');
     expect(sdk.setTag).toHaveBeenCalledWith('remix.handler', 'loader');
+    // Context bucket feeds the dashboard's RemixCard.
+    expect(sdk.setContext).toHaveBeenCalledWith('remix', { handler: 'loader' });
   });
 
   it('does not poison the response when captureError throws', async () => {
