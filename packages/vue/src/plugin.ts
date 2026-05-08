@@ -91,6 +91,19 @@ export const browsonicPlugin: Plugin<[BrowsonicVueOptions?]> = {
               if (typeof info === 'string' && info.length > 0) {
                 ctx.errorInfo = info.length > 64 ? info.slice(0, 64) : info;
               }
+              // 0.3.1 — pull the component name from the offending
+              // ComponentPublicInstance so VueCard can show "where it
+              // happened" without the operator having to read the
+              // componentStack metadata blob. Mirrors the boundary's
+              // existing logic; the plugin path covers errors that
+              // skipped a boundary (event handlers, async,
+              // out-of-tree throws).
+              const componentName =
+                (instance as { $options?: { name?: string; __name?: string } } | null)?.$options
+                  ?.name ??
+                (instance as { $options?: { name?: string; __name?: string } } | null)?.$options
+                  ?.__name;
+              if (componentName) ctx.componentName = componentName;
               sdk.setContext('vue', ctx);
             } catch {
               // Context failures must not block captureError.

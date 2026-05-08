@@ -50,6 +50,40 @@ describe('browsonicPlugin', () => {
     expect(sdk.addMetadata).toHaveBeenCalledWith('vueErrorInfo', 'setup function');
   });
 
+  it('extracts componentName from the offending instance and lands it on the vue context', () => {
+    const app = createApp({ render: () => null });
+    app.use(browsonicPlugin, { sdk });
+    // Pass a fake ComponentPublicInstance-shaped object so the
+    // plugin's $options walk has something to read. Vue's runtime
+    // would normally hand us a real instance with $options.name set
+    // by a `defineComponent({ name: 'X' })` call.
+    const fakeInstance = { $options: { name: 'CheckoutForm' } } as unknown as Parameters<
+      NonNullable<typeof app.config.errorHandler>
+    >[1];
+    app.config.errorHandler!(new Error('failure'), fakeInstance, 'render');
+    expect(sdk.setContext).toHaveBeenCalledWith(
+      'vue',
+      expect.objectContaining({
+        version: expect.stringMatching(/^3\./),
+        errorInfo: 'render',
+        componentName: 'CheckoutForm',
+      }),
+    );
+  });
+
+  it('falls back to $options.__name (script-setup compiled name) when name is absent', () => {
+    const app = createApp({ render: () => null });
+    app.use(browsonicPlugin, { sdk });
+    const fakeInstance = { $options: { __name: 'OrderSummary' } } as unknown as Parameters<
+      NonNullable<typeof app.config.errorHandler>
+    >[1];
+    app.config.errorHandler!(new Error('failure'), fakeInstance, 'render');
+    expect(sdk.setContext).toHaveBeenCalledWith(
+      'vue',
+      expect.objectContaining({ componentName: 'OrderSummary' }),
+    );
+  });
+
   it('preserves a previously-installed errorHandler (chains, does not replace)', () => {
     const previous = vi.fn();
     const app = createApp({ render: () => null });
