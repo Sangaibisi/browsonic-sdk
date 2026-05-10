@@ -1,7 +1,7 @@
 /**
  * Playwright configuration for e2e performance tests.
  *
- * PERFORMANS-STRATEJISI.md §7.2 — E2E perf suite runs in CI on three device profiles:
+ * PERFORMANCE-STRATEGY.md §7.2 — E2E perf suite runs in CI on three device profiles:
  *   - Desktop baseline
  *   - Mid-tier mobile (Moto G4 proxy, 6x CPU throttle, Fast 3G)
  *   - Low-end mobile (4x CPU throttle + Slow 3G)

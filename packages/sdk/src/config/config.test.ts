@@ -2,7 +2,7 @@
 
 /**
  * updateConfig deep-merge + runtime-lock regression suite.
- * Covers TEKNIK-IYILESTIRME-PLANI.md §1.5.
+ * Covers TECHNICAL-IMPROVEMENT-PLAN.md §1.5.
  */
 import { describe, it, expect, vi } from 'vitest';
 import {

@@ -64,7 +64,7 @@ interface XHRMetadata {
 /**
  * XMLHttpRequest interceptor — 0.3.0 rewrite.
  *
- * Leak fixes applied (TEKNIK-IYILESTIRME §2.2):
+ * Leak fixes applied (TECHNICAL-IMPROVEMENTS §2.2):
  *   1. Per-instance metadata now lives in a WeakMap, not a property on
  *      XMLHttpRequest. Previously every XHR instance carried a
  *      `_browsonicMetadata` property even after uninstall — that polluted

@@ -17,7 +17,7 @@
  *   3. Run this script — fails with non-zero exit on regression.
  *   4. Upload current bench-results.json as artifact for next run.
  *
- * See PERFORMANS-STRATEJISI.md §7.1 + BASELINE.md.
+ * See PERFORMANCE-STRATEGY.md §7.1 + BASELINE.md.
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';

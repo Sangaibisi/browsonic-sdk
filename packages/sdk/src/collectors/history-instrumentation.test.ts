@@ -3,7 +3,7 @@
 /**
  * History instrumentation — regression suite.
  *
- * Covers TEKNIK-IYILESTIRME-PLANI.md §1.4:
+ * Covers TECHNICAL-IMPROVEMENT-PLAN.md §1.4:
  *   - Single wrap regardless of subscriber count.
  *   - Native methods restored after last unsubscribe.
  *   - Subscriber errors do not break the history API.

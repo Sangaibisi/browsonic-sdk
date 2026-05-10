@@ -1,8 +1,8 @@
 /**
  * Vitest configuration — unit tests + microbenchmarks.
  *
- * See PERFORMANS-STRATEJISI.md §7.1 for benchmark philosophy.
- * See PERFORMANS-STRATEJISI.md §1 for SLO targets benchmarks verify.
+ * See PERFORMANCE-STRATEGY.md §7.1 for benchmark philosophy.
+ * See PERFORMANCE-STRATEGY.md §1 for SLO targets benchmarks verify.
  *
  * Bench results are emitted as JSON via the `--outputJson` CLI flag
  * (see `bench` script in package.json) — not via a config option, as

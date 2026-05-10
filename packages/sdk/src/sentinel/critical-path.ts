@@ -6,7 +6,7 @@
  * accumulation, skips widget UX, and drops non-whitelisted events at
  * the boundary for minimum overhead.
  *
- * See PERFORMANS-STRATEJISI.md §5.
+ * See PERFORMANCE-STRATEGY.md §5.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0

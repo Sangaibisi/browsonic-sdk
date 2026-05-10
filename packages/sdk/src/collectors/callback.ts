@@ -71,7 +71,7 @@ function wrapCallback<T extends AnyFn>(callback: T, bindStack: string): T {
  *     still finds the wrapped listener and tears it down — prior versions
  *     silently leaked listeners because each wrap produced a new function.
  *
- * See TEKNIK-IYILESTIRME §2.1 and PERFORMANS-STRATEJISI §9.
+ * See TECHNICAL-IMPROVEMENTS §2.1 and PERFORMANCE-STRATEGY §9.
  */
 export function createCallbackCollector(options: CallbackCollectorOptions) {
   const { debugLog } = options;

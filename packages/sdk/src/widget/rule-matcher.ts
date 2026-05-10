@@ -43,7 +43,7 @@ export function createRuleMatcher(initialRules: WidgetRule[] = []): RuleMatcher 
 
   // Compiled regex cache — prevents ReDoS-prone patterns from reaching the
   // engine and prevents re-compilation on every event (hot path).
-  // See TEKNIK-IYILESTIRME-PLANI.md §1.2.
+  // See TECHNICAL-IMPROVEMENT-PLAN.md §1.2.
   const compileRegex = createRegexCache((pattern, reason) => {
     console.warn('[Browsonic] Widget rule regex rejected:', reason, '/', pattern);
   });

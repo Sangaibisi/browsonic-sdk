@@ -2,7 +2,7 @@
 
 /**
  * Queue — sampling + batch metadata regression suite.
- * Covers PERFORMANS-STRATEJISI §3 (sampling) and CHANGELOG 0.3.0 batch fields.
+ * Covers PERFORMANCE-STRATEGY §3 (sampling) and CHANGELOG 0.3.0 batch fields.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createEventQueue } from './index';

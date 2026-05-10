@@ -304,7 +304,7 @@ export class Browsonic {
   /**
    * Update configuration at runtime. Nested objects are deep-merged;
    * arrays are replaced. Runtime-locked keys (apiEndpoint, captureXHR,
-   * …) are skipped with a debug warning. See TEKNIK-IYILESTIRME §1.5.
+   * …) are skipped with a debug warning. See TECHNICAL-IMPROVEMENTS §1.5.
    */
   updateConfig(partialConfig: Partial<BrowsonicConfig>): void {
     const raw = this.rawConfig;

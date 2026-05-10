@@ -1,7 +1,7 @@
 /**
  * Telemetry ring buffer microbenchmark.
  *
- * PERFORMANS-STRATEJISI.md §1: Event process p95 <= 1ms.
+ * PERFORMANCE-STRATEGY.md §1: Event process p95 <= 1ms.
  * Ring buffer `add()` is in that hot path.
  */
 import { bench, describe } from 'vitest';

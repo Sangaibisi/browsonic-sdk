@@ -448,7 +448,7 @@ export interface EventBatch {
   /**
    * Sampling metadata. Backends MUST apply weighting `1/sampleRate` when
    * computing aggregate metrics from sampled batches.
-   * See PERFORMANS-STRATEJISI.md §3 (Sampling Strategy).
+   * See PERFORMANCE-STRATEGY.md §3 (Sampling Strategy).
    */
   sampled?: boolean;
   sampleRate?: number;
@@ -572,7 +572,7 @@ export interface BrowsonicConfig {
    * enters "storm mode": fingerprint dedup cooldown is multiplied by
    * `errorStormCooldownMultiplier` to collapse duplicate noise while
    * still delivering the first few per-fingerprint.
-   * Added in 0.3.0. See TEKNIK-IYILESTIRME §2.4.
+   * Added in 0.3.0. See TECHNICAL-IMPROVEMENTS §2.4.
    */
   errorStormThreshold?: number; // default: 20
   errorStormWindowMs?: number; // default: 10000
@@ -780,7 +780,7 @@ export interface BrowsonicConfig {
    *
    * 2.0 — the legacy `true` value was removed. Use `'global'` instead.
    *
-   * See TEKNIK-IYILESTIRME §2.1.
+   * See TECHNICAL-IMPROVEMENTS §2.1.
    */
   captureAsyncStack?: 'manual' | 'global' | false;
 
@@ -997,7 +997,7 @@ export type SdkState = 'uninitialized' | 'initializing' | 'running' | 'paused' |
  * Options for entering Critical Path mode — used on conversion-critical
  * flows (checkout, payment, signup) to reduce SDK overhead to the minimum.
  *
- * See PERFORMANS-STRATEJISI.md §5.
+ * See PERFORMANCE-STRATEGY.md §5.
  */
 export interface CriticalPathOptions {
   /** Analytics label — shown on the Critical-Path Sessions dashboard. */

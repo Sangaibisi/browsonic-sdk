@@ -1,7 +1,7 @@
 /**
  * Memory leak detection — 10min session proxy (compressed to 2min with high event rate).
  *
- * PERFORMANS-STRATEJISI.md §1: Session heap <= 5MB per hour.
+ * PERFORMANCE-STRATEGY.md §1: Session heap <= 5MB per hour.
  * This spec simulates a burst session and checks heap delta.
  *
  * LIMITATIONS:

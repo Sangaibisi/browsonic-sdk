@@ -16,7 +16,7 @@ export interface TransportResult {
   /**
    * Server-reported remaining quota in range [0.0, 1.0]. Null if the
    * backend did not include the `X-Browsonic-Quota-Remaining` header.
-   * See PERFORMANS-STRATEJISI.md §3 (Adaptive Quality Degradation).
+   * See PERFORMANCE-STRATEGY.md §3 (Adaptive Quality Degradation).
    *
    * Consumer (queue) reduces effective sample rate when this drops below
    * ~0.2 and restores it as quota recovers.
@@ -122,7 +122,7 @@ export async function sendBatch(
 
       // Prefer low-priority hint on supporting browsers so SDK POSTs
       // never contend with user-critical requests. Unsupported browsers
-      // ignore silently. (See PERFORMANS-STRATEJISI §2 P4.)
+      // ignore silently. (See PERFORMANCE-STRATEGY §2 P4.)
       const init: RequestInit & { priority?: string } = {
         method: 'POST',
         headers,

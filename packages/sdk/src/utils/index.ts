@@ -135,7 +135,7 @@ export function cyrb53(str: string, seed = 0): string {
  * (53-bit) to reduce false-positive deduplication on high-cardinality
  * error streams (1M+ unique errors/day in large tenants saw measurable
  * dedup mistakes under the 32-bit birthday bound).
- * See BASELINE.md + PERFORMANS-STRATEJISI.md §9.
+ * See BASELINE.md + PERFORMANCE-STRATEGY.md §9.
  *
  * Sprint 2 M3: switched the stack contribution from raw string slice
  * to **parsed-frame `function@filename`** (line/column dropped). Two

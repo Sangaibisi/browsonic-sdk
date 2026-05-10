@@ -1,7 +1,7 @@
 /**
  * Event enqueue microbenchmark — the most critical hot path.
  *
- * PERFORMANS-STRATEJISI.md §1: Event process p95 <= 1ms end-to-end.
+ * PERFORMANCE-STRATEGY.md §1: Event process p95 <= 1ms end-to-end.
  * This bench isolates enqueue pipeline: fingerprint + dedup + queue.push.
  *
  * IMPORTANT: Vitest `bench()` does NOT invoke `beforeEach` hooks between

@@ -1,7 +1,7 @@
 /**
  * Perf with SDK loaded — measures delta vs baseline.
  *
- * PERFORMANS-STRATEJISI.md §1 SLOs:
+ * PERFORMANCE-STRATEGY.md §1 SLOs:
  *   - LCP delta <= 50ms
  *   - INP delta <= 10ms
  *   - init() blocking p95 <= 15ms

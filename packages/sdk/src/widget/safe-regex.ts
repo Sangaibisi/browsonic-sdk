@@ -15,7 +15,7 @@
  * in-depth we would move regex execution to a web worker with a watchdog
  * timer. That is Epic 2 territory (URUN-YOL-HARITASI Epic 4.X).
  *
- * See TEKNIK-IYILESTIRME-PLANI.md §1.2.
+ * See TECHNICAL-IMPROVEMENT-PLAN.md §1.2.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0

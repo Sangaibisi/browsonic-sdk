@@ -1,7 +1,7 @@
 /**
  * Web Vitals — LCP / INP / CLS delta (baseline vs with-SDK).
  *
- * PERFORMANS-STRATEJISI.md §1 SLO:
+ * PERFORMANCE-STRATEGY.md §1 SLO:
  *   - LCP delta ≤ 50 ms
  *   - INP delta ≤ 10 ms
  *   - CLS delta ≤ 0.01

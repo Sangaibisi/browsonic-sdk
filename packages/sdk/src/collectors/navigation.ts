@@ -17,7 +17,7 @@ interface NavigationCollectorOptions {
 /**
  * Navigation collector — tracks SPA route changes via the shared history
  * instrumentation module. Does NOT wrap history methods directly; see
- * collectors/history-instrumentation.ts for rationale (TEKNIK-IYILESTIRME-PLANI §1.4).
+ * collectors/history-instrumentation.ts for rationale (TECHNICAL-IMPROVEMENT-PLAN §1.4).
  */
 export function createNavigationCollector(options: NavigationCollectorOptions) {
   const { onTelemetry, debugLog } = options;

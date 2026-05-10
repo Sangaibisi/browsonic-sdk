@@ -16,7 +16,7 @@ import type { Browsonic } from './browsonic';
 /**
  * Set user context. Sensitive fields are masked using the SDK's
  * configured `redactKeys`. Masking is substring-based (legacy behavior
- * kept for backward compat; see TEKNIK-IYILESTIRME-PLANI §3.1).
+ * kept for backward compat; see TECHNICAL-IMPROVEMENT-PLAN §3.1).
  */
 export function setUser(sdk: Browsonic, user: UserContext): void {
   safeExecute(

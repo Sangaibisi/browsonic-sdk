@@ -3,7 +3,7 @@
 /**
  * Safe-regex / ReDoS mitigation — regression suite.
  *
- * Covers TEKNIK-IYILESTIRME-PLANI.md §1.2.
+ * Covers TECHNICAL-IMPROVEMENT-PLAN.md §1.2.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { compileSafeRegex, createRegexCache, MAX_PATTERN_LENGTH } from './safe-regex';

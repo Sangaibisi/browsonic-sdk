@@ -6,7 +6,7 @@
  * session id, telemetry store, queue, and activates plugins; and
  * `destroy()` teardown with plugin deactivate + queue destroy.
  *
- * See PERFORMANS-STRATEJISI.md §1 (init blocking p95 ≤ 15 ms) and §6
+ * See PERFORMANCE-STRATEGY.md §1 (init blocking p95 ≤ 15 ms) and §6
  * (pre-bootstrap buffer for capture-before-running events).
  *
  * @copyright 2024-2026 Browsonic

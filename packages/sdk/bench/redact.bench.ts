@@ -1,8 +1,9 @@
 /**
  * Redaction / masking microbenchmark.
  *
- * PERFORMANS-STRATEJISI.md §3: Storage capture default kapalı, ama açılırsa
- * redact hot path olur. Key lookup O(K*N) mevcut impl'de.
+ * PERFORMANCE-STRATEGY.md §3: Storage capture is off by default; once it's
+ * turned on, redact becomes a hot path. Key lookup is O(K*N) in the current
+ * implementation.
  */
 import { bench, describe } from 'vitest';
 

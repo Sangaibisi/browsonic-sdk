@@ -3,7 +3,7 @@
  *
  * Measures hot-path hash function performance for event deduplication.
  *
- * PERFORMANS-STRATEJISI.md §3: Default is cyrb53 (53-bit Number), not BigInt FNV-1a.
+ * PERFORMANCE-STRATEGY.md §3: Default is cyrb53 (53-bit Number), not BigInt FNV-1a.
  * This bench compares candidate algorithms head-to-head.
  *
  * SLO: fingerprint generation p95 <= 50μs per event.
@@ -27,7 +27,7 @@ const SAMPLE_STACK = `Error: Cannot read property 'foo' of undefined
 const SAMPLE_MESSAGE = "Cannot read property 'foo' of undefined";
 const SAMPLE_URL = 'https://example.com/checkout?step=payment&session=abc123';
 
-// Candidate: cyrb53 — 53-bit, Number-based, fast (PERFORMANS-STRATEJISI §9 decision)
+// Candidate: cyrb53 — 53-bit, Number-based, fast (PERFORMANCE-STRATEGY §9 decision)
 function cyrb53(str: string, seed = 0): string {
   let h1 = 0xdeadbeef ^ seed;
   let h2 = 0x41c6ce57 ^ seed;

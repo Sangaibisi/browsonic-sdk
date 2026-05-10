@@ -1,7 +1,7 @@
 /**
  * Event context collection microbenchmark.
  *
- * PERFORMANS-STRATEJISI.md §1: Event process p95 <= 1ms.
+ * PERFORMANCE-STRATEGY.md §1: Event process p95 <= 1ms.
  * collectEventContext is called per event (hot path).
  */
 import { bench, describe } from 'vitest';
