@@ -4,7 +4,7 @@
  * Public manual-capture API — `captureMessage` / `captureError` — plus
  * the pre-bootstrap buffer that holds events while the SDK is in the
  * `initializing` state (between sync `init()` and the idle-scheduled
- * bootstrap). See PERFORMANS-STRATEJISI.md §6.
+ * bootstrap). See PERFORMANCE-STRATEGY.md §6.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0

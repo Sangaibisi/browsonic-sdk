@@ -1,7 +1,7 @@
 /**
  * Baseline perf — fixture app WITHOUT SDK.
  *
- * PERFORMANS-STRATEJISI.md §1: LCP delta (with SDK vs without) <= 50ms.
+ * PERFORMANCE-STRATEGY.md §1: LCP delta (with SDK vs without) <= 50ms.
  * This spec captures the "without" baseline for comparison.
  */
 import { test, expect } from '@playwright/test';

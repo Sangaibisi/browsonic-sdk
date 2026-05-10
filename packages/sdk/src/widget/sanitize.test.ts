@@ -3,7 +3,7 @@
 /**
  * Widget sanitization — XSS regression suite.
  *
- * Covers TEKNIK-IYILESTIRME-PLANI.md §1.1 fix.
+ * Covers TECHNICAL-IMPROVEMENT-PLAN.md §1.1 fix.
  * These tests MUST pass for every PR touching widget code.
  */
 import { describe, it, expect } from 'vitest';

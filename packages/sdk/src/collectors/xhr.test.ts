@@ -3,7 +3,7 @@
 /**
  * XHR collector — WeakMap metadata + AbortSignal listener regression suite.
  *
- * Verifies the Sprint 3 rewrite (TEKNIK-IYILESTIRME §2.2).
+ * Verifies the Sprint 3 rewrite (TECHNICAL-IMPROVEMENTS §2.2).
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createXHRCollector } from './xhr';

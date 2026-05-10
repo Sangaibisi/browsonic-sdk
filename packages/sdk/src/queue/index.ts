@@ -44,7 +44,7 @@ interface QueueOptions {
   /**
    * Returns current head-based session sampling decision. When false,
    * non-error events are dropped at enqueue. Errors are always kept.
-   * (Added 0.3.0; see PERFORMANS-STRATEJISI.md §3.)
+   * (Added 0.3.0; see PERFORMANCE-STRATEGY.md §3.)
    */
   getSessionSampled?: () => boolean;
   /** SDK package name for batch.sdk.name. */
@@ -124,7 +124,7 @@ export function createEventQueue(options: QueueOptions) {
   // Rolling window of error-level event timestamps. When the count in the
   // last `errorStormWindowMs` exceeds `errorStormThreshold`, enter storm
   // mode which multiplies dedup cooldown by `errorStormCooldownMultiplier`.
-  // See TEKNIK-IYILESTIRME §2.4 + PERFORMANS-STRATEJISI §9.
+  // See TECHNICAL-IMPROVEMENTS §2.4 + PERFORMANCE-STRATEGY §9.
   const errorTimestamps: number[] = [];
   let inStorm = false;
 
@@ -140,7 +140,7 @@ export function createEventQueue(options: QueueOptions) {
   // Effective sample-rate multiplier, driven by backend
   // `X-Browsonic-Quota-Remaining`. Range [0.125, 1.0] — clamped so the
   // SDK never goes fully silent and always eventually recovers.
-  // See PERFORMANS-STRATEJISI §3 and Transport §.
+  // See PERFORMANCE-STRATEGY §3 and Transport §.
   let adaptiveMultiplier = 1.0;
   const ADAPTIVE_MIN = 0.125; // x8 reduction floor
   const ADAPTIVE_MAX = 1.0;
@@ -469,7 +469,7 @@ export function createEventQueue(options: QueueOptions) {
         // events only when session is sampled AND current adaptive multiplier
         // allows it. Decision is session-scoped at the sample gate; adaptive
         // rolls per non-error event based on current effective rate.
-        // (0.3.0; see PERFORMANS-STRATEJISI §3.)
+        // (0.3.0; see PERFORMANCE-STRATEGY §3.)
         if (event.level !== 'error' && event.level !== 'fatal') {
           if (getSessionSampled && !getSessionSampled()) {
             trackDrop('sampled_out');
@@ -527,7 +527,7 @@ export function createEventQueue(options: QueueOptions) {
         // Reason: on high-traffic sites, `error` storms can DDoS the ingest
         // endpoint. Errors now batch normally (≤ flushIntervalMs delay,
         // default 10s). `fatal` is reserved for unrecoverable conditions
-        // that cannot wait. See CHANGELOG and TEKNIK-IYILESTIRME §2.4.
+        // that cannot wait. See CHANGELOG and TECHNICAL-IMPROVEMENTS §2.4.
         if (event.level === 'fatal') {
           debugLog('Fatal event detected - instant flush');
           // Fire-and-forget: caller awaits via sdk.flush() if needed.

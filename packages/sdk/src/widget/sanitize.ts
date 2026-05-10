@@ -7,8 +7,8 @@
  *   - `javascript:` / `data:` / `vbscript:` URL XSS on `actionUrl`
  *   - Unbounded title/message from a compromised widget-rules endpoint
  *
- * See TEKNIK-IYILESTIRME-PLANI.md §1.1.
- * See PERFORMANS-STRATEJISI.md §1 — sanitize must be < 100μs per notification.
+ * See TECHNICAL-IMPROVEMENT-PLAN.md §1.1.
+ * See PERFORMANCE-STRATEGY.md §1 — sanitize must be < 100μs per notification.
  *
  * @copyright 2024-2026 Browsonic
  * @license Apache-2.0

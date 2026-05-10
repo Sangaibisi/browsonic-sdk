@@ -1,7 +1,7 @@
 /**
  * Parse + compile cost under CPU throttle (Moto G4 proxy).
  *
- * PERFORMANS-STRATEJISI.md §1 SLO:
+ * PERFORMANCE-STRATEGY.md §1 SLO:
  *   - Bundle parse+compile (low-end) ≤ 10 ms
  *
  * Method:

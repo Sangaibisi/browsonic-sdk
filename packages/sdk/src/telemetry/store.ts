@@ -113,7 +113,7 @@ export interface TelemetryTimeline {
  * Telemetry Store interface.
  *
  * `pause()`/`resume()` were added in 0.3.0 to support Critical Path mode
- * (PERFORMANS-STRATEJISI.md §5). While paused, `add()` is a no-op —
+ * (PERFORMANCE-STRATEGY.md §5). While paused, `add()` is a no-op —
  * breadcrumbs are not accumulated. Existing entries are retained and
  * remain queryable via `getTimeline()`.
  */

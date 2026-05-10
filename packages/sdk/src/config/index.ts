@@ -10,7 +10,7 @@ import type { BrowsonicConfig, ResolvedConfig } from '../types';
 /**
  * Default configuration values.
  *
- * Values marked "0.3.0" were revised per PERFORMANS-STRATEJISI.md §3
+ * Values marked "0.3.0" were revised per PERFORMANCE-STRATEGY.md §3
  * for high-traffic SaaS production profile (e-commerce / telco).
  * Any change here is a BREAKING release; bump minor and update CHANGELOG.
  */
@@ -282,7 +282,7 @@ export function resolveConfig(config: BrowsonicConfig): ResolvedConfig {
  * Changing any of these requires destroy() + init() because they affect
  * installed collectors, transport identity, or visitor identity.
  *
- * See TEKNIK-IYILESTIRME-PLANI.md §1.5.
+ * See TECHNICAL-IMPROVEMENT-PLAN.md §1.5.
  */
 export const RUNTIME_LOCKED_CONFIG_KEYS = new Set<keyof BrowsonicConfig>([
   // Transport / tenant identity — changing at runtime would mix events

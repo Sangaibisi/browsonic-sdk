@@ -3,7 +3,7 @@
 /**
  * Singleton history instrumentation — reference-counted.
  *
- * Problem being solved (TEKNIK-IYILESTIRME-PLANI.md §1.4):
+ * Problem being solved (TECHNICAL-IMPROVEMENT-PLAN.md §1.4):
  *   Both the navigation collector and the pageview collector wrapped
  *   `history.pushState` / `history.replaceState` independently. Whichever
  *   collector installed first lost its "original" reference when the second

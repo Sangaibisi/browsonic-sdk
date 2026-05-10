@@ -10,7 +10,7 @@
  *
  * Sends a page-view ping on initial page load and on SPA route changes.
  *
- * IMPORTANT CHANGES in 0.3.0 (TEKNIK-IYILESTIRME-PLANI §1.3, §1.4):
+ * IMPORTANT CHANGES in 0.3.0 (TECHNICAL-IMPROVEMENT-PLAN §1.3, §1.4):
  *   - Transport is now POST with apiKey in X-API-Key header (was: GET pixel
  *     with apiKey in URL query — leaked via Referer, access logs, browser
  *     history, extensions).
@@ -204,7 +204,7 @@ export function createPageViewCollector(config: PageViewConfig) {
     });
 
     // Subscribe to shared history instrumentation instead of wrapping
-    // history.pushState ourselves (TEKNIK-IYILESTIRME-PLANI §1.4).
+    // history.pushState ourselves (TECHNICAL-IMPROVEMENT-PLAN §1.4).
     unsubscribeHistory = subscribeToHistoryChanges(() => {
       // Small microtask delay so the URL has propagated and document.title
       // has likely been updated by the framework router.

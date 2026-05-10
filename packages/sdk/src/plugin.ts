@@ -7,7 +7,7 @@
  * explicitly — e.g. the notification widget, an OTel tracing exporter,
  * a session replay recorder. The core SDK never imports plugins directly;
  * this keeps the core bundle small and tree-shake-friendly (see the
- * `./core` entry — core bundle hedef ≤ 8 KB gzip, PERFORMANS-STRATEJISI §1).
+ * `./core` entry — core bundle target ≤ 8 KB gzip (PERFORMANCE-STRATEGY §1).
  *
  * Lifecycle:
  *   1. `new Browsonic()` or `getBrowsonic()` constructs the instance.

@@ -104,7 +104,7 @@ export function createWidgetRenderer(
   function show(notification: WidgetNotification, showOptions: ShowOptions = {}): void {
     // SECURITY: sanitize caps title/message length and filters the actionUrl
     // to only http(s)/mailto/tel — prevents `javascript:` XSS from a compromised
-    // widget-rules endpoint. See TEKNIK-IYILESTIRME-PLANI.md §1.1.
+    // widget-rules endpoint. See TECHNICAL-IMPROVEMENT-PLAN.md §1.1.
     const safe = sanitizeNotification(notification);
     if (!safe) return; // notification had no renderable content
     activeRuleId = showOptions.ruleId ?? null;

@@ -135,7 +135,7 @@ interface NetworkDetail {
 
 - Anything matching `/auth/i`, `/cookie/i`, `/token/i`, `/api[-_]key/i`, `/secret/i`
 
-PII redaction utility ships in `packages/sdk/src/utils/redaction.ts` and is unit-tested (regex tabanlı: email / JWT / OAuth secret / kart numarası).
+PII redaction utility ships in `packages/sdk/src/utils/redaction.ts` and is unit-tested (regex-based: email / JWT / OAuth secret / card number).
 
 ### `EventBatch.adapter` vs `EventBatch.sdk`
 
