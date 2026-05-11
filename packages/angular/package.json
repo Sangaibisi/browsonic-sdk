@@ -71,7 +71,7 @@
     "@browsonic/sdk": ">=2.2.1"
   },
   "devDependencies": {
-    "@angular/core": "^19.0.0",
+    "@angular/core": "^21.2.12",
     "@browsonic/sdk": "*",
     "@eslint/js": "^10.0.1",
     "@semantic-release/changelog": "^6.0.3",
