@@ -79,7 +79,7 @@
     "@semantic-release/git": "^10.0.1",
     "@semantic-release/github": "^11.0.1",
     "@semantic-release/npm": "^13.0.0",
-    "@semantic-release/release-notes-generator": "^14.0.1",
+    "@semantic-release/release-notes-generator": "^14.1.1",
     "@vitest/coverage-v8": "^3.0.0",
     "conventional-changelog-conventionalcommits": "^9.3.1",
     "eslint": "^10.2.1",
@@ -90,7 +90,7 @@
     "typescript": "^5.3.0",
     "typescript-eslint": "^8.59.0",
     "vitest": "^3.0.0",
-    "zone.js": "^0.14.0"
+    "zone.js": "^0.16.2"
   },
   "engines": {
     "node": ">=20"
